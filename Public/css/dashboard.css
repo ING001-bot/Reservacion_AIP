@@ -1,0 +1,75 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+main.dashboard {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 600px;
+}
+
+h1 {
+    margin-bottom: 2rem;
+    font-size: 2.2rem;
+    color: #ffcc70;
+}
+
+nav.menu-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+}
+
+nav.menu-buttons a {
+    text-decoration: none;
+    padding: 0.9rem 1.7rem;
+    background: #ff9800;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
+
+nav.menu-buttons a:hover {
+    background: #e68900;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.6);
+}
+
+nav.menu-buttons a.logout {
+    background: #d9534f;
+    box-shadow: 0 4px 15px rgba(217, 83, 79, 0.4);
+}
+
+nav.menu-buttons a.logout:hover {
+    background: #c9302c;
+    box-shadow: 0 6px 20px rgba(217, 83, 79, 0.6);
+}
+
+@media (max-width: 600px) {
+    nav.menu-buttons {
+        flex-direction: column;
+    }
+    nav.menu-buttons a {
+        width: 100%;
+        justify-content: center;
+    }
+}

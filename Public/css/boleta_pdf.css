@@ -1,0 +1,60 @@
+body {
+    font-family: Arial, sans-serif;
+    color: #f1f1f1;
+    background-color: #121212;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.card {
+    background: #1e1e1e;
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.4);
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    border-top: 5px solid #00bcd4;
+}
+
+h1 {
+    text-align: center;
+    color: #00bcd4;
+    margin-bottom: 20px;
+}
+
+.info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.datos {
+    width: 65%;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.datos p {
+    margin: 6px 0;
+}
+
+.qr {
+    text-align: center;
+}
+
+.qr img {
+    border: 2px solid #444;
+    border-radius: 6px;
+    padding: 5px;
+    background: #fff;
+}
+
+.footer {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 20px;
+}
