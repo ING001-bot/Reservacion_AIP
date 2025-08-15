@@ -1,13 +1,8 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['usuario']) || $_SESSION['tipo'] !== 'Administrador') {
-    header('Location: login.php');
-    exit();
-}
-
-require 'app/models/UsuarioModel.php';
-require 'app/models/EquipoModel.php';
+require '../models/UsuarioModel.php';
+require '../models/EquipoModel.php';
 
 $usuarioModel = new UsuarioModel();
 $equipoModel = new EquipoModel();
@@ -15,14 +10,16 @@ $equipoModel = new EquipoModel();
 $mensaje = '';
 $mensaje_tipo = '';
 
+$usuarioExterno = isset($_GET['modo']) && $_GET['modo'] === 'registro';
+$rol = $_SESSION['tipo'] ?? null;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Registro de usuario
+
     if (isset($_POST['registrar_usuario'])) {
         $nombre = trim($_POST['nombre']);
         $correo = filter_input(INPUT_POST, 'correo', FILTER_VALIDATE_EMAIL);
         $contraseña_raw = $_POST['contraseña'] ?? '';
-        $tipo = $_POST['tipo'];
-
+        $tipo = ($rol === 'Administrador') ? $_POST['tipo'] : 'Profesor';
         $tipos_validos = ['Profesor', 'Encargado', 'Administrador'];
 
         if (!$correo || !in_array($tipo, $tipos_validos) || strlen($contraseña_raw) < 6) {
@@ -39,8 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Registro de equipo
-    if (isset($_POST['registrar_equipo'])) {
+    if (isset($_POST['registrar_equipo']) && $rol === 'Administrador') {
         $nombre_equipo = trim($_POST['nombre_equipo']);
         $tipo_equipo = trim($_POST['tipo_equipo']);
 
@@ -55,4 +51,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require 'app/views/admin.view.php';
+// Cargar la vista con las variables ya definidas
+require '../view/Admin.php';

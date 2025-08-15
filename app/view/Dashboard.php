@@ -1,16 +1,14 @@
 <?php
 session_start();
 
-if (empty($_SESSION['usuario'])) {
+// Redirigir si no está logueado
+if (!isset($_SESSION['usuario'])) {
     header('Location: ../../Public/index.php');
     exit;
 }
 
-function esAdministrador(): bool {
-    return isset($_SESSION['tipo']) && $_SESSION['tipo'] === 'Administrador';
-}
-
 $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
+$rol = $_SESSION['tipo'] ?? 'Profesor';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,15 +21,25 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
     <main class="dashboard">
         <h1>Bienvenido, <?= $usuario ?></h1>
         <nav class="menu-buttons">
-            <a href="reservar.php">📅 Reservar Aula</a>
-            <a href="prestamo.php">💻 Préstamo de Equipos</a>
-            <a href="devolucion.php">🔄 Registrar Devolución</a>
-            <a href="historial.php">📄 Historial / PDF</a>
-            <a href="cambiar_contraseña.php">🔑 Cambiar Contraseña</a>
-            <?php if (esAdministrador()) : ?>
-                <a href="admin.php">⚙️ Administración</a>
-
+            <?php if ($rol === 'Profesor'): ?>
+                <a href="reservar.php">📅 Reservar Aula</a>
+                <a href="prestamo.php">💻 Préstamo de Equipos</a>
             <?php endif; ?>
+
+            <?php if ($rol === 'Administrador'): ?>
+                <a href="admin.php">⚙️ Administración</a>
+                <a href="historial.php">📄 Historial / PDF</a>
+            <?php endif; ?>
+
+            <?php if ($rol === 'Encargado'): ?>
+                <a href="historial.php">📄 Historial / PDF</a>
+                <a href="devolucion.php">🔄 Registrar Devolución</a>
+            <?php endif; ?>
+
+            <?php if (in_array($rol, ['Administrador'])): ?>
+                <a href="cambiar_contraseña.php">🔑 Cambiar Contraseña</a>
+            <?php endif; ?>
+
             <a href="logout.php">Cerrar sesión</a>
         </nav>
     </main>

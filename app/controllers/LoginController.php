@@ -1,10 +1,8 @@
 <?php
-
 session_start();
 require '../models/UsuarioModel.php';
 
 $usuarioModel = new UsuarioModel();
-
 $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -15,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensaje = "⚠️ Por favor, completa todos los campos.";
     } else {
         $user = $usuarioModel->obtenerPorCorreo($correo);
-        var_dump($user);
 
         if ($user && password_verify($contraseña, $user['contraseña'])) {
             session_regenerate_id(true);
@@ -30,4 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-?>
+
+// Aquí solo mostramos la vista del login
+require '../views/Login.php';

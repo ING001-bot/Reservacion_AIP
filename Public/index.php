@@ -21,7 +21,7 @@
         <button type="submit">Ingresar</button>
 
         <div class="enlaces">
-            <a href="registro.php">Crear cuenta</a> | 
+            <a href="../app/controllers/AdminController.php?modo=externo">Crear cuenta</a> | 
             <a href="recuperar_contraseña.php">¿Olvidaste tu contraseña?</a>
         </div>
     </form>
