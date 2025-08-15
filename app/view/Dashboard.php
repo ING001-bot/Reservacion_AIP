@@ -17,7 +17,7 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - <?= $usuario ?></title>
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="../../Public/css/dashboard.css">
 </head>
 <body>
     <main class="dashboard">

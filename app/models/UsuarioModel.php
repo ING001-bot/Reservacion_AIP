@@ -1,5 +1,5 @@
 <?php
-require 'app/config/conexion.php';
+require '../config/conexion.php';
 
 class UsuarioModel {
     private $db;
@@ -10,7 +10,7 @@ class UsuarioModel {
     }
 
     public function buscarPorCorreo($correo) {
-        $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE correo = ?");
+        $stmt = $this->db->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
         $stmt->execute([$correo]);
         return $stmt->fetch();
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Solicitar Préstamo</title>
-    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="../../Public/css/estilos.css">
 </head>
 <body>
     <form method="post" class="formulario">

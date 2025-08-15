@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Historial de Uso</title>
-<link rel="stylesheet" href="css/historial.css">
+<link rel="stylesheet" href="../../Public/css/historial.css">
 </head>
 <body>
 <main class="contenedor">

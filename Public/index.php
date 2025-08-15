@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Iniciar Sesión - Aulas de Innovación</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/login.css">
+<link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 <main class="login-container">
-    <form method="post" class="login-form" action="LoginController.php">
+    <form method="post" class="login-form" action="../app/controllers/LoginController.php">
         <h2>🔑 Iniciar Sesión</h2>
 
         <?php if (!empty($mensaje)): ?>

@@ -1,7 +1,7 @@
 <?php
-session_start();
 
-require 'app/models/UsuarioModel.php';
+session_start();
+require '../models/UsuarioModel.php';
 
 $usuarioModel = new UsuarioModel();
 
@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensaje = "⚠️ Por favor, completa todos los campos.";
     } else {
         $user = $usuarioModel->obtenerPorCorreo($correo);
+        var_dump($user);
 
         if ($user && password_verify($contraseña, $user['contraseña'])) {
             session_regenerate_id(true);

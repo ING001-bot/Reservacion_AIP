@@ -1,5 +1,6 @@
 <?php
-require 'app/models/UsuarioModel.php';
+
+require '../models/UsuarioModel.php';
 
 $mensaje = '';
 $mensaje_tipo = '';
@@ -40,5 +41,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
-require 'app/views/registro.view.php';
+require '../view/Registro.php';

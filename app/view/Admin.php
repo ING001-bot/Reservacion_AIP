@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel de Administración</title>
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="../../Public/css/admin.css">
 </head>
 <body>
     <h1>⚙ Panel de Administración</h1>
