@@ -1,15 +1,22 @@
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+require '../controllers/PrestamoController.php';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Solicitar Préstamo</title>
-    <link rel="stylesheet" href="../../Public/css/estilos.css">
+    <link rel="stylesheet" href="../../Public/css/estilo.css">
 </head>
 <body>
     <form method="post" class="formulario">
         <h2>Préstamo de Equipos</h2>
 
-        <?php if ($mensaje): ?>
+        <?php if (!empty($mensaje)): ?>
             <div class="mensaje <?= htmlspecialchars($mensaje_tipo) ?>">
                 <?= htmlspecialchars($mensaje) ?>
             </div>
@@ -26,7 +33,7 @@
         </select>
 
         <button type="submit" class="btn btn-primary">Solicitar Préstamo</button>
-        <a href="dashboard.php" class="btn btn-secondary">⬅ Volver</a>
+        <a href="../view/Dashboard.php" class="btn btn-secondary">⬅ Volver</a>
     </form>
 </body>
 </html>

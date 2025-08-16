@@ -29,4 +29,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Aquí solo mostramos la vista del login
-require '../views/Login.php';
+require '../view/Dashboard.php';

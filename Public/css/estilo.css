@@ -3,14 +3,15 @@ body {
     background: linear-gradient(120deg, #4f9cff, #3fc1c9);
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    align-items: flex-start;
+    padding-top: 70px; /* un poco más de espacio arriba */
     margin: 0;
+    min-height: 100vh;
 }
 
 .formulario {
     background: #fff;
-    padding: 25px;
+    padding: 40px;          /* un poco más grande */
     border-radius: 12px;
     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
     width: 350px;
@@ -18,14 +19,21 @@ body {
 }
 
 .formulario h2 {
-    margin-bottom: 20px;
+    margin-bottom: 35px;     /* más separación debajo del título */
     color: #333;
 }
 
-.formulario input {
+.formulario label {
+    display: block;
+    text-align: left;
+    margin-bottom: 12px;     /* más espacio debajo del label */
+}
+
+.formulario input,
+.formulario select {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
+    padding: 14px;           /* un poco más grande */
+    margin-bottom: 25px;     /* más espacio entre campos */
     border-radius: 8px;
     border: 1px solid #ccc;
 }
@@ -35,10 +43,11 @@ body {
     background: #4f9cff;
     color: #fff;
     border: none;
-    padding: 10px;
+    padding: 14px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
+    margin-top: 30px;        /* más separación del select */
 }
 
 .formulario button:hover {
@@ -46,29 +55,19 @@ body {
 }
 
 .mensaje {
-    padding: 10px;
+    padding: 12px;
     border-radius: 8px;
-    margin-top: 15px;
+    margin-top: 25px;        /* más separación del botón */
     font-size: 14px;
 }
 
-.mensaje.exito {
-    background: #d4f8d4;
-    color: #2d6a2d;
-    border: 1px solid #a3e4a3;
-}
-
-.mensaje.error {
-    background: #ffdada;
-    color: #a12626;
-    border: 1px solid #f5a1a1;
-}
-
-a {
+a.btn {
+    display: inline-block;
+    margin-top: 25px;        /* más separación del botón */
     text-decoration: none;
     color: #4f9cff;
 }
 
-a:hover {
+a.btn:hover {
     text-decoration: underline;
 }

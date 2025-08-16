@@ -20,7 +20,7 @@
             <th>Fecha Préstamo</th>
             <th>Acción</th>
         </tr>
-        <?php foreach ($prestamos as $row): ?>
+        <?php foreach ($prestamos  ?? [] as $p):?>
             <tr>
                 <td><?= htmlspecialchars($row['nombre_equipo'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars($row['nombre'], ENT_QUOTES, 'UTF-8') ?></td>

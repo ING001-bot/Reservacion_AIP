@@ -1,5 +1,8 @@
 <?php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 $rol = $_SESSION['tipo'] ?? null;
 $usuarioExterno = isset($_GET['modo']) && $_GET['modo'] === 'registro';
 ?>
@@ -49,7 +52,7 @@ $usuarioExterno = isset($_GET['modo']) && $_GET['modo'] === 'registro';
         </form>
     </div>
     <?php endif; ?>
-
+                
     <!-- Formulario de Equipo (solo admin) -->
     <?php if ($rol === 'Administrador'): ?>
     <div class="tarjeta">
@@ -64,6 +67,6 @@ $usuarioExterno = isset($_GET['modo']) && $_GET['modo'] === 'registro';
     </div>
     <?php endif; ?>
 
-    <a href="<?= $rol ? 'dashboard.php' : '../../Public/index.php' ?>" class="volver">🔙 Volver</a>
+    <a href="<?= $rol ? 'dashboard.php' : '../Dashboard' ?>" class="volver">🔙 Volver</a>
 </body>
 </html>

@@ -40,7 +40,7 @@ $rol = $_SESSION['tipo'] ?? 'Profesor';
                 <a href="cambiar_contraseña.php">🔑 Cambiar Contraseña</a>
             <?php endif; ?>
 
-            <a href="logout.php">Cerrar sesión</a>
+            <a href="../controllers/LogoutController.php">Cerrar sesión</a>
         </nav>
     </main>
 </body>

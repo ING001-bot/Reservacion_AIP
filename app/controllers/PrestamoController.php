@@ -1,14 +1,23 @@
-<?
-require 'app/models/PrestamoModel.php';
+<?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+require '../config/conexion.php';
+require '../models/PrestamoModel.php';
 
 $prestamoModel = new PrestamoModel($conexion);
 
-// Insertar un préstamo (como ya lo tienes)
+// Inicializar mensajes
+$mensaje = '';
+$mensaje_tipo = '';
+
+// Procesar POST al enviar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $equipo = $_POST['equipo'] ?? null;
-    $usuario = $_SESSION['usuario'];
+    $usuario = $_SESSION['usuario'] ?? null;
 
-    if ($equipo) {
+    if ($equipo && $usuario) {
         $usuarioData = $prestamoModel->obtenerUsuarioPorNombre($usuario);
 
         if ($usuarioData) {
@@ -26,10 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         $mensaje = "⚠️ Debes seleccionar un equipo.";
-        $mensaje_tipo = 'advertencia';
+        $mensaje_tipo = 'error';
     }
 }
 
-// Obtener equipos disponibles
+// Obtener equipos disponibles para mostrar en la vista
 $equipos = $prestamoModel->obtenerEquiposDisponibles();
 ?>
