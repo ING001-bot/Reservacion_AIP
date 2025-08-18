@@ -67,6 +67,6 @@ $usuarioExterno = isset($_GET['modo']) && $_GET['modo'] === 'registro';
     </div>
     <?php endif; ?>
 
-    <a href="<?= $rol ? 'dashboard.php' : '../Dashboard' ?>" class="volver">🔙 Volver</a>
+    <a href="../view/Dashboard.php" class="volver">🔙 Volver</a>
 </body>
 </html>

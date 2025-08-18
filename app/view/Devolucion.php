@@ -1,37 +1,68 @@
+<?php
+session_start();
+require '../config/conexion.php';
+require '../controllers/PrestamoController.php';
+
+$controller = new PrestamoController($conexion);
+
+if (!isset($_SESSION['usuario']) || $_SESSION['tipo']!=='Encargado') {
+    die("Acceso denegado");
+}
+
+if (isset($_GET['devolver'])) {
+    $controller->devolverEquipo($_GET['devolver']);
+}
+
+$prestamos = $controller->obtenerTodosPrestamos();
+$mensaje = $_GET['mensaje'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Registrar Devolución</title>
     <link rel="stylesheet" href="../../Public/css/devolucion.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h2>Equipos Prestados</h2>
+<h2>Todos los Préstamos</h2>
 
-    <?php if (!empty($mensaje)) : ?>
-        <div class="mensaje"><?= htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') ?></div>
-    <?php endif; ?>
+<?php if($mensaje): ?>
+    <div class="mensaje"><?= htmlspecialchars($mensaje) ?></div>
+<?php endif; ?>
 
-    <table>
+<table>
+    <tr>
+        <th>Equipo</th>
+        <th>Responsable</th>
+        <th>Fecha Préstamo</th>
+        <th>Hora Inicio</th>
+        <th>Hora Fin</th>
+        <th>Estado</th>
+        <th>Acción</th>
+    </tr>
+    <?php if(!empty($prestamos)): ?>
+        <?php foreach($prestamos as $row): ?>
         <tr>
-            <th>Equipo</th>
-            <th>Responsable</th>
-            <th>Fecha Préstamo</th>
-            <th>Acción</th>
+            <td><?= htmlspecialchars($row['nombre_equipo']) ?></td>
+            <td><?= htmlspecialchars($row['nombre']) ?></td>
+            <td><?= htmlspecialchars($row['fecha_prestamo']) ?></td>
+            <td><?= htmlspecialchars($row['hora_inicio']) ?></td>
+            <td><?= htmlspecialchars($row['hora_fin']) ?></td>
+            <td><?= htmlspecialchars($row['estado']) ?></td>
+            <td>
+                <?php if($row['estado']==='Prestado'): ?>
+                    <a href="?devolver=<?= $row['id_prestamo'] ?>">✅ Devolver</a>
+                <?php else: ?>
+                    ✔ Devuelto
+                <?php endif; ?>
+            </td>
         </tr>
-        <?php foreach ($prestamos  ?? [] as $p):?>
-            <tr>
-                <td><?= htmlspecialchars($row['nombre_equipo'], ENT_QUOTES, 'UTF-8') ?></td>
-                <td><?= htmlspecialchars($row['nombre'], ENT_QUOTES, 'UTF-8') ?></td>
-                <td><?= htmlspecialchars($row['fecha_prestamo'], ENT_QUOTES, 'UTF-8') ?></td>
-                <td><a class="devolver" href="DevolucionController.php?devolver=<?= urlencode($row['id_prestamo']) ?>">✅ Devolver</a></td>
-            </tr>
         <?php endforeach; ?>
-    </table>
+    <?php else: ?>
+        <tr><td colspan="7" style="text-align:center;">No hay préstamos registrados.</td></tr>
+    <?php endif; ?>
+</table>
 
-    <div class="boton-volver">
-        <a href="dashboard.php"><button>⬅️ Volver al Dashboard</button></a>
-    </div>
+<a href="dashboard.php"><button>⬅ Volver al Dashboard</button></a>
 </body>
 </html>

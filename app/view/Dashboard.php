@@ -22,7 +22,7 @@ $rol = $_SESSION['tipo'] ?? 'Profesor';
         <h1>Bienvenido, <?= $usuario ?></h1>
         <nav class="menu-buttons">
             <?php if ($rol === 'Profesor'): ?>
-                <a href="reservar.php">📅 Reservar Aula</a>
+                <a href="reserva.php">📅 Reservar Aula</a>
                 <a href="prestamo.php">💻 Préstamo de Equipos</a>
             <?php endif; ?>
 

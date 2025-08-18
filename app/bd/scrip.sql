@@ -42,3 +42,7 @@ CREATE TABLE prestamos (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
     FOREIGN KEY (id_equipo) REFERENCES equipos(id_equipo)
 );
+
+ALTER TABLE prestamos
+ADD COLUMN hora_inicio TIME NOT NULL AFTER id_equipo,
+ADD COLUMN hora_fin TIME NULL AFTER hora_inicio;

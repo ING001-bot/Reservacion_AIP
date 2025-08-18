@@ -1,44 +1,30 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-require '../config/conexion.php';
 require '../models/PrestamoModel.php';
 
-$prestamoModel = new PrestamoModel($conexion);
+class PrestamoController {
+    private $model;
 
-// Inicializar mensajes
-$mensaje = '';
-$mensaje_tipo = '';
+    public function __construct($conexion) {
+        $this->model = new PrestamoModel($conexion);
+    }
 
-// Procesar POST al enviar formulario
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $equipo = $_POST['equipo'] ?? null;
-    $usuario = $_SESSION['usuario'] ?? null;
+    // Guardar múltiples préstamos
+    public function guardarPrestamosMultiple($id_usuario, $equipos, $hora_inicio, $hora_fin = null) {
+        return $this->model->guardarPrestamosMultiple($id_usuario, $equipos, $hora_inicio, $hora_fin);
+    }
 
-    if ($equipo && $usuario) {
-        $usuarioData = $prestamoModel->obtenerUsuarioPorNombre($usuario);
+    // Listar equipos disponibles por tipo
+    public function listarEquiposPorTipo($tipo) {
+        return $this->model->listarEquiposPorTipo($tipo);
+    }
 
-        if ($usuarioData) {
-            $id_usuario = $usuarioData['id_usuario'];
-            $fecha = date('Y-m-d');
+    // Obtener todos los préstamos (para encargado)
+    public function obtenerTodosPrestamos() {
+        return $this->model->obtenerTodosPrestamos();
+    }
 
-            $prestamoModel->insertarPrestamo($id_usuario, $equipo, $fecha);
-            $prestamoModel->actualizarEstadoEquipo($equipo, 'Prestado');
-
-            $mensaje = "✅ Préstamo registrado correctamente.";
-            $mensaje_tipo = 'exito';
-        } else {
-            $mensaje = "❌ Usuario no encontrado.";
-            $mensaje_tipo = 'error';
-        }
-    } else {
-        $mensaje = "⚠️ Debes seleccionar un equipo.";
-        $mensaje_tipo = 'error';
+    // Cambiar estado a devuelto
+    public function devolverEquipo($id_prestamo) {
+        return $this->model->devolverEquipo($id_prestamo);
     }
 }
-
-// Obtener equipos disponibles para mostrar en la vista
-$equipos = $prestamoModel->obtenerEquiposDisponibles();
-?>
