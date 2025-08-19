@@ -22,7 +22,6 @@ $mensaje = $mensaje ?? '';
 <body>
 <main class="contenedor">
     <h1>📅 Reservar Aula</h1>
-    <a href="dashboard.php" class="btn-volver">⬅ Volver al Dashboard</a>
 
     <?php if (!empty($mensaje)): ?>
         <p class="mensaje"><?= htmlspecialchars($mensaje) ?></p>
@@ -58,6 +57,8 @@ $mensaje = $mensaje ?? '';
         <input type="time" name="hora_fin" required>
         <button type="submit" name="reservar_aip2">Reservar AIP 2</button>
     </form>
+    <a href="dashboard.php" class="btn-volver">⬅ Volver al Dashboard</a>
+
 </main>
 
 <script>
