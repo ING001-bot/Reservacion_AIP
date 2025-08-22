@@ -14,6 +14,7 @@ $rol = $_SESSION['tipo'] ?? 'Profesor';
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - <?= $usuario ?></title>
     <link rel="stylesheet" href="../../Public/css/dashboard.css">
 </head>
@@ -40,7 +41,7 @@ $rol = $_SESSION['tipo'] ?? 'Profesor';
                 <a href="cambiar_contraseña.php">🔑 Cambiar Contraseña</a>
             <?php endif; ?>
 
-            <a href="../controllers/LogoutController.php">Cerrar sesión</a>
+            <a href="../controllers/LogoutController.php" class="logout">Cerrar sesión</a>
         </nav>
     </main>
 </body>

@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 require '../models/ReservaModel.php';
 
 class ReservaController {
@@ -11,17 +13,41 @@ class ReservaController {
     }
 
     public function reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario) {
-        if ($this->model->crearReserva($id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin)) {
-            $this->mensaje = "✅ Reserva realizada correctamente.";
-            return true;
+        // Validar límite horario
+        if ($hora_fin > "18:35") {
+            $this->mensaje = "⚠️ El horario excede la hora límite permitida (18:35).";
+            return false;
+        }
+
+        if ($hora_inicio >= $hora_fin) {
+            $this->mensaje = "⚠️ La hora de inicio debe ser menor a la hora de fin.";
+            return false;
+        }
+
+        if ($this->model->verificarDisponibilidad($id_aula, $fecha, $hora_inicio, $hora_fin)) {
+            if ($this->model->crearReserva($id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin)) {
+                $this->mensaje = "✅ Reserva realizada correctamente.";
+                return true;
+            } else {
+                $this->mensaje = "❌ Error al realizar la reserva.";
+                return false;
+            }
         } else {
-            $this->mensaje = "❌ Error al realizar la reserva.";
+            $this->mensaje = "⚠️ Aula ocupada en el horario seleccionado. Por favor elige otro horario.";
             return false;
         }
     }
+
+    public function obtenerAulas($tipo = null) {
+        return $this->model->obtenerAulas($tipo);
+    }
+
+    public function obtenerReservas($id_usuario) {
+        return $this->model->obtenerReservasPorProfesor($id_usuario);
+    }
 }
 
-// Inicializar
+// Inicializar controlador
 $controller = new ReservaController($conexion);
 
 // Verificar sesión
@@ -31,18 +57,17 @@ if (!isset($_SESSION['usuario']) || $_SESSION['tipo'] !== 'Profesor') {
 }
 
 // Procesar formulario
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar') {
     $id_usuario = $_SESSION['id_usuario'];
+    $id_aula = $_POST['id_aula'];
     $fecha = $_POST['fecha'] ?? null;
     $hora_inicio = $_POST['hora_inicio'] ?? null;
     $hora_fin = $_POST['hora_fin'] ?? null;
 
-    // Determinar aula según el botón presionado
-    if (isset($_POST['reservar_aip1'])) {
-        $controller->reservarAula(1, $fecha, $hora_inicio, $hora_fin, $id_usuario);
-    } elseif (isset($_POST['reservar_aip2'])) {
-        $controller->reservarAula(2, $fecha, $hora_inicio, $hora_fin, $id_usuario);
-    }
+    $controller->reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario);
 }
 
 $mensaje = $controller->mensaje;
+// Solo traer aulas tipo AIP
+$aulas = $controller->obtenerAulas('AIP');
+$reservas = $controller->obtenerReservas($_SESSION['id_usuario']);

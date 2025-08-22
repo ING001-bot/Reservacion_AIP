@@ -2,8 +2,13 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require '../controllers/ReservaController.php';
 
-$mensaje = $mensaje ?? '';
+$nombreProfesor = $_SESSION['usuario'] ?? 'Invitado';
+
+// Fecha mínima y valor predeterminado en formato YYYY-MM-DD
+$fecha_min = date('Y-m-d'); // hoy
+$fecha_default = $fecha_min;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -12,12 +17,6 @@ $mensaje = $mensaje ?? '';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reservar Aula</title>
 <link rel="stylesheet" href="../../Public/css/reserva.css">
-<style>
-    .aulas { margin: 20px 0; }
-    .formulario { display: none; margin-top: 15px; padding: 15px; border: 1px solid #ccc; }
-    .btn { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
-    .mensaje { margin: 10px 0; font-weight: bold; }
-</style>
 </head>
 <body>
 <main class="contenedor">
@@ -27,46 +26,61 @@ $mensaje = $mensaje ?? '';
         <p class="mensaje"><?= htmlspecialchars($mensaje) ?></p>
     <?php endif; ?>
 
-    <div class="aulas">
-        <button class="btn" onclick="mostrarFormulario('aip1')">AIP 1</button>
-        <button class="btn" onclick="mostrarFormulario('aip2')">AIP 2</button>
-    </div>
+    <!-- Formulario único -->
+    <form method="POST">
+        <label>Profesor:</label>
+        <input type="text" value="<?= htmlspecialchars($nombreProfesor) ?>" readonly><br><br>
 
-    <!-- Formulario AIP 1 -->
-    <form method="POST" class="formulario" id="aip1">
-        <h2>Reserva AIP 1</h2>
-        <input type="hidden" name="id_aula" value="1">
+        <label>Seleccionar Aula (Solo AIP):</label>
+        <select name="id_aula" required>
+            <?php foreach ($aulas as $aula): ?>
+                <option value="<?= $aula['id_aula'] ?>">
+                    <?= $aula['nombre_aula'] ?> (Cap: <?= $aula['capacidad'] ?>)
+                </option>
+            <?php endforeach; ?>
+        </select><br><br>
+
         <label>Fecha:</label>
-        <input type="date" name="fecha" required>
+        <input type="date" name="fecha" required 
+               min="<?= $fecha_min ?>" 
+               value="<?= $fecha_default ?>"><br><br>
+
         <label>Hora Inicio:</label>
-        <input type="time" name="hora_inicio" required>
+        <input type="time" name="hora_inicio" required><br><br>
+
         <label>Hora Fin:</label>
-        <input type="time" name="hora_fin" required>
-        <button type="submit" name="reservar_aip1">Reservar AIP 1</button>
+        <input type="time" name="hora_fin" required><br><br>
+
+        <button type="submit" name="accion" value="guardar">Reservar</button>
     </form>
 
-    <!-- Formulario AIP 2 -->
-    <form method="POST" class="formulario" id="aip2">
-        <h2>Reserva AIP 2</h2>
-        <input type="hidden" name="id_aula" value="2">
-        <label>Fecha:</label>
-        <input type="date" name="fecha" required>
-        <label>Hora Inicio:</label>
-        <input type="time" name="hora_inicio" required>
-        <label>Hora Fin:</label>
-        <input type="time" name="hora_fin" required>
-        <button type="submit" name="reservar_aip2">Reservar AIP 2</button>
-    </form>
+    <hr>
+
+    <!-- Tabla de reservas -->
+    <h2>Reservas Registradas</h2>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Profesor</th>
+            <th>Aula</th>
+            <th>Capacidad</th>
+            <th>Fecha</th>
+            <th>Hora Inicio</th>
+            <th>Hora Fin</th>
+        </tr>
+        <?php foreach ($reservas as $reserva): ?>
+            <tr>
+                <td><?= htmlspecialchars($reserva['profesor']) ?></td>
+                <td><?= htmlspecialchars($reserva['nombre_aula']) ?></td>
+                <td><?= htmlspecialchars($reserva['capacidad']) ?></td>
+                <td><?= htmlspecialchars($reserva['fecha']) ?></td>
+                <td><?= htmlspecialchars($reserva['hora_inicio']) ?></td>
+                <td><?= htmlspecialchars($reserva['hora_fin']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+
+    <br>
     <a href="dashboard.php" class="btn-volver">⬅ Volver al Dashboard</a>
-
 </main>
-
-<script>
-function mostrarFormulario(aula) {
-    document.getElementById('aip1').style.display = 'none';
-    document.getElementById('aip2').style.display = 'none';
-    document.getElementById(aula).style.display = 'block';
-}
-</script>
 </body>
 </html>

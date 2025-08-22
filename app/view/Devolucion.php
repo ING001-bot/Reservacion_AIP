@@ -34,9 +34,12 @@ $mensaje = $_GET['mensaje'] ?? '';
     <tr>
         <th>Equipo</th>
         <th>Responsable</th>
+        <th>Aula</th>
+        <th>Tipo Aula</th>
         <th>Fecha Préstamo</th>
         <th>Hora Inicio</th>
         <th>Hora Fin</th>
+        <th>Fecha Devolución</th>
         <th>Estado</th>
         <th>Acción</th>
     </tr>
@@ -45,9 +48,12 @@ $mensaje = $_GET['mensaje'] ?? '';
         <tr>
             <td><?= htmlspecialchars($row['nombre_equipo']) ?></td>
             <td><?= htmlspecialchars($row['nombre']) ?></td>
+            <td><?= htmlspecialchars($row['nombre_aula']) ?></td>
+            <td><?= htmlspecialchars($row['tipo']) ?></td>
             <td><?= htmlspecialchars($row['fecha_prestamo']) ?></td>
             <td><?= htmlspecialchars($row['hora_inicio']) ?></td>
             <td><?= htmlspecialchars($row['hora_fin']) ?></td>
+            <td><?= $row['fecha_devolucion'] ? htmlspecialchars($row['fecha_devolucion']) : '---' ?></td>
             <td><?= htmlspecialchars($row['estado']) ?></td>
             <td>
                 <?php if($row['estado']==='Prestado'): ?>
@@ -59,7 +65,7 @@ $mensaje = $_GET['mensaje'] ?? '';
         </tr>
         <?php endforeach; ?>
     <?php else: ?>
-        <tr><td colspan="7" style="text-align:center;">No hay préstamos registrados.</td></tr>
+        <tr><td colspan="10" style="text-align:center;">No hay préstamos registrados.</td></tr>
     <?php endif; ?>
 </table>
 

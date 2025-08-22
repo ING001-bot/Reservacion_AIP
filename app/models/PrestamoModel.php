@@ -8,20 +8,23 @@ class PrestamoModel {
         $this->db = $conexion;
     }
 
-    public function guardarPrestamosMultiple($id_usuario, $equipos, $hora_inicio, $hora_fin = null) {
-        if (!$id_usuario || empty($equipos)) {
-            return ['mensaje'=>'⚠ No se proporcionó usuario o equipos.','tipo'=>'error'];
+    public function guardarPrestamosMultiple($id_usuario, $equipos, $fecha_prestamo, $hora_inicio, $hora_fin = null, $id_aula) {
+        if (!$id_usuario || empty($equipos) || !$id_aula) {
+            return ['mensaje'=>'⚠ No se proporcionó usuario, equipos o aula.','tipo'=>'error'];
         }
 
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO prestamos (id_usuario, id_equipo, fecha_prestamo, estado, hora_inicio, hora_fin)
-                VALUES (?, ?, CURDATE(), 'Prestado', ?, ?)
+                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)
+                VALUES (?, ?, ?, ?, 'Prestado', ?, ?)
             ");
 
-            foreach ($equipos as $id_equipo) {
-                if ($id_equipo) $stmt->execute([$id_usuario, $id_equipo, $hora_inicio, $hora_fin]);
+            foreach ($equipos as $val) {
+                if ($val) {
+                    $id_equipo = $val; // ya recibimos solo id_equipo
+                    $stmt->execute([$id_usuario, $id_equipo, $id_aula, $fecha_prestamo, $hora_inicio, $hora_fin]);
+                }
             }
 
             $this->db->commit();
@@ -47,20 +50,41 @@ class PrestamoModel {
 
     public function obtenerTodosPrestamos() {
         $stmt = $this->db->prepare("
-            SELECT p.id_prestamo, e.nombre_equipo, u.nombre, p.fecha_prestamo, p.hora_inicio, p.hora_fin, p.estado
+            SELECT p.id_prestamo, e.nombre_equipo, e.tipo_equipo, u.nombre, 
+                   a.nombre_aula, a.tipo,
+                   p.fecha_prestamo, p.hora_inicio, p.hora_fin, 
+                   p.fecha_devolucion, p.estado
             FROM prestamos p
             JOIN equipos e ON p.id_equipo = e.id_equipo
             JOIN usuarios u ON p.id_usuario = u.id_usuario
+            JOIN aulas a ON p.id_aula = a.id_aula
             ORDER BY p.fecha_prestamo DESC
         ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function listarPrestamosPorUsuario($id_usuario) {
+        if (!$id_usuario) return [];
+        $stmt = $this->db->prepare("
+            SELECT p.*, e.tipo_equipo, e.nombre_equipo, a.nombre_aula
+            FROM prestamos p
+            JOIN equipos e ON p.id_equipo = e.id_equipo
+            JOIN aulas a ON p.id_aula = a.id_aula
+            WHERE p.id_usuario = ?
+            ORDER BY p.fecha_prestamo DESC
+        ");
+        $stmt->execute([$id_usuario]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function devolverEquipo($id_prestamo) {
         $stmt = $this->db->prepare("
-            UPDATE prestamos SET estado='Devuelto', fecha_devolucion=NOW() WHERE id_prestamo=?
+            UPDATE prestamos 
+            SET estado='Devuelto', fecha_devolucion=CURDATE() 
+            WHERE id_prestamo=?
         ");
         return $stmt->execute([$id_prestamo]);
     }
 }
+?>

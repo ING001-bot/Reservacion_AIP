@@ -1,4 +1,4 @@
-/* Fondo y tipografía general */
+/* ===== Fondo y tipografía general ===== */
 body {
     background-color: #121212;
     color: #eee;
@@ -24,6 +24,14 @@ h1, h2 {
     color: #00e676;
     margin-bottom: 25px;
     word-wrap: break-word;
+}
+
+/* Tarjeta del formulario */
+.tarjeta {
+    background-color: #1f1f1f;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
 }
 
 /* Formulario */
@@ -68,6 +76,16 @@ button:hover {
     background-color: #00c853;
 }
 
+/* Botón secundario */
+.btn-secundario {
+    background-color: #424242;
+    color: #eee;
+}
+
+.btn-secundario:hover {
+    background-color: #616161;
+}
+
 /* Mensajes */
 .mensaje {
     padding: 10px;
@@ -81,7 +99,11 @@ button:hover {
 .error { background-color: #d32f2f; color: #fff; }
 .advertencia { background-color: #ffa000; color: #121212; }
 
-/* Tabla de préstamos */
+/* Tabla de usuarios */
+.tabla-container {
+    overflow-x: auto;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -106,8 +128,32 @@ table tr:nth-child(even) {
     background-color: #2c2c2c;
 }
 
+/* Inputs dentro de la tabla (editar) */
+td form input, td form select {
+    padding: 8px;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+/* Botones dentro de la tabla */
+td form button {
+    padding: 8px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+/* Enlaces */
+a {
+    text-decoration: none;
+    color: #00e676;
+}
+
+a:hover {
+    color: #00c853;
+}
+
 /* Botón volver */
-.btn-volver {
+.btn-volver, .volver {
     display: inline-block;
     margin-top: 15px;
     padding: 10px 20px;
@@ -118,7 +164,7 @@ table tr:nth-child(even) {
     text-align: center;
 }
 
-.btn-volver:hover {
+.btn-volver:hover, .volver:hover {
     background-color: #616161;
 }
 
@@ -144,7 +190,12 @@ table tr:nth-child(even) {
         padding: 8px;
     }
 
-    .btn-volver {
+    td form input, td form select, td form button {
+        font-size: 12px;
+        padding: 6px;
+    }
+
+    .btn-volver, .volver {
         padding: 8px 15px;
         font-size: 14px;
     }
