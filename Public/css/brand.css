@@ -1,0 +1,109 @@
+/* Public/css/brand.css */
+
+/* ==============================
+   🎨 COLORES INSTITUCIONALES
+   ============================== */
+:root {
+  --brand-color: #3a8dd8;
+  --brand-dark: #2f79bf;
+  --brand-light: #e9f2fb;
+  --text-dark: #212529;
+  --text-light: #ffffff;
+}
+
+/* ==============================
+   🌐 FONDOS Y TEXTOS
+   ============================== */
+.bg-brand { background-color: var(--brand-color) !important; }
+.text-brand { color: var(--brand-color) !important; }
+
+/* ==============================
+   🔘 BOTONES
+   ============================== */
+.btn-brand {
+  background-color: var(--brand-color);
+  border: 1px solid var(--brand-color);
+  color: var(--text-light);
+}
+.btn-brand:hover {
+  background-color: var(--brand-dark);
+  border-color: var(--brand-dark);
+  color: var(--text-light);
+}
+
+.btn-outline-brand {
+  background: transparent;
+  border: 1px solid var(--brand-color);
+  color: var(--brand-color);
+}
+.btn-outline-brand:hover {
+  background: var(--brand-color);
+  color: var(--text-light);
+}
+
+/* ==============================
+   📋 TABLAS
+   ============================== */
+.table-brand {
+  border: 1px solid var(--brand-color);
+}
+.table-brand thead {
+  background: var(--brand-color);
+  color: var(--text-light);
+}
+.table-brand tbody tr:hover {
+  background: var(--brand-light);
+}
+
+/* ==============================
+   📑 FORMULARIOS
+   ============================== */
+.form-control:focus {
+  border-color: var(--brand-color);
+  box-shadow: 0 0 0 0.2rem rgba(58, 141, 216, 0.25);
+}
+
+label {
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* ==============================
+   📦 MODALES
+   ============================== */
+.modal-header.bg-brand,
+.modal-footer.bg-brand {
+  background: var(--brand-color);
+  color: var(--text-light);
+}
+
+/* ==============================
+   📚 SIDEBAR Y NAV
+   ============================== */
+.sidebar {
+  min-width: 240px;
+  min-height: 100vh;
+  background: var(--brand-color);
+}
+.link-sidebar {
+  color: #ffffffcc;
+  display: block;
+  padding: .5rem 1rem;
+  border-radius: .5rem;
+}
+.link-sidebar:hover,
+.link-sidebar.active {
+  color: var(--text-light);
+  background: var(--brand-dark);
+}
+
+/* ==============================
+   ⚡ UTILIDADES EXTRAS
+   ============================== */
+.card-brand {
+  border: 1px solid var(--brand-color);
+}
+.card-brand .card-header {
+  background: var(--brand-color);
+  color: var(--text-light);
+}
