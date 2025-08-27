@@ -1,97 +1,111 @@
-body {
+/* Reset básico */
+* {
     margin: 0;
+    padding: 0;
+    box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: #fff;
 }
 
+body, html {
+    height: 100%;
+}
+
+/* Contenedor principal */
 .login-container {
-    background: rgba(0, 0, 0, 0.85);
-    padding: 2rem;
-    border-radius: 15px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-    text-align: center;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Formulario a la izquierda */
+.login-form {
+    flex: 0.5;
+    background: linear-gradient(135deg, #1a4ed0, #3a8dd8);
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
 }
 
 .login-form h2 {
-    color: #00d9ff;
-    margin-bottom: 1rem;
+    font-size: 2rem;
+    margin-bottom: 30px;
+    text-align: center;
 }
 
 .login-form input {
-    width: 100%;
-    padding: 0.7rem;
-    margin: 0.5rem 0;
-    border: none;
+    padding: 12px 15px;
+    margin-bottom: 20px;
     border-radius: 8px;
-    background: #1e2a33;
-    color: #fff;
+    border: none;
     font-size: 1rem;
-}
-
-.login-form input:focus {
-    background: #243b4a;
-    box-shadow: 0 0 8px #00d9ff;
     outline: none;
 }
 
+.login-form input::placeholder {
+    color: #e0e0e0;
+}
+
 .login-form button {
-    width: 100%;
-    padding: 0.8rem;
-    margin-top: 1rem;
-    background: #00d9ff;
+    padding: 12px;
+    background: #ff3b6c;
+    color: #fff;
     border: none;
     border-radius: 8px;
-    font-weight: bold;
-    color: black;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: background 0.3s ease;
 }
 
 .login-form button:hover {
-    background: #00a7cc;
-    transform: scale(1.05);
+    background: #e6355c;
 }
 
+/* Mensajes de error */
 .mensaje.error {
-    background: #ff4c4c;
-    color: #fff;
-    padding: 0.5rem;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff3b6c;
     border-radius: 5px;
-    margin-bottom: 0.8rem;
+    text-align: center;
 }
 
-.enlaces {
-    margin-top: 1rem;
+/* Enlaces */
+.login-form .enlaces {
+    margin-top: 15px;
+    text-align: center;
     font-size: 0.9rem;
 }
 
-.enlaces a {
-    color: #00d9ff;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-.enlaces a:hover {
-    color: #00a7cc;
-}
-
-@media (max-width: 500px) {
-    .login-container {
-        margin: 0 1rem;
-        padding: 1.5rem;
-    }
-}
-.mensaje.exito {
-    background: #4CAF50;
+.login-form .enlaces a {
     color: #fff;
-    padding: 0.5rem;
-    border-radius: 5px;
-    margin-bottom: 0.8rem;
+    text-decoration: underline;
+}
+
+.login-form .enlaces a:hover {
+    color: #d4f0ff;
+}
+
+/* Imagen a la derecha */
+.login-container::after {
+    content: "";
+    flex: 1;
+    background: url('../img/logo_colegio.png') no-repeat center center;
+    background-size: cover;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-container::after {
+        display: none; /* opcional en móvil si no quieres la imagen */
+    }
+
+    .login-form {
+        padding: 40px 20px;
+    }
 }

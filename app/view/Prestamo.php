@@ -134,8 +134,8 @@ $fecha_default = $fecha_min;
     <!-- Tabla de préstamos -->
     <h2 class="text-center text-brand mb-3">📖 Préstamos Registrados</h2>
     <div class="table-responsive shadow-lg">
-        <table class="table table-striped table-hover table-bordered align-middle">
-            <thead class="table-dark text-center">
+        <table class="table table-hover align-middle">
+            <thead class="table-primary text-center">
                 <tr>
                     <th>Tipo</th>
                     <th>Equipo</th>

@@ -43,8 +43,9 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle text-center mb-0">
-                        <thead class="table-success">
+                    
+                    <table class="table table-hover align-middle text-center">
+                        <thead class="table-primary">        
                             <tr>
                                 <th>Equipo</th>
                                 <th>Responsable</th>
