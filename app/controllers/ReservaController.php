@@ -13,8 +13,8 @@ class ReservaController {
     }
 
     public function reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario) {
-        // Validar límite horario
-        if ($hora_fin > "18:35") {
+        // Validar límite horario (usar formato HH:MM:SS para consistencia)
+        if ($hora_fin > "18:35" && $hora_fin > "18:35:00") {
             $this->mensaje = "⚠️ El horario excede la hora límite permitida (18:35).";
             return false;
         }
@@ -45,6 +45,13 @@ class ReservaController {
     public function obtenerReservas($id_usuario) {
         return $this->model->obtenerReservasPorProfesor($id_usuario);
     }
+
+    /*  NUEVO: para el cuadro de horas (no rompe nada) */
+    public function obtenerReservasPorFecha($id_aula, $fecha) {
+        return $this->model->obtenerReservasPorAulaYFecha($id_aula, $fecha);
+    }
+    /*  NUEVO: obtener reservas semanales del profesor */
+
 }
 
 // Inicializar controlador
@@ -56,18 +63,18 @@ if (!isset($_SESSION['usuario']) || $_SESSION['tipo'] !== 'Profesor') {
     exit();
 }
 
-// Procesar formulario
+// Procesar formulario (solo guarda si viene 'accion' = guardar)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar') {
-    $id_usuario = $_SESSION['id_usuario'];
-    $id_aula = $_POST['id_aula'];
-    $fecha = $_POST['fecha'] ?? null;
+    $id_usuario  = $_SESSION['id_usuario'];
+    $id_aula     = $_POST['id_aula'];
+    $fecha       = $_POST['fecha'] ?? null;
     $hora_inicio = $_POST['hora_inicio'] ?? null;
-    $hora_fin = $_POST['hora_fin'] ?? null;
+    $hora_fin    = $_POST['hora_fin'] ?? null;
 
     $controller->reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario);
 }
 
-$mensaje = $controller->mensaje;
+$mensaje  = $controller->mensaje;
 // Solo traer aulas tipo AIP
-$aulas = $controller->obtenerAulas('AIP');
+$aulas    = $controller->obtenerAulas('AIP');
 $reservas = $controller->obtenerReservas($_SESSION['id_usuario']);

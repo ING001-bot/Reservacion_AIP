@@ -1,5 +1,6 @@
 <?php
 require "../config/conexion.php";
+
 class ReservaModel {
     private $db;
 
@@ -16,8 +17,7 @@ class ReservaModel {
         return $stmt->execute([$id_usuario, $id_aula, $fecha, $hora_inicio, $hora_fin]);
     }
 
-    // Obtener todas las aulas disponibles
-    // Filtrar por tipo si se indica
+    // Obtener aulas (opcional por tipo)
     public function obtenerAulas($tipo = null) {
         if ($tipo) {
             $stmt = $this->db->prepare("SELECT * FROM aulas WHERE tipo = ?");
@@ -28,7 +28,7 @@ class ReservaModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Listar reservas de un profesor específico
+    // Listar reservas por profesor
     public function obtenerReservasPorProfesor($id_usuario) {
         $stmt = $this->db->prepare("
             SELECT r.id_reserva, u.nombre AS profesor, a.nombre_aula, a.capacidad,
@@ -45,17 +45,22 @@ class ReservaModel {
 
     // Verificar disponibilidad del aula
     public function verificarDisponibilidad($id_aula, $fecha, $hora_inicio, $hora_fin) {
-        $hora_min = "07:00:00";
+        // ✅ Ajuste solicitado: de 06:00 a 18:35
+        $hora_min = "06:00:00";
         $hora_max = "18:35:00";
+
+        // Normalizar a HH:MM:SS por si vienen en HH:MM
+        if (strlen($hora_inicio) === 5) $hora_inicio .= ":00";
+        if (strlen($hora_fin)    === 5) $hora_fin    .= ":00";
 
         if ($hora_inicio < $hora_min || $hora_fin > $hora_max) {
             return false;
         }
 
-        $query = "SELECT * FROM reservas 
+        $query = "SELECT 1 FROM reservas 
                   WHERE id_aula = :id_aula 
-                  AND fecha = :fecha
-                  AND (hora_inicio < :hora_fin AND hora_fin > :hora_inicio)";
+                    AND fecha = :fecha
+                    AND (hora_inicio < :hora_fin AND hora_fin > :hora_inicio)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(":id_aula", $id_aula);
         $stmt->bindParam(":fecha", $fecha);
@@ -63,6 +68,21 @@ class ReservaModel {
         $stmt->bindParam(":hora_fin", $hora_fin);
         $stmt->execute();
 
+        // true si NO hay choque (cero filas)
         return $stmt->rowCount() === 0;
     }
+
+    /* ➕ NUEVO: para el cuadro de horas (no rompe nada) */
+    public function obtenerReservasPorAulaYFecha($id_aula, $fecha) {
+        $stmt = $this->db->prepare("
+            SELECT hora_inicio, hora_fin 
+            FROM reservas 
+            WHERE id_aula = ? AND fecha = ?
+            ORDER BY hora_inicio ASC
+        ");
+        $stmt->execute([$id_aula, $fecha]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+
 }

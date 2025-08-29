@@ -19,7 +19,7 @@ body, html {
 /* Formulario a la izquierda */
 .login-form {
     flex: 0.5;
-    background: linear-gradient(135deg, #1a4ed0, #3a8dd8);
+    background: linear-gradient(135deg, #0939b3, #3a8dd8);
     padding: 60px 40px;
     display: flex;
     flex-direction: column;

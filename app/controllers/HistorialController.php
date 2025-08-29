@@ -1,24 +1,81 @@
 <?php
-session_start();
+// app/controllers/HistorialController.php
+if (session_status() === PHP_SESSION_NONE) session_start();
+require '../config/conexion.php'; // asegúrate que $conexion está disponible
+require '../models/HistorialModel.php';
 
-if (!isset($_SESSION['usuario'])) {
-    header('Location: login.php');
-    exit();
+class HistorialController {
+    private $model;
+
+    public function __construct($conexion) {
+        $this->model = new HistorialModel($conexion);
+    }
+
+    public function obtenerAulas() {
+        return $this->model->obtenerAulasAIP();
+    }
+
+    public function obtenerReservasSemana($id_aula, $fecha_inicio, $fecha_fin) {
+        return $this->model->obtenerReservasPorSemana($id_aula, $fecha_inicio, $fecha_fin);
+    }
+
+    public function obtenerPrestamos($id_usuario) {
+        return $this->model->obtenerPrestamosPorProfesor($id_usuario);
+    }
 }
 
-require 'app/models/HistorialModel.php';
+/*
+  Si se llama directamente a este archivo por AJAX (desde la vista),
+  responde JSON para la acción `reservasSemana`.
+  Asegúrate de que la ruta usada por fetch en la vista apunte acá.
+*/
+if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
+    header('Content-Type: application/json; charset=utf-8');
 
-$id_usuario = $_SESSION['id_usuario'] ?? 0;
+    // seguridad: solo profesores
+    if (!isset($_SESSION['usuario']) || ($_SESSION['tipo'] ?? '') !== 'Profesor') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Acceso denegado']);
+        exit;
+    }
 
-$model = new HistorialModel();
+    // Preparar controlador
+    $ctrl = new HistorialController($conexion);
 
-$datos_usuario = $model->obtenerDatosUsuario($id_usuario);
-if (!$datos_usuario) {
-    die("❌ No se encontraron datos del usuario.");
+    $action = $_GET['action'] ?? '';
+    if ($action === 'reservasSemana') {
+        $semanaOffset = intval($_GET['semana'] ?? 0);
+
+        // calcular lunes y sábado de la semana segun offset
+        $inicio = new DateTime();
+        if ($semanaOffset !== 0) $inicio->modify($semanaOffset . ' week');
+        $inicio->modify('monday this week');
+        $fin = clone $inicio;
+        $fin->modify('+5 days'); // termina el sábado (lunes + 5 días)
+
+        $fecha_inicio = $inicio->format('Y-m-d');
+        $fecha_fin = $fin->format('Y-m-d');
+
+        $aulas = $ctrl->obtenerAulas();
+        $response = [
+            'fecha_inicio' => $fecha_inicio,
+            'fecha_fin' => $fecha_fin,
+            'aulas' => []
+        ];
+
+        foreach ($aulas as $aula) {
+            $reservas = $ctrl->obtenerReservasSemana($aula['id_aula'], $fecha_inicio, $fecha_fin);
+            $response['aulas'][] = [
+                'id_aula' => $aula['id_aula'],
+                'nombre_aula' => $aula['nombre_aula'],
+                'reservas' => $reservas
+            ];
+        }
+
+        echo json_encode($response);
+        exit;
+    }
+
+    echo json_encode(['error' => 'Acción no válida']);
+    exit;
 }
-
-$reservas = $model->obtenerReservas($id_usuario);
-$prestamos = $model->obtenerPrestamos($id_usuario);
-
-// Pasar $datos_usuario, $reservas, $prestamos a la vista (incluida abajo)
-require 'app/views/historialView.php';
