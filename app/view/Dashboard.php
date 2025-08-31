@@ -1,5 +1,4 @@
 <?php
-// app/view/Dashboard.php
 session_start();
 
 // Si no está logueado, fuera

@@ -120,7 +120,7 @@ $fecha_default = $fecha_min;
                 </div>
 
                 <div class="col-md-3">
-                    <label for="hora_fin" class="form-label">Hora de fin (opcional)</label>
+                    <label for="hora_fin" class="form-label">Hora de fin</label>
                     <input type="time" name="hora_fin" id="hora_fin" class="form-control">
                 </div>
 
