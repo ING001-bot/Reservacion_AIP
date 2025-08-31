@@ -3,7 +3,7 @@
     const dataInit = (typeof initialData !== 'undefined') ? initialData : { fecha_inicio: null, fecha_fin: null, aulas: [] };
     const AJAX_URL = (typeof ajaxUrl !== 'undefined') ? ajaxUrl : '../controllers/HistorialController.php';
 
-    const intervalMinutes = 45; // como pediste (45 min)
+    const intervalMinutes = 45; // (45 min)
     const turnoRanges = {
         'manana': { start: '06:00', end: '12:45' }, // incluye 12:45 final
         'tarde' : { start: '13:00', end: '19:00' }  // termina a las 19:00

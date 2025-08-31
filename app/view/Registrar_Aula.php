@@ -51,7 +51,7 @@ $id_editar = $_GET['editar'] ?? null;
         <form method="post" class="row g-3">
             <div class="col-md-6">
                 <label class="form-label">Nombre del Aula</label>
-                <input type="text" name="nombre_aula" class="form-control" placeholder="Ej: AIP1" required>
+                <input type="text" name="nombre_aula" class="form-control" placeholder="" required>
             </div>
             <div class="col-md-3">
                 <label class="form-label">Capacidad</label>
@@ -73,7 +73,7 @@ $id_editar = $_GET['editar'] ?? null;
 
 <!-- Tabla de Aulas -->
 <div class="card shadow-sm">
-    <div class="card-header bg-brand text-white">Aulas Registrados</div>
+    <div class="card-header bg-brand text-white">Aulas Registradas</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -101,8 +101,6 @@ $id_editar = $_GET['editar'] ?? null;
                                         </td>
                                         <td class="text-center">
                                             <input type="hidden" name="id_aula" value="<?= $aula['id_aula'] ?>">
-                                            <button type="submit" name="editar_aula" class="btn btn-sm btn-success">💾 Guardar</button>
-                                            <a href="Registrar_Aula.php" class="btn btn-sm btn-secondary">❌ Cancelar</a>
                                         </td>
                                     </tr>
                                 </form>
@@ -112,7 +110,6 @@ $id_editar = $_GET['editar'] ?? null;
                                     <td><?= htmlspecialchars($aula['capacidad']) ?></td>
                                     <td><?= htmlspecialchars($aula['tipo']) ?></td>
                                     <td class="text-center">
-                                        <a href="?editar=<?= $aula['id_aula'] ?>" class="btn btn-sm btn-outline-primary">✏️ Editar</a>
                                         <a href="?eliminar=<?= $aula['id_aula'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Seguro que deseas eliminar esta aula?')">🗑️ Eliminar</a>
                                     </td>
                                 </tr>

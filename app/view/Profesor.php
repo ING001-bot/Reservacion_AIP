@@ -72,7 +72,7 @@ $vista = $_GET['view'] ?? 'inicio';
       default: ?>
           <div class="text-center mb-4">
               <h1 class="fw-bold text-brand">Panel del Profesor</h1>
-              <p class="text-muted">Realice rápidamente sus reservas y solicitudes.</p>
+              <p class="text-muted">Realice rápidamente sus reservas y prestamos.</p>
           </div>
           <div class="row g-4 justify-content-center">
               <div class="col-sm-6 col-md-5">
