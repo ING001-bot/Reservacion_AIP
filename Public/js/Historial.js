@@ -104,70 +104,72 @@
             reservasPorDia[fecha].push({ inicioStr, finStr, inicioSec, finSec, profesor: r.profesor || '' });
         });
 
-        // Build table header (6 days)
+                // Build table header (6 days)
         let html = '<div class="table-responsive-calendar"><table class="calendar">';
         html += '<thead><tr><th class="time-col"></th>';
-        for(let i=0;i<6;i++){
-            const d = days[i];
-            const label = d.toLocaleDateString(undefined, { weekday: 'short', day:'2-digit', month:'2-digit' });
-            html += `<th>${label}</th>`;
+        for (let i = 0; i < 6; i++) {
+        const d = days[i];
+        const label = d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' });
+        html += `<th>${label}</th>`;
         }
         html += '</tr></thead><tbody>';
 
-        // For each slot (45-min), for each day, mark occupation and text if start/end falls in slot
-        for(let s=0; s<slots.length; s++){
-            const slot = slots[s];
-            const slotStartSec = timeToSeconds(slot.start + ':00');
-            const slotEndSec   = timeToSeconds(slot.end + ':00');
+        // Para mostrar el rango real solo una vez por reserva y por día,
+        // registramos si ya "pusimos" la etiqueta de inicio en ese día.
+        const labelPlacedByDay = Array(6).fill(null).map(() => new Set());
 
-            html += `<tr><td class="time-col">${slot.start}</td>`;
+        for (let s = 0; s < slots.length; s++) {
+        const slot = slots[s];
+        const slotStartSec = timeToSeconds(slot.start + ':00');
+        const slotEndSec   = timeToSeconds(slot.end   + ':00');
 
-            for(let d=0; d<6; d++){
-                const dayStr = days[d].toISOString().slice(0,10);
-                const diaReservas = reservasPorDia[dayStr] || [];
+        html += `<tr><td class="time-col">${slot.start}</td>`;
 
-                let occupied = false;
-                let texts = []; // may collect multiple reservation labels if multiple overlap
+        for (let d = 0; d < 6; d++) {
+            const dayStr = days[d].toISOString().slice(0, 10);
+            const diaReservas = reservasPorDia[dayStr] || [];
+            const labelPlaced = labelPlacedByDay[d];
 
-                // Iterate each reservation for that day and check overlap with slot
-                for(let ri=0; ri<diaReservas.length; ri++){
-                    const r = diaReservas[ri];
-                    if (r.inicioSec == null || r.finSec == null) continue;
-                    // overlap if slotStart < r.fin && slotEnd > r.inicio
-                    if (slotStartSec < r.finSec && slotEndSec > r.inicioSec) {
-                        occupied = true;
-                        // determine whether slot contains start, end or both
-                        const isStartCell = (r.inicioSec >= slotStartSec && r.inicioSec < slotEndSec);
-                        const isEndCell   = (r.finSec > slotStartSec && r.finSec <= slotEndSec);
-                        if (isStartCell && isEndCell) {
-                            texts.push(`${formatHM(r.inicioStr)} - ${formatHM(r.finStr)}`);
-                        } else if (isStartCell) {
-                            texts.push(formatHM(r.inicioStr));
-                        } else if (isEndCell) {
-                            texts.push(formatHM(r.finStr));
-                        } else {
-                            // middle cell: no text
-                        }
-                    }
+            let occupied = false;
+            const texts = [];
+
+            // Recorremos reservas del día y vemos solape con el slot
+            for (let ri = 0; ri < diaReservas.length; ri++) {
+            const r = diaReservas[ri];
+            if (r.inicioSec == null || r.finSec == null) continue;
+
+            // ¿Este slot se solapa con la reserva?
+            if (slotStartSec < r.finSec && slotEndSec > r.inicioSec) {
+                occupied = true;
+
+                // 👇 LÓGICA CLAVE:
+                // Etiquetar en la PRIMERA celda cuyo INICIO DE SLOT sea >= hora de inicio real.
+                // (Esto hace que si la reserva inicia 07:00 y el grid tiene 06:45–07:30,
+                // la etiqueta salga en el slot de 07:30 y no en 06:45)
+                if (!labelPlaced.has(ri) && slotStartSec >= r.inicioSec) {
+                texts.push(`${formatHM(r.inicioStr)} - ${formatHM(r.finStr)}`);
+                labelPlaced.add(ri); // ya etiquetamos esta reserva en este día
                 }
-
-                if (occupied) {
-                    if (texts.length > 0) {
-                        // join multiple texts with " | " in case of multiple overlapping reservations (rare)
-                        const content = texts.join(' | ');
-                        html += `<td class="occupied"><span>${content}</span></td>`;
-                    } else {
-                        html += `<td class="occupied"></td>`;
-                    }
-                } else {
-                    html += `<td class="free"></td>`;
-                }
+                // Las celdas intermedias o finales solo se pintan (sin texto).
+            }
             }
 
-            html += '</tr>';
+            if (occupied) {
+            if (texts.length > 0) {
+                html += `<td class="occupied"><span>${texts.join(' | ')}</span></td>`;
+            } else {
+                html += `<td class="occupied"></td>`;
+            }
+            } else {
+            html += `<td class="free"></td>`;
+            }
+        }
+
+        html += '</tr>';
         }
 
         html += '</tbody></table></div>';
+
 
         container.innerHTML = '<div class="calendar-title">' + aulaObj.nombre_aula + ' (Turno: ' + (turnoActual==='manana' ? 'Mañana' : 'Tarde') + ')</div>' + html;
     }

@@ -28,9 +28,10 @@ $fin_semana->modify('+5 days'); // termina sábado
 $fecha_inicio = $inicio_semana->format('Y-m-d');
 $fecha_fin = $fin_semana->format('Y-m-d');
 
-// Reservas iniciales (render server-side para carga inicial)
-$reservas_aip1 = $controller->obtenerReservasSemana($aip1['id_aula'], $fecha_inicio, $fecha_fin);
-$reservas_aip2 = $controller->obtenerReservasSemana($aip2['id_aula'], $fecha_inicio, $fecha_fin);
+// ... (arriba ya tienes $id_usuario de la sesión)
+$reservas_aip1 = $controller->obtenerReservasSemana($aip1['id_aula'], $fecha_inicio, $fecha_fin, $id_usuario);
+$reservas_aip2 = $controller->obtenerReservasSemana($aip2['id_aula'], $fecha_inicio, $fecha_fin, $id_usuario);
+
 
 // Prestamos para la tabla inferior
 $prestamos = $controller->obtenerPrestamos($id_usuario);
