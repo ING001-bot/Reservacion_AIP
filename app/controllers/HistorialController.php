@@ -42,8 +42,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
         $semanaOffset = intval($_GET['semana'] ?? 0);
 
         $inicio = new DateTime();
-        if ($semanaOffset !== 0) $inicio->modify($semanaOffset . ' week');
-        $inicio->modify('monday this week');
+        $inicio->modify($semanaOffset . ' week monday this week'); // <-- Corregido
         $fin = clone $inicio;
         $fin->modify('+5 days'); // lunes..sábado
 

@@ -2,23 +2,37 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require "../config/conexion.php";
 require '../controllers/ReservaController.php';
 
 $nombreProfesor = $_SESSION['usuario'] ?? 'Invitado';
 
-// Fecha mínima y valor predeterminado en formato YYYY-MM-DD
-$fecha_min = date('Y-m-d'); // hoy
-// Mantener la fecha seleccionada tras autosubmit
+// Inicializar la conexión y el controlador
+$controller = new ReservaController($conexion);
+
+// Obtener aulas solo de tipo AIP
+$aulas = $controller->obtenerAulas('AIP');
+
+// Procesar el formulario si se envió
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar') {
+    $id_usuario  = $_SESSION['id_usuario'];
+    $id_aula     = $_POST['id_aula'] ?? null;
+    $fecha       = $_POST['fecha'] ?? null;
+    $hora_inicio = $_POST['hora_inicio'] ?? null;
+    $hora_fin    = $_POST['hora_fin'] ?? null;
+
+    $controller->reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario);
+}
+
+// Mantener la fecha y aula seleccionadas
+$fecha_min = date('Y-m-d');
 $fecha_default = $_POST['fecha'] ?? $fecha_min;
-// Mantener el aula seleccionada tras autosubmit
 $id_aula_selected = $_POST['id_aula'] ?? (isset($aulas[0]['id_aula']) ? $aulas[0]['id_aula'] : null);
 
-// Si tenemos selección de fecha y aula, preparar reservas del cuadro
-$fecha_para_cuadro = $fecha_default;
-$id_aula_para_cuadro = $id_aula_selected;
+// Preparar reservas para el cuadro de horas
 $reservas_existentes = [];
-if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
-    $reservas_existentes = $controller->obtenerReservasPorFecha($id_aula_para_cuadro, $fecha_para_cuadro);
+if (!empty($fecha_default) && !empty($id_aula_selected)) {
+    $reservas_existentes = $controller->obtenerReservasPorFecha($id_aula_selected, $fecha_default);
 }
 ?>
 <!DOCTYPE html>
@@ -41,9 +55,9 @@ if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
 <div class="container py-4">
     <h1 class="text-center text-brand mb-4">📅 Reservar Aula</h1>
 
-    <?php if (!empty($mensaje)): ?>
+    <?php if (!empty($controller->mensaje)): ?>
         <div class="alert alert-info text-center shadow-sm">
-            <?= htmlspecialchars($mensaje) ?>
+            <?= htmlspecialchars($controller->mensaje) ?>
         </div>
     <?php endif; ?>
 
@@ -73,8 +87,8 @@ if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
                         <div class="col-6">
                             <label class="form-label">Fecha</label>
                             <input type="date" name="fecha" class="form-control" required 
-                                   min="<?= $fecha_min ?>" value="<?= htmlspecialchars($fecha_default) ?>"
-                                   onchange="this.form.submit()">
+                                    min="<?= $fecha_min ?>" value="<?= htmlspecialchars($fecha_default) ?>"
+                                    onchange="this.form.submit()">
                         </div>
 
                         <div class="col-6">
@@ -102,16 +116,16 @@ if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <label class="form-label mb-0">Disponibilidad de Horas</label>
                         <span class="badge bg-primary-subtle text-primary-emphasis">
-                            <?= htmlspecialchars($fecha_para_cuadro) ?>
+                            <?= htmlspecialchars($fecha_default) ?>
                         </span>
                     </div>
 
                     <div id="cuadro-horas" class="d-flex flex-wrap gap-2">
                         <?php
-                        if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
+                        if (!empty($fecha_default) && !empty($id_aula_selected)) {
                             // Configuración de rango y bloque
                             $t_inicio = strtotime("06:00");
-                            $t_fin    = strtotime("18:35");
+                            $t_fin    = strtotime("19:00");
                             $intervalo = 45 * 60; // 30 min (cambiar a 45*60 si deseas 45 min)
 
                             while ($t_inicio < $t_fin) {
@@ -154,7 +168,7 @@ if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
     <!-- Tabla de reservas -->
     <h2 class="text-center text-brand my-4">📖 Reservas Registradas</h2>
     <div class="table-responsive shadow-lg">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle text-center" >
             <thead class="table-primary text-center">
                 <tr>
                     <th>Profesor</th>
@@ -166,6 +180,7 @@ if (!empty($fecha_para_cuadro) && !empty($id_aula_para_cuadro)) {
                 </tr>
             </thead>
             <tbody>
+                <?php $reservas = $controller->obtenerReservas($_SESSION['id_usuario']); ?>
                 <?php foreach ($reservas as $reserva): ?>
                     <tr>
                         <td><?= htmlspecialchars($reserva['profesor']) ?></td>

@@ -5,8 +5,8 @@
 
     const intervalMinutes = 45; // (45 min)
     const turnoRanges = {
-        'manana': { start: '06:00', end: '12:45' }, // incluye 12:45 final
-        'tarde' : { start: '13:00', end: '19:00' }  // termina a las 19:00
+        'manana': { start: '06:00', end: '13:15' }, // incluye 12:45 final
+        'tarde' : { start: '13:00', end: '19:15' }  // termina a las 19:00
     };
 
     // DOM
@@ -73,6 +73,7 @@
     function pad(n){ return n<10 ? '0'+n : ''+n; }
 
     // Render calendar for one aula. IMPORTANT: days are Monday..Saturday (6 days)
+    // Render calendar for one aula. IMPORTANT: days are Monday..Saturday (6 days)
     function renderCalendarInto(aulaObj, container, turnoActual, fechaInicioSemana){
         if(!container) return;
         if(!aulaObj){
@@ -104,13 +105,13 @@
             reservasPorDia[fecha].push({ inicioStr, finStr, inicioSec, finSec, profesor: r.profesor || '' });
         });
 
-                // Build table header (6 days)
+        // Build table header (6 days)
         let html = '<div class="table-responsive-calendar"><table class="calendar">';
         html += '<thead><tr><th class="time-col"></th>';
         for (let i = 0; i < 6; i++) {
-        const d = days[i];
-        const label = d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' });
-        html += `<th>${label}</th>`;
+            const d = days[i];
+            const label = d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' });
+            html += `<th>${label}</th>`;
         }
         html += '</tr></thead><tbody>';
 
@@ -119,57 +120,53 @@
         const labelPlacedByDay = Array(6).fill(null).map(() => new Set());
 
         for (let s = 0; s < slots.length; s++) {
-        const slot = slots[s];
-        const slotStartSec = timeToSeconds(slot.start + ':00');
-        const slotEndSec   = timeToSeconds(slot.end   + ':00');
+            const slot = slots[s];
+            const slotStartSec = timeToSeconds(slot.start + ':00');
+            const slotEndSec   = timeToSeconds(slot.end  + ':00');
 
-        html += `<tr><td class="time-col">${slot.start}</td>`;
+            html += `<tr><td class="time-col">${slot.start}</td>`;
 
-        for (let d = 0; d < 6; d++) {
-            const dayStr = days[d].toISOString().slice(0, 10);
-            const diaReservas = reservasPorDia[dayStr] || [];
-            const labelPlaced = labelPlacedByDay[d];
+            for (let d = 0; d < 6; d++) {
+                const dayStr = days[d].toISOString().slice(0, 10);
+                const diaReservas = reservasPorDia[dayStr] || [];
+                const labelPlaced = labelPlacedByDay[d];
 
-            let occupied = false;
-            const texts = [];
+                let occupied = false;
+                const texts = [];
 
-            // Recorremos reservas del día y vemos solape con el slot
-            for (let ri = 0; ri < diaReservas.length; ri++) {
-            const r = diaReservas[ri];
-            if (r.inicioSec == null || r.finSec == null) continue;
+                // Recorremos reservas del día y vemos solape con el slot
+                for (let ri = 0; ri < diaReservas.length; ri++) {
+                    const r = diaReservas[ri];
+                    if (r.inicioSec == null || r.finSec == null) continue;
 
-            // ¿Este slot se solapa con la reserva?
-            if (slotStartSec < r.finSec && slotEndSec > r.inicioSec) {
-                occupied = true;
+                    // ¿Este slot se solapa con la reserva?
+                    if (slotStartSec < r.finSec && slotEndSec > r.inicioSec) {
+                        occupied = true;
 
-                // 👇 LÓGICA CLAVE:
-                // Etiquetar en la PRIMERA celda cuyo INICIO DE SLOT sea >= hora de inicio real.
-                // (Esto hace que si la reserva inicia 07:00 y el grid tiene 06:45–07:30,
-                // la etiqueta salga en el slot de 07:30 y no en 06:45)
-                if (!labelPlaced.has(ri) && slotStartSec >= r.inicioSec) {
-                texts.push(`${formatHM(r.inicioStr)} - ${formatHM(r.finStr)}`);
-                labelPlaced.add(ri); // ya etiquetamos esta reserva en este día
+                        // 👇 LÓGICA CLAVE:
+                        // Etiquetar en la PRIMERA celda cuyo INICIO DE SLOT sea >= hora de inicio real.
+                        if (!labelPlaced.has(ri) && slotStartSec >= r.inicioSec) {
+                            texts.push(`${formatHM(r.inicioStr)} - ${formatHM(r.finStr)}`);
+                            labelPlaced.add(ri); // ya etiquetamos esta reserva en este día
+                        }
+                    }
                 }
-                // Las celdas intermedias o finales solo se pintan (sin texto).
-            }
+
+                if (occupied) {
+                    if (texts.length > 0) {
+                        html += `<td class="occupied"><span>${texts.join(' | ')}</span></td>`;
+                    } else {
+                        html += `<td class="occupied"></td>`;
+                    }
+                } else {
+                    html += `<td class="free"></td>`;
+                }
             }
 
-            if (occupied) {
-            if (texts.length > 0) {
-                html += `<td class="occupied"><span>${texts.join(' | ')}</span></td>`;
-            } else {
-                html += `<td class="occupied"></td>`;
-            }
-            } else {
-            html += `<td class="free"></td>`;
-            }
-        }
-
-        html += '</tr>';
+            html += '</tr>';
         }
 
         html += '</tbody></table></div>';
-
 
         container.innerHTML = '<div class="calendar-title">' + aulaObj.nombre_aula + ' (Turno: ' + (turnoActual==='manana' ? 'Mañana' : 'Tarde') + ')</div>' + html;
     }
@@ -193,6 +190,7 @@
             slots.push({ start: s, end: e });
             cur = next;
         }
+        
         return slots;
     }
 

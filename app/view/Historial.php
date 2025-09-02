@@ -142,7 +142,7 @@ $initialData = [
     const ajaxUrl = <?= json_encode('../controllers/HistorialController.php') ?>;
 </script>
 
-<!-- Script externo (mismo directorio). Guarda historial_calendario.js al lado de este archivo -->
+<!-- Script externo. Guarda historial.js al lado de este archivo -->
 <script src="../../Public/js/Historial.js"></script>
 </body>
 </html>
