@@ -1,197 +1,176 @@
-(function () {
-    // datos del PHP
-    const dataInit = (typeof initialData !== 'undefined') ? initialData : { fecha_inicio: null, fecha_fin: null, aulas: [] };
-    const AJAX_URL = (typeof ajaxUrl !== 'undefined') ? ajaxUrl : '../controllers/HistorialController.php';
+// Public/js/historial.js
+(() => {
+  if (typeof initialData === 'undefined') {
+    console.error('initialData no definido');
+    return;
+  }
 
-    const intervalMinutes = 45; // (45 min)
-    const turnoRanges = {
-        'manana': { start: '06:00', end: '13:15' }, // incluye 12:45 final
-        'tarde' : { start: '13:00', end: '19:15' }  // termina a las 19:00
-    };
+  const AJAX_URL = typeof AJAX_URL !== 'undefined' ? AJAX_URL : '../controllers/HistorialController.php';
+  const intervalMinutes = 45;
+  const turnoRanges = {
+    manana: { start: '06:00', end: '12:45' },
+    tarde : { start: '13:00', end: '19:00' }
+  };
 
-    // DOM
-    const btnPrev = document.getElementById('btnPrev');
-    const btnNext = document.getElementById('btnNext');
-    const btnManana = document.getElementById('btnManana');
-    const btnTarde = document.getElementById('btnTarde');
-    const calAip1 = document.getElementById('cal-aip1');
-    const calAip2 = document.getElementById('cal-aip2');
-    const weekRangeServer = document.getElementById('weekRangeServer');
+  const elWeekRange = document.getElementById('weekRangeDisplay');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnManana = document.getElementById('btnManana');
+  const btnTarde = document.getElementById('btnTarde');
+  const btnPdf = document.getElementById('btnPdf');
+  const calAip1 = document.getElementById('cal-aip1');
+  const calAip2 = document.getElementById('cal-aip2');
 
-    let weekOffset = 0;
-    let turno = 'manana';
+  let weekOffset = 0;
+  let turno = 'manana';
+  let data = initialData;
 
-    // render inicial
-    renderResponse(dataInit, turno);
-    setTurnoButtons();
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function parseTimeToMinutes(t){
+    if(!t) return null;
+    const parts = t.split(':').map(Number);
+    return parts[0]*60 + (parts[1]||0);
+  }
+  function dateFromYMD(ymd){
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+    if(!m) return new Date();
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  function ymdFromDate(dt){
+    return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate());
+  }
 
-    // listeners
-    btnPrev && btnPrev.addEventListener('click', e => { e.preventDefault(); weekOffset--; loadWeek(); });
-    btnNext && btnNext.addEventListener('click', e => { e.preventDefault(); weekOffset++; loadWeek(); });
-    btnManana && btnManana.addEventListener('click', e => { e.preventDefault(); turno='manana'; setTurnoButtons(); loadWeek(); });
-    btnTarde  && btnTarde.addEventListener('click', e => { e.preventDefault(); turno='tarde';  setTurnoButtons(); loadWeek(); });
+  function generateSlots(hInicio, hFin, intervalMin){
+    const [h0, m0] = hInicio.split(':').map(Number);
+    const [hf, mf] = hFin.split(':').map(Number);
 
-    function setTurnoButtons(){
-        if(!btnManana || !btnTarde) return;
-        btnManana.classList.toggle('btn-success', turno==='manana');
-        btnManana.classList.toggle('btn-outline-secondary', turno!=='manana');
-        btnTarde.classList.toggle('btn-success', turno==='tarde');
-        btnTarde.classList.toggle('btn-outline-secondary', turno!=='tarde');
+    const slots = [];
+    let curMin = h0*60 + m0;
+    const endMin = hf*60 + mf;
+
+    while (curMin < endMin) {
+      let nextMin = curMin + intervalMin;
+      if (nextMin > endMin) nextMin = endMin;
+      const s = pad(Math.floor(curMin/60)) + ':' + pad(curMin%60);
+      const e = pad(Math.floor(nextMin/60)) + ':' + pad(nextMin%60);
+      slots.push({ start: s, end: e, startMin: curMin, endMin: nextMin });
+      curMin = nextMin;
+    }
+    return slots;
+  }
+
+  function renderCalendarInto(aulaObj, container, turnoActual, fechaInicioSemana){
+    if(!container) return;
+    if(!aulaObj){
+      container.innerHTML = '<div class="calendar-title">—</div><div class="text-muted p-3">Aula no encontrada.</div>';
+      return;
     }
 
-    function loadWeek(){
-        const params = new URLSearchParams({ action: 'reservasSemana', semana: weekOffset });
-        fetch(AJAX_URL + '?' + params.toString())
-            .then(r => { if(!r.ok) throw new Error('Error en la petición'); return r.json(); })
-            .then(data => {
-                if(data.error) throw new Error(data.error);
-                renderResponse(data, turno);
-            })
-            .catch(err => {
-                console.error('Carga semana error:', err);
-                alert('Error al cargar la semana. Revisa la consola.');
-            });
+    const startDate = dateFromYMD(fechaInicioSemana);
+    const days = [];
+    for(let d=0; d<6; d++){
+      const dt = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + d);
+      days.push(dt);
     }
 
-    function renderResponse(data, turnoActual){
-        if (weekRangeServer && data.fecha_inicio && data.fecha_fin) {
-            weekRangeServer.textContent = 'Semana: ' + data.fecha_inicio + ' → ' + data.fecha_fin;
-        }
-        const aulas = data.aulas || [];
-        renderCalendarInto(aulas[0] || null, calAip1, turnoActual, data.fecha_inicio);
-        renderCalendarInto(aulas[1] || null, calAip2, turnoActual, data.fecha_inicio);
+    const range = turnoRanges[turnoActual];
+    const slots = generateSlots(range.start, range.end, intervalMinutes);
+    const reservasPorDia = aulaObj.reservas || {};
+
+    let html = '<div class="table-responsive-calendar"><table class="calendar">';
+    html += '<thead><tr><th class="time-col"></th>';
+    for (let i=0;i<6;i++){
+      const d = days[i];
+      const label = d.toLocaleDateString(undefined,{weekday:'short', day:'2-digit', month:'2-digit'});
+      html += `<th>${label}</th>`;
     }
+    html += '</tr></thead><tbody>';
 
-    // util: HH:MM[:SS] -> segundos
-    function timeToSeconds(t){
-        if(!t) return null;
-        const parts = t.split(':').map(Number);
-        if(parts.length === 2) parts.push(0);
-        return parts[0]*3600 + parts[1]*60 + parts[2];
-    }
-    function formatHM(t){ if(!t) return ''; return t.slice(0,5); }
-    function pad(n){ return n<10 ? '0'+n : ''+n; }
+    const labelPlacedByDay = Array(6).fill(null).map(()=> new Set());
 
-    // Render calendar for one aula. IMPORTANT: days are Monday..Saturday (6 days)
-    // Render calendar for one aula. IMPORTANT: days are Monday..Saturday (6 days)
-    function renderCalendarInto(aulaObj, container, turnoActual, fechaInicioSemana){
-        if(!container) return;
-        if(!aulaObj){
-            container.innerHTML = '<div class="calendar-title">—</div><div class="text-muted p-3">Aula no encontrada.</div>';
-            return;
-        }
+    for (let s=0; s<slots.length; s++){
+      const slot = slots[s];
+      html += `<tr><td class="time-col">${slot.start}</td>`;
 
-        // days: Monday -> Saturday (6 days)
-        const start = new Date(fechaInicioSemana + 'T00:00:00');
-        const days = [];
-        for(let d=0; d<6; d++){
-            const dt = new Date(start);
-            dt.setDate(start.getDate() + d);
-            days.push(dt);
-        }
+      for (let d=0; d<6; d++){
+        const dayYMD = ymdFromDate(days[d]);
+        const diaReservas = reservasPorDia[dayYMD] || [];
+        let occupied = false;
+        let cellText = '';
 
-        const range = turnoRanges[turnoActual];
-        const slots = generateTimeSlots(range.start, range.end, intervalMinutes);
+        for (let ri=0; ri<diaReservas.length; ri++){
+          const r = diaReservas[ri];
+          if (!r.hora_inicio || !r.hora_fin) continue;
+          const rStart = parseTimeToMinutes(r.hora_inicio.slice(0,5));
+          const rEnd = parseTimeToMinutes(r.hora_fin.slice(0,5));
+          if (isNaN(rStart) || isNaN(rEnd) || rEnd <= rStart) continue;
 
-        // Group reservations per day for faster checks. Normalize to seconds.
-        const reservasPorDia = {};
-        (aulaObj.reservas || []).forEach(r => {
-            const fecha = (r.fecha || '').slice(0,10);
-            const inicioStr = r.hora_inicio || '';
-            const finStr = r.hora_fin || '';
-            const inicioSec = timeToSeconds(inicioStr.length===5? inicioStr + ':00' : inicioStr);
-            const finSec    = timeToSeconds(finStr.length===5? finStr + ':00' : finStr);
-            if(!reservasPorDia[fecha]) reservasPorDia[fecha] = [];
-            reservasPorDia[fecha].push({ inicioStr, finStr, inicioSec, finSec, profesor: r.profesor || '' });
-        });
+          // redondeo: primer slot.startMin >= rStart
+          let roundedStart = slots.length ? slots[0].startMin : rStart;
+          for (let sj=0; sj<slots.length; sj++){
+            if (slots[sj].startMin >= rStart) { roundedStart = slots[sj].startMin; break; }
+          }
 
-        // Build table header (6 days)
-        let html = '<div class="table-responsive-calendar"><table class="calendar">';
-        html += '<thead><tr><th class="time-col"></th>';
-        for (let i = 0; i < 6; i++) {
-            const d = days[i];
-            const label = d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' });
-            html += `<th>${label}</th>`;
-        }
-        html += '</tr></thead><tbody>';
-
-        // Para mostrar el rango real solo una vez por reserva y por día,
-        // registramos si ya "pusimos" la etiqueta de inicio en ese día.
-        const labelPlacedByDay = Array(6).fill(null).map(() => new Set());
-
-        for (let s = 0; s < slots.length; s++) {
-            const slot = slots[s];
-            const slotStartSec = timeToSeconds(slot.start + ':00');
-            const slotEndSec   = timeToSeconds(slot.end  + ':00');
-
-            html += `<tr><td class="time-col">${slot.start}</td>`;
-
-            for (let d = 0; d < 6; d++) {
-                const dayStr = days[d].toISOString().slice(0, 10);
-                const diaReservas = reservasPorDia[dayStr] || [];
-                const labelPlaced = labelPlacedByDay[d];
-
-                let occupied = false;
-                const texts = [];
-
-                // Recorremos reservas del día y vemos solape con el slot
-                for (let ri = 0; ri < diaReservas.length; ri++) {
-                    const r = diaReservas[ri];
-                    if (r.inicioSec == null || r.finSec == null) continue;
-
-                    // ¿Este slot se solapa con la reserva?
-                    if (slotStartSec < r.finSec && slotEndSec > r.inicioSec) {
-                        occupied = true;
-
-                        // 👇 LÓGICA CLAVE:
-                        // Etiquetar en la PRIMERA celda cuyo INICIO DE SLOT sea >= hora de inicio real.
-                        if (!labelPlaced.has(ri) && slotStartSec >= r.inicioSec) {
-                            texts.push(`${formatHM(r.inicioStr)} - ${formatHM(r.finStr)}`);
-                            labelPlaced.add(ri); // ya etiquetamos esta reserva en este día
-                        }
-                    }
-                }
-
-                if (occupied) {
-                    if (texts.length > 0) {
-                        html += `<td class="occupied"><span>${texts.join(' | ')}</span></td>`;
-                    } else {
-                        html += `<td class="occupied"></td>`;
-                    }
-                } else {
-                    html += `<td class="free"></td>`;
-                }
+          if (slot.startMin >= roundedStart && slot.startMin < rEnd) {
+            occupied = true;
+            if (!labelPlacedByDay[d].has(ri)) {
+              cellText = `${r.hora_inicio.slice(0,5)} - ${r.hora_fin.slice(0,5)}`;
+              labelPlacedByDay[d].add(ri);
             }
-
-            html += '</tr>';
+          }
         }
 
-        html += '</tbody></table></div>';
-
-        container.innerHTML = '<div class="calendar-title">' + aulaObj.nombre_aula + ' (Turno: ' + (turnoActual==='manana' ? 'Mañana' : 'Tarde') + ')</div>' + html;
-    }
-
-    // Generate slots between hInicio and hFin with intervalMinutes (last slot may be truncated to hFin)
-    function generateTimeSlots(hInicio, hFin, intervalMinutes){
-        const slots = [];
-        const [h0, m0] = hInicio.split(':').map(Number);
-        const [hf, mf] = hFin.split(':').map(Number);
-
-        let cur = new Date();
-        cur.setHours(h0, m0, 0, 0);
-        let end = new Date();
-        end.setHours(hf, mf, 0, 0);
-
-        while (cur < end) {
-            let next = new Date(cur.getTime() + intervalMinutes * 60000);
-            if (next > end) next = new Date(end); // truncar la última franja
-            const s = pad(cur.getHours()) + ':' + pad(cur.getMinutes());
-            const e = pad(next.getHours()) + ':' + pad(next.getMinutes());
-            slots.push({ start: s, end: e });
-            cur = next;
+        if (occupied) {
+          html += cellText ? `<td class="occupied"><span>${cellText}</span></td>` : `<td class="occupied"></td>`;
+        } else {
+          html += `<td class="free"></td>`;
         }
-        
-        return slots;
+      }
+
+      html += '</tr>';
     }
 
+    html += '</tbody></table></div>';
+
+    container.innerHTML = '<div class="calendar-title">' + aulaObj.nombre_aula + ' (Turno: ' + (turnoActual==='manana' ? 'Mañana' : 'Tarde') + ')</div>' + html;
+  }
+
+  function renderAll(){
+    if (!data || !data.aulas) return;
+    elWeekRange && (elWeekRange.textContent = (data.rango_semana?.inicio || '') + ' → ' + (data.rango_semana?.fin || ''));
+    const aula1 = data.aulas[0] || null;
+    const aula2 = data.aulas[1] || null;
+    renderCalendarInto(aula1, calAip1, turno, data.fecha_inicio);
+    renderCalendarInto(aula2, calAip2, turno, data.fecha_inicio);
+    btnManana.classList.toggle('btn-success', turno === 'manana');
+    btnManana.classList.toggle('btn-outline-brand', turno !== 'manana');
+    btnTarde.classList.toggle('btn-success', turno === 'tarde');
+    btnTarde.classList.toggle('btn-outline-brand', turno !== 'tarde');
+    if (btnPdf) {
+      const url = AJAX_URL + '?action=exportPdf&semana=' + weekOffset + '&turno=' + encodeURIComponent(turno);
+      btnPdf.setAttribute('href', url);
+    }
+  }
+
+  function loadWeek(offset) {
+    fetch(AJAX_URL + '?action=reservasSemana&semana=' + encodeURIComponent(offset))
+      .then(r => { if (!r.ok) throw new Error('Error al cargar semana'); return r.json(); })
+      .then(json => {
+        data = json;
+        weekOffset = offset;
+        renderAll();
+      })
+      .catch(err => {
+        console.error('Error loadWeek:', err);
+        alert('Error al cargar la semana. Revisa la consola.');
+      });
+  }
+
+  btnPrev && btnPrev.addEventListener('click', () => loadWeek(weekOffset - 1));
+  btnNext && btnNext.addEventListener('click', () => loadWeek(weekOffset + 1));
+  btnManana && btnManana.addEventListener('click', () => { turno = 'manana'; renderAll(); });
+  btnTarde && btnTarde.addEventListener('click', () => { turno = 'tarde'; renderAll(); });
+
+  // Inicial
+  renderAll();
 })();
