@@ -1,176 +1,183 @@
-// Public/js/historial.js
-(() => {
-  if (typeof initialData === 'undefined') {
-    console.error('initialData no definido');
-    return;
-  }
+// Public/js/Historial.js
+document.addEventListener('DOMContentLoaded', function(){
+    const btnManana = document.getElementById('btn-manana');
+    const btnTarde  = document.getElementById('btn-tarde');
+    const prevWeek  = document.getElementById('prev-week');
+    const nextWeek  = document.getElementById('next-week');
+    const startInput = document.getElementById('start-of-week');
+    const calendarios = document.getElementById('calendarios');
+    const pdfStart = document.getElementById('pdf-start-week');
+    const pdfTurno = document.getElementById('pdf-turno');
 
-  const AJAX_URL = typeof AJAX_URL !== 'undefined' ? AJAX_URL : '../controllers/HistorialController.php';
-  const intervalMinutes = 45;
-  const turnoRanges = {
-    manana: { start: '06:00', end: '12:45' },
-    tarde : { start: '13:00', end: '19:00' }
-  };
+    let turno = 'manana';
+    let startOfWeek = startInput.value || new Date().toISOString().substr(0,10);
 
-  const elWeekRange = document.getElementById('weekRangeDisplay');
-  const btnPrev = document.getElementById('btnPrev');
-  const btnNext = document.getElementById('btnNext');
-  const btnManana = document.getElementById('btnManana');
-  const btnTarde = document.getElementById('btnTarde');
-  const btnPdf = document.getElementById('btnPdf');
-  const calAip1 = document.getElementById('cal-aip1');
-  const calAip2 = document.getElementById('cal-aip2');
-
-  let weekOffset = 0;
-  let turno = 'manana';
-  let data = initialData;
-
-  function pad(n){ return n < 10 ? '0' + n : '' + n; }
-  function parseTimeToMinutes(t){
-    if(!t) return null;
-    const parts = t.split(':').map(Number);
-    return parts[0]*60 + (parts[1]||0);
-  }
-  function dateFromYMD(ymd){
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
-    if(!m) return new Date();
-    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  }
-  function ymdFromDate(dt){
-    return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate());
-  }
-
-  function generateSlots(hInicio, hFin, intervalMin){
-    const [h0, m0] = hInicio.split(':').map(Number);
-    const [hf, mf] = hFin.split(':').map(Number);
-
-    const slots = [];
-    let curMin = h0*60 + m0;
-    const endMin = hf*60 + mf;
-
-    while (curMin < endMin) {
-      let nextMin = curMin + intervalMin;
-      if (nextMin > endMin) nextMin = endMin;
-      const s = pad(Math.floor(curMin/60)) + ':' + pad(curMin%60);
-      const e = pad(Math.floor(nextMin/60)) + ':' + pad(nextMin%60);
-      slots.push({ start: s, end: e, startMin: curMin, endMin: nextMin });
-      curMin = nextMin;
-    }
-    return slots;
-  }
-
-  function renderCalendarInto(aulaObj, container, turnoActual, fechaInicioSemana){
-    if(!container) return;
-    if(!aulaObj){
-      container.innerHTML = '<div class="calendar-title">—</div><div class="text-muted p-3">Aula no encontrada.</div>';
-      return;
+    function setActiveTurn(button){
+        btnManana.classList.remove('active');
+        btnTarde.classList.remove('active');
+        button.classList.add('active');
     }
 
-    const startDate = dateFromYMD(fechaInicioSemana);
-    const days = [];
-    for(let d=0; d<6; d++){
-      const dt = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + d);
-      days.push(dt);
+    btnManana.addEventListener('click', ()=>{ turno = 'manana'; setActiveTurn(btnManana); pdfTurno.value='manana'; loadAll(); });
+    btnTarde.addEventListener('click', ()=>{ turno = 'tarde'; setActiveTurn(btnTarde); pdfTurno.value='tarde'; loadAll(); });
+
+    prevWeek.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value = startOfWeek; pdfStart.value = startOfWeek; loadAll(); });
+    nextWeek.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value = startOfWeek; pdfStart.value = startOfWeek; loadAll(); });
+
+    function shiftWeek(dateStr, deltaDays){
+        const d = new Date(dateStr + 'T00:00:00');
+        d.setDate(d.getDate() + deltaDays);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        const dd = String(d.getDate()).padStart(2,'0');
+        return `${yyyy}-${mm}-${dd}`;
     }
 
-    const range = turnoRanges[turnoActual];
-    const slots = generateSlots(range.start, range.end, intervalMinutes);
-    const reservasPorDia = aulaObj.reservas || {};
-
-    let html = '<div class="table-responsive-calendar"><table class="calendar">';
-    html += '<thead><tr><th class="time-col"></th>';
-    for (let i=0;i<6;i++){
-      const d = days[i];
-      const label = d.toLocaleDateString(undefined,{weekday:'short', day:'2-digit', month:'2-digit'});
-      html += `<th>${label}</th>`;
-    }
-    html += '</tr></thead><tbody>';
-
-    const labelPlacedByDay = Array(6).fill(null).map(()=> new Set());
-
-    for (let s=0; s<slots.length; s++){
-      const slot = slots[s];
-      html += `<tr><td class="time-col">${slot.start}</td>`;
-
-      for (let d=0; d<6; d++){
-        const dayYMD = ymdFromDate(days[d]);
-        const diaReservas = reservasPorDia[dayYMD] || [];
-        let occupied = false;
-        let cellText = '';
-
-        for (let ri=0; ri<diaReservas.length; ri++){
-          const r = diaReservas[ri];
-          if (!r.hora_inicio || !r.hora_fin) continue;
-          const rStart = parseTimeToMinutes(r.hora_inicio.slice(0,5));
-          const rEnd = parseTimeToMinutes(r.hora_fin.slice(0,5));
-          if (isNaN(rStart) || isNaN(rEnd) || rEnd <= rStart) continue;
-
-          // redondeo: primer slot.startMin >= rStart
-          let roundedStart = slots.length ? slots[0].startMin : rStart;
-          for (let sj=0; sj<slots.length; sj++){
-            if (slots[sj].startMin >= rStart) { roundedStart = slots[sj].startMin; break; }
-          }
-
-          if (slot.startMin >= roundedStart && slot.startMin < rEnd) {
-            occupied = true;
-            if (!labelPlacedByDay[d].has(ri)) {
-              cellText = `${r.hora_inicio.slice(0,5)} - ${r.hora_fin.slice(0,5)}`;
-              labelPlacedByDay[d].add(ri);
-            }
-          }
+    async function loadAll(){
+        try {
+            const resp = await fetch(`../../app/api/Historial_fetch.php?start=${startOfWeek}&turno=${turno}`);
+            const data = await resp.json();
+            renderCalendarios(data, turno);
+            loadPrestamos();
+        } catch (e) {
+            console.error('Error al cargar historial', e);
         }
+    }
 
-        if (occupied) {
-          html += cellText ? `<td class="occupied"><span>${cellText}</span></td>` : `<td class="occupied"></td>`;
-        } else {
-          html += `<td class="free"></td>`;
+    async function loadPrestamos(){
+        try {
+            const resp = await fetch('../../app/api/prestamos_fetch.php');
+            const data = await resp.json();
+            renderPrestamos(data);
+        } catch (e) {
+            console.error('Error al cargar prestamos', e);
         }
-      }
-
-      html += '</tr>';
     }
 
-    html += '</tbody></table></div>';
+    function renderCalendarios(data, turno){
+        calendarios.innerHTML = '';
 
-    container.innerHTML = '<div class="calendar-title">' + aulaObj.nombre_aula + ' (Turno: ' + (turnoActual==='manana' ? 'Mañana' : 'Tarde') + ')</div>' + html;
-  }
+        const containerLeft = document.createElement('div');
+        containerLeft.className = 'calendario-box';
 
-  function renderAll(){
-    if (!data || !data.aulas) return;
-    elWeekRange && (elWeekRange.textContent = (data.rango_semana?.inicio || '') + ' → ' + (data.rango_semana?.fin || ''));
-    const aula1 = data.aulas[0] || null;
-    const aula2 = data.aulas[1] || null;
-    renderCalendarInto(aula1, calAip1, turno, data.fecha_inicio);
-    renderCalendarInto(aula2, calAip2, turno, data.fecha_inicio);
-    btnManana.classList.toggle('btn-success', turno === 'manana');
-    btnManana.classList.toggle('btn-outline-brand', turno !== 'manana');
-    btnTarde.classList.toggle('btn-success', turno === 'tarde');
-    btnTarde.classList.toggle('btn-outline-brand', turno !== 'tarde');
-    if (btnPdf) {
-      const url = AJAX_URL + '?action=exportPdf&semana=' + weekOffset + '&turno=' + encodeURIComponent(turno);
-      btnPdf.setAttribute('href', url);
+        const containerRight = document.createElement('div');
+        containerRight.className = 'calendario-box';
+
+        const titleLeft = document.createElement('h3');
+        titleLeft.textContent = data.aip1_nombre || 'AIP 1';
+        const titleRight = document.createElement('h3');
+        titleRight.textContent = data.aip2_nombre || 'AIP 2';
+
+        containerLeft.appendChild(titleLeft);
+        containerRight.appendChild(titleRight);
+
+        const tableLeft = buildTableForAula(data.aip1, turno);
+        const tableRight = buildTableForAula(data.aip2, turno);
+
+        containerLeft.appendChild(tableLeft);
+        containerRight.appendChild(tableRight);
+
+        calendarios.appendChild(containerLeft);
+        calendarios.appendChild(containerRight);
     }
-  }
 
-  function loadWeek(offset) {
-    fetch(AJAX_URL + '?action=reservasSemana&semana=' + encodeURIComponent(offset))
-      .then(r => { if (!r.ok) throw new Error('Error al cargar semana'); return r.json(); })
-      .then(json => {
-        data = json;
-        weekOffset = offset;
-        renderAll();
-      })
-      .catch(err => {
-        console.error('Error loadWeek:', err);
-        alert('Error al cargar la semana. Revisa la consola.');
-      });
-  }
+   function buildTableForAula(aipData, turno){
+    const table = document.createElement('table');
+    table.className = 'calendario-table';
 
-  btnPrev && btnPrev.addEventListener('click', () => loadWeek(weekOffset - 1));
-  btnNext && btnNext.addEventListener('click', () => loadWeek(weekOffset + 1));
-  btnManana && btnManana.addEventListener('click', () => { turno = 'manana'; renderAll(); });
-  btnTarde && btnTarde.addEventListener('click', () => { turno = 'tarde'; renderAll(); });
+    const thead = document.createElement('thead');
+    const trHead = document.createElement('tr');
+    const thEmpty = document.createElement('th');
+    thEmpty.textContent = '';
+    trHead.appendChild(thEmpty);
 
-  // Inicial
-  renderAll();
-})();
+    const dias = Object.keys(aipData);
+    dias.forEach(fecha => {
+        const th = document.createElement('th');
+        const d = new Date(fecha + 'T00:00:00');
+        th.innerHTML = `${d.toLocaleDateString('es-PE', {weekday:'long'})}<br><small>${fecha}</small>`;
+        trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    const times = getTimesForTurno(turno);
+
+    times.forEach(time => {
+        const tr = document.createElement('tr');
+        const timeTd = document.createElement('td');
+        timeTd.className = 'hora-cell';
+        timeTd.textContent = time;
+        tr.appendChild(timeTd);
+
+        dias.forEach(fecha => {
+            const td = document.createElement('td');
+            td.dataset.fecha = fecha;
+            td.dataset.hora = time;
+            td.className = 'cell';
+
+            const reservas = aipData[fecha] || [];
+            reservas.forEach(r => {
+                if (isTimeBetween(time, r.hora_inicio, r.hora_fin)) {
+                    td.classList.add('reserved');
+
+                    // Mostrar solo en la primera celda del rango
+                    if (!r._shown) {
+                        td.innerHTML = `<div class="res-label">
+                            ${r.hora_inicio.substr(0,5)} - ${r.hora_fin.substr(0,5)}
+                            <br><small>${r.profesor}</small>
+                        </div>`;
+                        r._shown = true; // marcamos que ya se mostró
+                    }
+                }
+            });
+
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    return table;
+}
+
+    function getTimesForTurno(turno){
+        const times = [];
+        let start = turno === 'manana' ? '06:00' : '13:00';
+        let end   = turno === 'manana' ? '12:45' : '19:00';
+        let [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        while (sh < eh || (sh === eh && sm <= em)){
+            times.push(String(sh).padStart(2,'0') + ':' + String(sm).padStart(2,'0'));
+            sm += 45;
+            if (sm >= 60){ sm = 0; sh++; }
+        }
+        return times;
+    }
+
+    function isTimeBetween(t, start, end){
+      const tt = (t.length===5 ? t+':00' : t);
+      if (start.length===5) start += ':00';
+      if (end.length===5) end += ':00';
+
+        // Incluir también la hora final exacta
+      return (tt >= start && tt <= end);
+    }
+    function renderPrestamos(data){
+        const container = document.getElementById('tabla-prestamos');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p>No hay préstamos registrados.</p>';
+            return;
+        }
+        let html = '<table class="tabla-prestamos"><thead><tr><th>ID</th><th>Equipo</th><th>Profesor</th><th>Aula</th><th>Fecha</th><th>Hora inicio</th><th>Hora fin</th><th>Estado</th></tr></thead><tbody>';
+        data.forEach(p => {
+            html += `<tr><td>${p.id_prestamo}</td><td>${p.nombre_equipo}</td><td>${p.nombre}</td><td>${p.nombre_aula}</td><td>${p.fecha_prestamo}</td><td>${p.hora_inicio}</td><td>${p.hora_fin || ''}</td><td>${p.estado}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    loadAll();
+});

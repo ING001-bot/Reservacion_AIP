@@ -1,32 +1,22 @@
 <?php
 require "../config/conexion.php";
-
 class PrestamoModel {
     private $db;
-
-    public function __construct($conexion) {
-        $this->db = $conexion;
-    }
+    public function __construct($conexion) { $this->db = $conexion; }
 
     public function guardarPrestamosMultiple($id_usuario, $equipos, $fecha_prestamo, $hora_inicio, $hora_fin = null, $id_aula) {
         if (!$id_usuario || empty($equipos) || !$id_aula) {
             return ['mensaje'=>'⚠ No se proporcionó usuario, equipos o aula.','tipo'=>'error'];
         }
-
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)
                 VALUES (?, ?, ?, ?, 'Prestado', ?, ?)
             ");
-
             foreach ($equipos as $val) {
-                if ($val) {
-                    $id_equipo = $val; // ya recibimos solo id_equipo
-                    $stmt->execute([$id_usuario, $id_equipo, $id_aula, $fecha_prestamo, $hora_inicio, $hora_fin]);
-                }
+                if ($val) $stmt->execute([$id_usuario, $val, $id_aula, $fecha_prestamo, $hora_inicio, $hora_fin]);
             }
-
             $this->db->commit();
             return ['mensaje'=>'✅ Préstamos registrados correctamente.','tipo'=>'success'];
         } catch (PDOException $e) {
@@ -87,4 +77,3 @@ class PrestamoModel {
         return $stmt->execute([$id_prestamo]);
     }
 }
-?>

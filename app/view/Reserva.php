@@ -14,19 +14,32 @@ $controller = new ReservaController($conexion);
 $aulas = $controller->obtenerAulas('AIP');
 
 // Procesar el formulario si se envió
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar') {
-    $id_usuario  = $_SESSION['id_usuario'];
-    $id_aula     = $_POST['id_aula'] ?? null;
-    $fecha       = $_POST['fecha'] ?? null;
-    $hora_inicio = $_POST['hora_inicio'] ?? null;
-    $hora_fin    = $_POST['hora_fin'] ?? null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
+    if ($_POST['accion'] === 'guardar') {
+        $id_usuario  = $_SESSION['id_usuario'];
+        $id_aula     = $_POST['id_aula'] ?? null;
+        $fecha       = $_POST['fecha'] ?? null;
+        $hora_inicio = $_POST['hora_inicio'] ?? null;
+        $hora_fin    = $_POST['hora_fin'] ?? null;
 
-    $controller->reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario);
+        $controller->reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario);
+    } elseif ($_POST['accion'] === 'eliminar') {
+        $id_reserva  = $_POST['id_reserva'] ?? null;
+        $id_usuario  = $_SESSION['id_usuario'];
+        $controller->eliminarReserva($id_reserva, $id_usuario);
+    }
+} else {
+    // Reiniciar mensaje si no hay acción
+    $controller->mensaje = "";
 }
 
-// Mantener la fecha y aula seleccionadas
-$fecha_min = date('Y-m-d');
-$fecha_default = $_POST['fecha'] ?? $fecha_min;
+// Fecha de hoy
+date_default_timezone_set('America/Lima');
+$hoy = new DateTime('today');
+$mañana = (clone $hoy)->modify('+1 day');
+
+$fecha_min = $mañana->format('Y-m-d');
+$fecha_default = $fecha_min;
 $id_aula_selected = $_POST['id_aula'] ?? (isset($aulas[0]['id_aula']) ? $aulas[0]['id_aula'] : null);
 
 // Preparar reservas para el cuadro de horas
@@ -41,32 +54,26 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reservar Aula</title>
-<!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<!-- Estilos de marca -->
 <link rel="stylesheet" href="../../Public/css/brand.css">
-<style>
-    /* Opcional: hacer que los chips ocupen el ancho disponible elegantemente */
-    #cuadro-horas .btn { min-width: 110px; }
-</style>
+<style>#cuadro-horas .btn { min-width: 110px; }</style>
 </head>
 <body class="bg-light">
-
 <div class="container py-4">
     <h1 class="text-center text-brand mb-4">📅 Reservar Aula</h1>
 
     <?php if (!empty($controller->mensaje)): ?>
-        <div class="alert alert-info text-center shadow-sm">
+        <div class="alert alert-<?= $controller->tipo ?> text-center shadow-sm">
             <?= htmlspecialchars($controller->mensaje) ?>
         </div>
     <?php endif; ?>
 
     <div class="row g-4">
-        <!-- Formulario -->
         <div class="col-lg-6">
             <div class="card shadow-lg">
                 <div class="card-body">
-                    <form method="POST" class="row g-3">
+                    <form id="form-reserva" method="POST" class="row g-3">
+                        <input type="hidden" name="accion" value="guardar">
                         <div class="col-12">
                             <label class="form-label">Profesor</label>
                             <input type="text" class="form-control" value="<?= htmlspecialchars($nombreProfesor) ?>" readonly>
@@ -86,9 +93,9 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 
                         <div class="col-6">
                             <label class="form-label">Fecha</label>
-                            <input type="date" name="fecha" class="form-control" required 
-                                    min="<?= $fecha_min ?>" value="<?= htmlspecialchars($fecha_default) ?>"
-                                    onchange="this.form.submit()">
+                            <input type="date" name="fecha" class="form-control" required
+                                   min="<?= $fecha_min ?>" value="<?= $fecha_default ?>"
+                                   onchange="this.form.submit()">
                         </div>
 
                         <div class="col-6">
@@ -102,14 +109,13 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
                         </div>
 
                         <div class="col-12 text-center mt-2">
-                            <button type="submit" name="accion" value="guardar" class="btn btn-brand px-4">Reservar</button>
+                            <button type="button" id="btn-reservar" class="btn btn-brand px-4">Reservar</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Cuadro de horas -->
         <div class="col-lg-6">
             <div class="card shadow-lg">
                 <div class="card-body">
@@ -123,22 +129,18 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
                     <div id="cuadro-horas" class="d-flex flex-wrap gap-2">
                         <?php
                         if (!empty($fecha_default) && !empty($id_aula_selected)) {
-                            // Configuración de rango y bloque
                             $t_inicio = strtotime("06:00");
                             $t_fin    = strtotime("19:00");
-                            $intervalo = 45 * 60; // 30 min (cambiar a 45*60 si deseas 45 min)
+                            $intervalo = 45 * 60;
 
                             while ($t_inicio < $t_fin) {
                                 $inicio_hm = date("H:i", $t_inicio);
                                 $fin_hm    = date("H:i", $t_inicio + $intervalo);
-                                // Normalizar a HH:MM:SS para comparar con lo que viene de BD
                                 $inicio = $inicio_hm . ":00";
                                 $fin    = $fin_hm . ":00";
 
                                 $ocupada = false;
                                 foreach ($reservas_existentes as $res) {
-                                    // $res['hora_inicio'] y $res['hora_fin'] están en HH:MM:SS
-                                    // choque si: inicio < res.fin  y  fin > res.inicio
                                     if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) {
                                         $ocupada = true;
                                         break;
@@ -165,10 +167,9 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
         </div>
     </div>
 
-    <!-- Tabla de reservas -->
     <h2 class="text-center text-brand my-4">📖 Reservas Registradas</h2>
     <div class="table-responsive shadow-lg">
-        <table class="table table-hover align-middle text-center" >
+        <table class="table table-hover align-middle text-center">
             <thead class="table-primary text-center">
                 <tr>
                     <th>Profesor</th>
@@ -177,6 +178,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
                     <th>Fecha</th>
                     <th>Hora Inicio</th>
                     <th>Hora Fin</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -189,6 +191,13 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
                         <td><?= htmlspecialchars($reserva['fecha']) ?></td>
                         <td><?= htmlspecialchars($reserva['hora_inicio']) ?></td>
                         <td><?= htmlspecialchars($reserva['hora_fin']) ?></td>
+                        <td>
+                            <form method="POST" class="d-inline form-cancelar">
+                                <input type="hidden" name="accion" value="eliminar">
+                                <input type="hidden" name="id_reserva" value="<?= $reserva['id_reserva'] ?>">
+                                <button type="button" class="btn btn-danger btn-sm cancelar-btn">Cancelar</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -200,7 +209,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
     </div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../Public/js/reservas.js"></script>
 </body>
 </html>

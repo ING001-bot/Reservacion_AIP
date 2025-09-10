@@ -1,24 +1,18 @@
 <?php
-// Ya no es necesario incluir la conexión aquí. El controlador se encargará de pasarla.
+require "../config/conexion.php";
 
 class ReservaModel {
     private $db;
+    public function __construct($conexion) { $this->db = $conexion; }
 
-    public function __construct($conexion) {
-        $this->db = $conexion;
-    }
-
-    // Crear nueva reserva
     public function crearReserva($id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin) {
         $stmt = $this->db->prepare("
             INSERT INTO reservas (id_aula, id_usuario, fecha, hora_inicio, hora_fin)
             VALUES (?, ?, ?, ?, ?)
         ");
-        // El orden de los parámetros en el array debe coincidir con el orden de las columnas en la consulta
         return $stmt->execute([$id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin]);
     }
 
-    // Obtener aulas (opcional por tipo)
     public function obtenerAulas($tipo = null) {
         if ($tipo) {
             $stmt = $this->db->prepare("SELECT * FROM aulas WHERE tipo = ?");
@@ -29,11 +23,10 @@ class ReservaModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Listar reservas por profesor
     public function obtenerReservasPorProfesor($id_usuario) {
         $stmt = $this->db->prepare("
             SELECT r.id_reserva, u.nombre AS profesor, a.nombre_aula, a.capacidad,
-                    r.fecha, r.hora_inicio, r.hora_fin
+                   r.fecha, r.hora_inicio, r.hora_fin
             FROM reservas r
             INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
             INNER JOIN aulas a ON r.id_aula = a.id_aula
@@ -44,14 +37,12 @@ class ReservaModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Verificar disponibilidad del aula
     public function verificarDisponibilidad($id_aula, $fecha, $hora_inicio, $hora_fin) {
         $hora_min = "06:00:00";
         $hora_max = "19:00:00";
-        
-        // Normalizar a HH:MM:SS
+
         if (strlen($hora_inicio) === 5) $hora_inicio .= ":00";
-        if (strlen($hora_fin)   === 5) $hora_fin    .= ":00";
+        if (strlen($hora_fin) === 5) $hora_fin .= ":00";
 
         if ($hora_inicio < $hora_min || $hora_fin > $hora_max || $hora_inicio >= $hora_fin) {
             return false;
@@ -69,18 +60,27 @@ class ReservaModel {
             ':hora_fin' => $hora_fin
         ]);
 
-        return $stmt->fetchColumn() === 0;
+        return $stmt->fetchColumn() == 0;
     }
 
-    // Obtener reservas para el cuadro de horas
     public function obtenerReservasPorAulaYFecha($id_aula, $fecha) {
         $stmt = $this->db->prepare("
-            SELECT hora_inicio, hora_fin 
-            FROM reservas 
+            SELECT r.id_reserva, u.nombre, r.hora_inicio, r.hora_fin 
+            FROM reservas r
+            LEFT JOIN usuarios u ON r.id_usuario = u.id_usuario
             WHERE id_aula = ? AND fecha = ?
             ORDER BY hora_inicio ASC
         ");
         $stmt->execute([$id_aula, $fecha]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // NUEVO: eliminar reserva (solo si pertenece al usuario)
+    public function eliminarReserva($id_reserva, $id_usuario) {
+        $stmt = $this->db->prepare("
+            DELETE FROM reservas
+            WHERE id_reserva = ? AND id_usuario = ?
+        ");
+        return $stmt->execute([$id_reserva, $id_usuario]);
     }
 }
