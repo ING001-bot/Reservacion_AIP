@@ -63,19 +63,29 @@ class ReservaModel {
         return $stmt->fetchColumn() == 0;
     }
 
-    public function obtenerReservasPorAulaYFecha($id_aula, $fecha) {
-        $stmt = $this->db->prepare("
-            SELECT r.id_reserva, u.nombre, r.hora_inicio, r.hora_fin 
-            FROM reservas r
-            LEFT JOIN usuarios u ON r.id_usuario = u.id_usuario
-            WHERE id_aula = ? AND fecha = ?
-            ORDER BY hora_inicio ASC
-        ");
-        $stmt->execute([$id_aula, $fecha]);
+    // ✅ Modificada: ahora filtra por id_usuario si se pasa (para historial/pdf)
+    public function obtenerReservasPorAulaYFecha($id_aula, $fecha, $id_usuario = null) {
+        $sql = "SELECT r.id_reserva, u.nombre, r.hora_inicio, r.hora_fin 
+                FROM reservas r
+                LEFT JOIN usuarios u ON r.id_usuario = u.id_usuario
+                WHERE r.id_aula = :id_aula AND r.fecha = :fecha";
+
+        if ($id_usuario) {
+            $sql .= " AND r.id_usuario = :id_usuario";
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id_aula', $id_aula, PDO::PARAM_INT);
+        $stmt->bindParam(':fecha', $fecha);
+
+        if ($id_usuario) {
+            $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // NUEVO: eliminar reserva (solo si pertenece al usuario)
     public function eliminarReserva($id_reserva, $id_usuario) {
         $stmt = $this->db->prepare("
             DELETE FROM reservas

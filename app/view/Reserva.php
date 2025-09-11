@@ -6,14 +6,9 @@ require "../config/conexion.php";
 require '../controllers/ReservaController.php';
 
 $nombreProfesor = $_SESSION['usuario'] ?? 'Invitado';
-
-// Inicializar la conexión y el controlador
 $controller = new ReservaController($conexion);
-
-// Obtener aulas solo de tipo AIP
 $aulas = $controller->obtenerAulas('AIP');
 
-// Procesar el formulario si se envió
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     if ($_POST['accion'] === 'guardar') {
         $id_usuario  = $_SESSION['id_usuario'];
@@ -29,20 +24,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $controller->eliminarReserva($id_reserva, $id_usuario);
     }
 } else {
-    // Reiniciar mensaje si no hay acción
     $controller->mensaje = "";
 }
 
-// Fecha de hoy
 date_default_timezone_set('America/Lima');
 $hoy = new DateTime('today');
 $mañana = (clone $hoy)->modify('+1 day');
 
 $fecha_min = $mañana->format('Y-m-d');
-$fecha_default = $fecha_min;
+
+// Mantener la fecha seleccionada por el usuario si la hay; si no, usar la mínima (mañana)
+$fecha_default = $_POST['fecha'] ?? $fecha_min;
+
+// Mantener aula seleccionada si POST, si no elegir la primera disponible
 $id_aula_selected = $_POST['id_aula'] ?? (isset($aulas[0]['id_aula']) ? $aulas[0]['id_aula'] : null);
 
-// Preparar reservas para el cuadro de horas
+// Preparar reservas para el cuadro de horas (mostrar todas las reservas que ocupan el aula)
 $reservas_existentes = [];
 if (!empty($fecha_default) && !empty($id_aula_selected)) {
     $reservas_existentes = $controller->obtenerReservasPorFecha($id_aula_selected, $fecha_default);
@@ -81,7 +78,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 
                         <div class="col-12">
                             <label class="form-label">Seleccionar Aula (Solo AIP)</label>
-                            <select name="id_aula" class="form-select" required onchange="this.form.submit()">
+                            <select name="id_aula" class="form-select" required id="aula-select">
                                 <?php foreach ($aulas as $aula): ?>
                                     <option value="<?= $aula['id_aula'] ?>"
                                         <?= ($id_aula_selected == $aula['id_aula']) ? 'selected' : '' ?>>
@@ -94,8 +91,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
                         <div class="col-6">
                             <label class="form-label">Fecha</label>
                             <input type="date" name="fecha" class="form-control" required
-                                   min="<?= $fecha_min ?>" value="<?= $fecha_default ?>"
-                                   onchange="this.form.submit()">
+                                   min="<?= $fecha_min ?>" value="<?= htmlspecialchars($fecha_default) ?>" id="fecha-select">
                         </div>
 
                         <div class="col-6">
@@ -121,7 +117,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <label class="form-label mb-0">Disponibilidad de Horas</label>
-                        <span class="badge bg-primary-subtle text-primary-emphasis">
+                        <span class="badge bg-primary-subtle text-primary-emphasis" id="fecha-badge">
                             <?= htmlspecialchars($fecha_default) ?>
                         </span>
                     </div>
@@ -209,7 +205,9 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
     </div>
 </div>
 
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../Public/js/reservas.js"></script>
+<!-- Script externo -->
+<script src="../../Public/js/Reservas.js"></script>
 </body>
 </html>

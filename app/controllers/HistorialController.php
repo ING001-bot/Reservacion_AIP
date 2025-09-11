@@ -37,12 +37,12 @@ class HistorialController {
         return $this->reservaModel->obtenerAulas($tipo);
     }
 
-    // Obtener todas las reservas de la semana para un aula (por fecha lunes)
-    public function obtenerReservasSemanaPorAula($id_aula, $monday) {
+    // Obtener reservas de la semana para un aula, filtrando por profesor
+    public function obtenerReservasSemanaPorAula($id_aula, $monday, $id_usuario) {
         $dates = $this->getWeekDates($monday);
         $result = [];
         foreach ($dates as $fecha) {
-            $res = $this->reservaModel->obtenerReservasPorAulaYFecha($id_aula, $fecha);
+            $res = $this->reservaModel->obtenerReservasPorAulaYFecha($id_aula, $fecha, $id_usuario);
             $normalized = [];
             foreach ($res as $r) {
                 $normalized[] = [

@@ -56,10 +56,10 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
       <h2>Préstamos realizados</h2>
       <div id="tabla-prestamos"></div>
     </section>
+  </main>
     <a href="Profesor.php" class="btn btn-primary mb-3">
       <i class="bi bi-arrow-left"></i> Volver al inicio
     </a>
-  </main>
 
   <script src="../../Public/js/Historial.js"></script>
 </body>

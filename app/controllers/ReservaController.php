@@ -21,17 +21,41 @@ class ReservaController {
             return false;
         }
 
-        // Validar que la fecha sea al menos mañana
-        $fecha_actual = new DateTime('today');
-        $fecha_reserva = new DateTime($fecha);
+        // Forzar zona horaria (Perú)
+        date_default_timezone_set('America/Lima');
 
-        if ($fecha_reserva <= $fecha_actual) {
+        // Normalizar y validar formato de fecha recibido (esperamos 'Y-m-d')
+        $fecha_reserva = DateTime::createFromFormat('Y-m-d', $fecha);
+        if (!$fecha_reserva) {
+            // intentar con otras entradas (por si el input trae otra estructura)
+            try {
+                $fecha_reserva = new DateTime($fecha);
+            } catch (Exception $e) {
+                $this->mensaje = "⚠️ Fecha inválida.";
+                $this->tipo = "danger";
+                return false;
+            }
+        }
+
+        // Comparar solo fechas (sin hora). Permitir reservas a partir de mañana.
+        $hoy = new DateTime('today', new DateTimeZone('America/Lima'));
+        $minima = (clone $hoy)->modify('+1 day'); // mañana 00:00
+
+        // Normalizamos ambas a formato Y-m-d para evitar problemas de hora/zona
+        $fecha_reserva_str = $fecha_reserva->format('Y-m-d');
+        $minima_str = $minima->format('Y-m-d');
+
+        if ($fecha_reserva_str < $minima_str) {
             $this->mensaje = "⚠️ Solo puedes reservar a partir del día siguiente.";
             $this->tipo = "danger";
             return false;
         }
 
-        // Validación de horarios
+        // Validación de horarios (se asume formato HH:MM o HH:MM:SS)
+        // Normalizar horas a HH:MM:SS
+        if (strlen($hora_inicio) === 5) $hora_inicio .= ":00";
+        if (strlen($hora_fin) === 5) $hora_fin .= ":00";
+
         if ($hora_inicio >= $hora_fin) {
             $this->mensaje = "⚠️ La hora de inicio debe ser menor a la hora de fin.";
             $this->tipo = "danger";
@@ -39,8 +63,8 @@ class ReservaController {
         }
 
         // Verificar disponibilidad
-        if ($this->model->verificarDisponibilidad($id_aula, $fecha, $hora_inicio, $hora_fin)) {
-            if ($this->model->crearReserva($id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin)) {
+        if ($this->model->verificarDisponibilidad($id_aula, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
+            if ($this->model->crearReserva($id_aula, $id_usuario, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
                 $this->mensaje = "✅ Reserva realizada correctamente.";
                 $this->tipo = "success";
                 return true;
