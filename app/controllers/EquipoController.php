@@ -9,11 +9,11 @@ class EquipoController {
     }
 
     /** Registrar equipo */
-    public function registrarEquipo($nombre_equipo, $tipo_equipo) {
-        if (!$nombre_equipo || !$tipo_equipo) {
-            return ['error' => true, 'mensaje' => '⚠ Todos los campos son obligatorios.'];
+    public function registrarEquipo($nombre_equipo, $tipo_equipo, $stock) {
+        if (!$nombre_equipo || !$tipo_equipo || $stock < 0) {
+            return ['error' => true, 'mensaje' => '⚠ Todos los campos son obligatorios y el stock no puede ser negativo.'];
         }
-        $ok = $this->equipoModel->registrarEquipo($nombre_equipo, $tipo_equipo);
+        $ok = $this->equipoModel->registrarEquipo($nombre_equipo, $tipo_equipo, $stock);
         return [
             'error' => !$ok,
             'mensaje' => $ok ? "✅ Equipo '$nombre_equipo' registrado correctamente." : "❌ Error al registrar el equipo."
@@ -21,28 +21,34 @@ class EquipoController {
     }
 
     /** Listar equipos */
-    public function listarEquipos() {
-        return $this->equipoModel->obtenerEquipos();
+    public function listarEquipos($soloActivos = false) {
+        return $soloActivos ? $this->equipoModel->obtenerEquiposActivos() : $this->equipoModel->obtenerEquipos();
     }
 
-    /** Eliminar equipo */
-    public function eliminarEquipo($id_equipo) {
-        $ok = $this->equipoModel->eliminarEquipo($id_equipo);
+    /** Dar de baja equipo */
+    public function darDeBajaEquipo($id_equipo) {
+        $ok = $this->equipoModel->darDeBajaEquipo($id_equipo);
         return [
             'error' => !$ok,
-            'mensaje' => $ok ? "✅ Equipo eliminado correctamente." : "❌ Error al eliminar."
+            'mensaje' => $ok ? "✅ Equipo dado de baja correctamente." : "❌ Error al dar de baja."
         ];
     }
 
-    /** Editar equipo */
-    public function editarEquipo($id_equipo, $nombre_equipo, $tipo_equipo) {
-        if (!$nombre_equipo || !$tipo_equipo) {
-            return ['error' => true, 'mensaje' => '⚠ Todos los campos son obligatorios.'];
-        }
-        $ok = $this->equipoModel->actualizarEquipo($id_equipo, $nombre_equipo, $tipo_equipo);
+    /** Restaurar equipo */
+    public function restaurarEquipo($id_equipo) {
+        $ok = $this->equipoModel->restaurarEquipo($id_equipo);
         return [
             'error' => !$ok,
-            'mensaje' => $ok ? "✅ Equipo actualizado correctamente." : "❌ Error al actualizar."
+            'mensaje' => $ok ? "✅ Equipo restaurado correctamente." : "❌ Error al restaurar."
+        ];
+    }
+
+    /** Eliminar definitivo */
+    public function eliminarEquipoDefinitivo($id_equipo) {
+        $ok = $this->equipoModel->eliminarEquipoDefinitivo($id_equipo);
+        return [
+            'error' => !$ok,
+            'mensaje' => $ok ? "✅ Equipo eliminado definitivamente." : "❌ Error al eliminar."
         ];
     }
 
@@ -50,28 +56,30 @@ class EquipoController {
     public function handleRequest() {
         $mensaje = '';
         $mensaje_tipo = '';
-        
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['registrar_equipo'])) {
-                $res = $this->registrarEquipo($_POST['nombre_equipo'], $_POST['tipo_equipo']);
+                $res = $this->registrarEquipo($_POST['nombre_equipo'], $_POST['tipo_equipo'], $_POST['stock']);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'error' : 'success';
             }
-
-            if (isset($_POST['eliminar_equipo'])) {
-                $res = $this->eliminarEquipo($_POST['id_equipo']);
+            if (isset($_POST['dar_baja_equipo'])) {
+                $res = $this->darDeBajaEquipo($_POST['id_equipo']);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'error' : 'success';
             }
-
-            if (isset($_POST['editar_equipo'])) {
-                $res = $this->editarEquipo($_POST['id_equipo'], $_POST['nombre_equipo'], $_POST['tipo_equipo']);
+            if (isset($_POST['restaurar_equipo'])) {
+                $res = $this->restaurarEquipo($_POST['id_equipo']);
+                $mensaje = $res['mensaje'];
+                $mensaje_tipo = $res['error'] ? 'error' : 'success';
+            }
+            if (isset($_POST['eliminar_equipo_def'])) {
+                $res = $this->eliminarEquipoDefinitivo($_POST['id_equipo']);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'error' : 'success';
             }
         }
 
-        // Siempre obtenemos los equipos para la vista
         $equipos = $this->listarEquipos();
         return ['equipos' => $equipos, 'mensaje' => $mensaje, 'mensaje_tipo' => $mensaje_tipo];
     }

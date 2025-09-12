@@ -50,6 +50,8 @@ $vista = $_GET['view'] ?? 'inicio';
     <a class="nav-link mb-2" href="?view=reserva">📅 Reservar Aula</a>
     <a class="nav-link mb-2" href="?view=prestamo">💻 Préstamo de Equipos</a>
     <a class="nav-link mb-2" href="?view=historial">📄 Mis Reservas/Préstamos</a>
+    <a class="nav-link mb-2" href="dashboard.php">⬅ Inicio</a>
+
     <div class="mt-auto">
       <a class="nav-link text-danger" href="../controllers/LogoutController.php">🚪 Cerrar sesión</a>
     </div>

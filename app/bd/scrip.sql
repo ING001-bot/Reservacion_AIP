@@ -43,6 +43,16 @@ CREATE TABLE prestamos (
     FOREIGN KEY (id_equipo) REFERENCES equipos(id_equipo)
 );
 
+CREATE TABLE reservas_canceladas (
+    id_cancelacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    id_usuario INT NOT NULL,
+    motivo VARCHAR(255) NOT NULL,
+    fecha_cancelacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
 ALTER TABLE prestamos
 ADD COLUMN hora_inicio TIME NOT NULL AFTER id_equipo,
 ADD COLUMN hora_fin TIME NULL AFTER hora_inicio;
@@ -56,3 +66,6 @@ ADD COLUMN id_aula INT NOT NULL AFTER id_prestamo;
 ALTER TABLE prestamos 
 ADD CONSTRAINT fk_prestamos_aulas 
 FOREIGN KEY (id_aula) REFERENCES aulas(id_aula);
+
+ALTER TABLE equipos ADD COLUMN stock INT NOT NULL DEFAULT 0;
+ALTER TABLE equipos ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1;
