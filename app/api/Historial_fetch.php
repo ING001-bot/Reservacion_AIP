@@ -34,7 +34,7 @@ if (count($aip_ids) < 2) {
     }
 }
 
-// ✅ Filtrar solo las reservas del profesor logueado
+// Filtrar solo las reservas del profesor logueado
 $aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAula($aip_ids[0], $monday, $id_usuario) : array_fill_keys($controller->getWeekDates($monday), []);
 $aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAula($aip_ids[1], $monday, $id_usuario) : array_fill_keys($controller->getWeekDates($monday), []);
 

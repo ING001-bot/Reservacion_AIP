@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnReservar = document.getElementById('btn-reservar');
     const formReserva = document.getElementById('form-reserva');
 
-    // Función para actualizar disponibilidad de horas
+    // Función para actualizar disponibilidad de horas (tu código existente)
     function actualizarHoras() {
         const fecha = fechaInput.value;
         const aula = aulaSelect.value;
@@ -24,14 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // Ejecutar al cargar la página
-    actualizarHoras();
-
-    // Detectar cambios
     fechaInput.addEventListener('change', actualizarHoras);
     aulaSelect.addEventListener('change', actualizarHoras);
 
-    // Confirmación al reservar
+    actualizarHoras();
+
+    // -----------------------------
+    // Confirmación con SweetAlert2
+    // -----------------------------
     btnReservar.addEventListener('click', () => {
         const aula = formReserva.querySelector("[name='id_aula']").value;
         const fecha = formReserva.querySelector("[name='fecha']").value;
@@ -40,28 +40,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validación de campos
         if (!aula || !fecha || !horaInicio || !horaFin) {
-            alert("⚠️ Por favor completa todos los campos antes de reservar.");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos incompletos',
+                text: 'Por favor completa todos los campos antes de reservar',
+                confirmButtonColor: '#25D366'
+            });
             return;
         }
 
         if (horaInicio >= horaFin) {
-            alert("⚠️ La hora de inicio debe ser menor a la hora de fin.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Error en horario',
+                text: 'La hora de inicio debe ser menor a la hora de fin',
+                confirmButtonColor: '#ff3b6c'
+            });
             return;
         }
 
-        // Confirmación
-        if (confirm("¿Seguro que deseas realizar esta reserva?")) {
-            formReserva.submit();
-        }
+        // Confirmación antes de enviar
+        Swal.fire({
+            title: '¿Deseas realizar la reserva?',
+            text: `${fecha} - ${horaInicio} a ${horaFin}`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reservar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#25D366',
+            cancelButtonColor: '#ff3b6c'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formReserva.submit();
+            }
+        });
     });
 
-    // Confirmación al cancelar reservas
+    // Confirmación al cancelar reserva
     document.querySelectorAll(".cancelar-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
             const formCancelar = e.target.closest("form");
-            if (confirm("⚠️ ¿Seguro que deseas cancelar esta reserva?")) {
-                formCancelar.submit();
-            }
+            Swal.fire({
+                title: '¿Cancelar esta reserva?',
+                text: 'El aula quedará disponible nuevamente',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cancelar',
+                cancelButtonText: 'No',
+                confirmButtonColor: '#ff3b6c',
+                cancelButtonColor: '#25D366'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    formCancelar.submit();
+                }
+            });
         });
     });
 });

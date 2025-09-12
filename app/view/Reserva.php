@@ -208,6 +208,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Script externo -->
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../../Public/js/Reservas.js"></script>
 </body>
 </html>
