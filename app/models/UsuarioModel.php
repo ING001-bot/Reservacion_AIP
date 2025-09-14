@@ -41,5 +41,10 @@ class UsuarioModel {
         $stmt->execute([$correo]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function actualizarContraseña($nuevaContraseña, $correo) {
+        $stmt = $this->db->prepare("UPDATE usuarios SET contraseña = ? WHERE correo = ?");
+        return $stmt->execute([$nuevaContraseña, $correo]);
+    }
 }
 ?>
