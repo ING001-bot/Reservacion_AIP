@@ -8,164 +8,76 @@ require_once __DIR__ . '/../controllers/CambiarContraseñaController.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cambiar Contraseña - Aulas de Innovación</title>
-    <link rel="stylesheet" href="../../Public/css/brand.css">
-    <link rel="stylesheet" href="../../Public/css/login.css">
+    <link rel="stylesheet" href="/Reservacion_AIP/Public/css/brand.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         .login-container {
             max-width: 500px;
-            margin: 40px auto;
+            margin: 50px auto;
             padding: 30px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
-        h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #495057;
-        }
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-        .form-control:focus {
-            border-color: #80bdff;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            background-color: #3498db;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-        .btn-primary:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-        .password-requirements {
-            background-color: #f8f9fa;
-            border-left: 4px solid #3498db;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            font-size: 0.9em;
-            color: #495057;
-        }
-        .password-requirements p {
-            margin-top: 0;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .requirement {
-            margin: 8px 0;
-            display: flex;
-            align-items: center;
-            font-size: 0.95em;
-        }
-        .requirement.valid {
-            color: #2ecc71;
-        }
-        .requirement.invalid {
-            color: #e74c3c;
-        }
-        .requirement i {
-            margin-right: 10px;
-            font-size: 1.1em;
-        }
+        
         .password-field {
             position: relative;
         }
+        
         .toggle-password {
             position: absolute;
-            right: 12px;
+            right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            cursor: pointer;
-            color: #7f8c8d;
             background: none;
             border: none;
-            font-size: 1.1em;
-            padding: 5px;
+            cursor: pointer;
+            color: #6c757d;
         }
-        .toggle-password:hover {
-            color: #3498db;
-        }
+        
         .password-strength {
-            height: 6px;
-            background-color: #ecf0f1;
-            margin: 10px 0 5px;
-            border-radius: 3px;
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
             overflow: hidden;
         }
+        
         .strength-bar {
             height: 100%;
             width: 0%;
-            transition: all 0.3s ease;
-            border-radius: 3px;
+            transition: width 0.3s ease, background-color 0.3s ease;
         }
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid transparent;
-            border-radius: 5px;
-            font-size: 0.95em;
+        
+        .password-requirements {
+            font-size: 0.875rem;
         }
-        .alert-danger {
-            color: #e74c3c;
-            background-color: #fadbd8;
-            border-color: #f8d7da;
+        
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.25rem;
+            color: #6c757d;
         }
-        .alert-success {
-            color: #27ae60;
-            background-color: #d4edda;
-            border-color: #c3e6cb;
+        
+        .requirement i {
+            margin-right: 0.5rem;
+            width: 16px;
         }
-        .btn-outline-secondary {
-            display: inline-block;
-            padding: 10px 20px;
-            margin-top: 15px;
-            color: #7f8c8d;
-            border: 1px solid #bdc3c7;
-            border-radius: 5px;
-            text-decoration: none;
-            transition: all 0.3s ease;
+        
+        .requirement.valid {
+            color: #28a745;
         }
-        .btn-outline-secondary:hover {
-            background-color: #f8f9fa;
-            color: #2c3e50;
-            text-decoration: none;
+        
+        .requirement.invalid {
+            color: #dc3545;
         }
     </style>
 </head>
@@ -259,7 +171,6 @@ require_once __DIR__ . '/../controllers/CambiarContraseñaController.php';
 </div>
 </main>
 
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 <script>
     function togglePassword(fieldId) {
         const field = document.getElementById(fieldId);

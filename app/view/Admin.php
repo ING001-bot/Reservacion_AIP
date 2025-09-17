@@ -68,7 +68,6 @@ $vista = $_GET['view'] ?? 'inicio';
         <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos">💻 Inventario de Equipos</a>
         <a class="nav-link link-sidebar <?= $vista==='historial'?'active':'' ?>" href="Admin.php?view=historial">📄 Historial / PDF</a>
         <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
-        <a class="nav-link link-sidebar text-warning" href="Dashboard.php">🔁 Cambiar Vista</a>
         <a class="nav-link link-sidebar text-danger" href="../controllers/LogoutController.php">🚪 Cerrar sesión</a>
       </nav>
       <div class="mt-auto small text-white-50">Admin: <?= $usuario ?></div>
