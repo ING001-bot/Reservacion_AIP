@@ -32,6 +32,8 @@ $id_editar = $_GET['editar'] ?? null;
 <link rel="stylesheet" href="../../Public/css/brand.css">
 </head>
 <body class="bg-light">
+</head>
+<body class="bg-light">
 
 <main class="container py-4">
 
@@ -101,6 +103,8 @@ $id_editar = $_GET['editar'] ?? null;
                                         </td>
                                         <td class="text-center">
                                             <input type="hidden" name="id_aula" value="<?= $aula['id_aula'] ?>">
+                                            <button type="submit" name="editar_aula" class="btn btn-sm btn-success">💾 Guardar</button>
+                                            <a href="Registrar_Aula.php" class="btn btn-sm btn-secondary">❌ Cancelar</a>
                                         </td>
                                     </tr>
                                 </form>
@@ -110,7 +114,7 @@ $id_editar = $_GET['editar'] ?? null;
                                     <td><?= htmlspecialchars($aula['capacidad']) ?></td>
                                     <td><?= htmlspecialchars($aula['tipo']) ?></td>
                                     <td class="text-center">
-                                        <a href="?eliminar=<?= $aula['id_aula'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Seguro que deseas eliminar esta aula?')">🗑️ Eliminar</a>
+                                        <a href="#" data-id="<?= $aula['id_aula'] ?>" class="btn btn-sm btn-outline-danger btn-eliminar-aula">🗑️ Eliminar</a>
                                     </td>
                                 </tr>
                             <?php endif; ?>
@@ -131,5 +135,7 @@ $id_editar = $_GET['editar'] ?? null;
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../../Public/js/aulas.js"></script>
 </body>
 </html>

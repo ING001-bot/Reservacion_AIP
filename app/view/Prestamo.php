@@ -82,7 +82,7 @@ $fecha_default = $fecha_min;
     <?php endif; ?>
 
     <!-- Formulario -->
-    <div class="card shadow-lg mb-4">
+    <div class="card card-brand shadow-lg mb-4">
         <div class="card-body">
             <form method="POST" class="row g-3">
                 <div class="col-md-4">
@@ -134,7 +134,7 @@ $fecha_default = $fecha_min;
     <!-- Tabla de préstamos -->
     <h2 class="text-center text-brand mb-3">📖 Préstamos Registrados</h2>
     <div class="table-responsive shadow-lg">
-        <table class="table table-hover align-middle text-center">
+        <table class="table table-hover align-middle text-center table-brand">
             <thead class="table-primary text-center">
                 <tr>
                     <th>Tipo</th>

@@ -50,6 +50,7 @@ $vista = $_GET['view'] ?? 'inicio';
     <a class="nav-link mb-2" href="?view=reserva">📅 Reservar Aula</a>
     <a class="nav-link mb-2" href="?view=prestamo">💻 Préstamo de Equipos</a>
     <a class="nav-link mb-2" href="?view=historial">📄 Mis Reservas/Préstamos</a>
+    <a class="nav-link mb-2" href="?view=password">🔑 Cambiar Contraseña</a>
     <a class="nav-link mb-2" href="dashboard.php">⬅ Inicio</a>
 
     <div class="mt-auto">
@@ -71,6 +72,9 @@ $vista = $_GET['view'] ?? 'inicio';
       case 'historial':
           include 'historial.php';
           break;
+      case 'password':
+          include 'Cambiar_Contraseña.php';
+          break;
       default: ?>
           <div class="text-center mb-4">
               <h1 class="fw-bold text-brand">Panel del Profesor</h1>
@@ -78,7 +82,7 @@ $vista = $_GET['view'] ?? 'inicio';
           </div>
           <div class="row g-4 justify-content-center">
               <div class="col-sm-6 col-md-5">
-                  <div class="card shadow-sm h-100">
+                  <div class="card card-brand shadow-sm h-100">
                       <div class="card-body d-flex flex-column text-center">
                           <h5 class="card-title mb-2">Reservar Aula</h5>
                           <p class="card-text text-muted mb-4">Consulte disponibilidad y registre su reserva.</p>
@@ -88,7 +92,7 @@ $vista = $_GET['view'] ?? 'inicio';
               </div>
 
               <div class="col-sm-6 col-md-5">
-                  <div class="card shadow-sm h-100">
+                  <div class="card card-brand shadow-sm h-100">
                       <div class="card-body d-flex flex-column text-center">
                           <h5 class="card-title mb-2">Préstamo de Equipos</h5>
                           <p class="card-text text-muted mb-4">Solicite equipos del aula de innovación.</p>
@@ -98,11 +102,21 @@ $vista = $_GET['view'] ?? 'inicio';
               </div>
 
               <div class="col-sm-6 col-md-5">
-                  <div class="card shadow-sm h-100">
+                  <div class="card card-brand shadow-sm h-100">
                       <div class="card-body d-flex flex-column text-center">
                           <h5 class="card-title mb-2">Mis Reservas/Préstamos</h5>
                           <p class="card-text text-muted mb-4">Revise su historial y estados.</p>
                           <a href="?view=historial" class="btn btn-outline-brand mt-auto">Ver Historial</a>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="col-sm-6 col-md-5">
+                  <div class="card card-brand shadow-sm h-100">
+                      <div class="card-body d-flex flex-column text-center">
+                          <h5 class="card-title mb-2">Cambiar Contraseña</h5>
+                          <p class="card-text text-muted mb-4">Actualice su contraseña de acceso.</p>
+                          <a href="?view=password" class="btn btn-outline-brand mt-auto">Abrir</a>
                       </div>
                   </div>
               </div>
