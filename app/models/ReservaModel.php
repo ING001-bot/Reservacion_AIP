@@ -15,10 +15,10 @@ class ReservaModel {
 
     public function obtenerAulas($tipo = null) {
         if ($tipo) {
-            $stmt = $this->db->prepare("SELECT * FROM aulas WHERE tipo = ?");
+            $stmt = $this->db->prepare("SELECT * FROM aulas WHERE activo = 1 AND tipo = ? ORDER BY nombre_aula ASC");
             $stmt->execute([$tipo]);
         } else {
-            $stmt = $this->db->query("SELECT * FROM aulas");
+            $stmt = $this->db->query("SELECT * FROM aulas WHERE activo = 1 ORDER BY nombre_aula ASC");
         }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -92,5 +92,45 @@ class ReservaModel {
             WHERE id_reserva = ? AND id_usuario = ?
         ");
         return $stmt->execute([$id_reserva, $id_usuario]);
+    }
+
+    // Obtener datos de un aula por ID (para notificaciones)
+    public function obtenerAulaPorId($id_aula) {
+        $stmt = $this->db->prepare("SELECT id_aula, nombre_aula, tipo FROM aulas WHERE id_aula = ?");
+        $stmt->execute([$id_aula]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    // Cancelar con motivo: registra en reservas_canceladas y elimina la reserva
+    public function cancelarReserva($id_reserva, $id_usuario, $motivo) {
+        try {
+            $this->db->beginTransaction();
+            // Insertar cancelación
+            $stmt = $this->db->prepare("INSERT INTO reservas_canceladas (id_reserva, id_usuario, motivo) VALUES (?, ?, ?)");
+            $stmt->execute([$id_reserva, $id_usuario, $motivo]);
+            // Eliminar reserva original
+            $stmt2 = $this->db->prepare("DELETE FROM reservas WHERE id_reserva = ? AND id_usuario = ?");
+            $stmt2->execute([$id_reserva, $id_usuario]);
+            $this->db->commit();
+            return true;
+        } catch (\PDOException $e) {
+            $this->db->rollBack();
+            return false;
+        }
+    }
+
+    // Listar cancelaciones del usuario
+    public function obtenerCanceladasPorUsuario($id_usuario) {
+        $stmt = $this->db->prepare("
+            SELECT rc.id_cancelacion, rc.motivo, rc.fecha_cancelacion,
+                   r.fecha, r.hora_inicio, r.hora_fin, a.nombre_aula, a.tipo
+            FROM reservas_canceladas rc
+            LEFT JOIN reservas r ON rc.id_reserva = r.id_reserva
+            LEFT JOIN aulas a ON r.id_aula = a.id_aula
+            WHERE rc.id_usuario = ?
+            ORDER BY rc.fecha_cancelacion DESC
+        ");
+        $stmt->execute([$id_usuario]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

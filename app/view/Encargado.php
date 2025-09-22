@@ -72,7 +72,7 @@ $vista = $_GET['view'] ?? 'inicio';
           </div>
           <div class="row g-4 justify-content-center">
               <div class="col-sm-6 col-md-5">
-                  <div class="card shadow-sm h-100">
+                  <div class="card card-brand shadow-sm h-100">
                       <div class="card-body d-flex flex-column text-center">
                           <h5 class="card-title mb-2">Historial</h5>
                           <p class="card-text text-muted mb-4">Reservas y préstamos del sistema.</p>
@@ -82,7 +82,7 @@ $vista = $_GET['view'] ?? 'inicio';
               </div>
 
               <div class="col-sm-6 col-md-5">
-                  <div class="card shadow-sm h-100">
+                  <div class="card card-brand shadow-sm h-100">
                       <div class="card-body d-flex flex-column text-center">
                           <h5 class="card-title mb-2">Devoluciones</h5>
                           <p class="card-text text-muted mb-4">Registrar devoluciones de equipos.</p>

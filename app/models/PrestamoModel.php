@@ -76,4 +76,20 @@ class PrestamoModel {
         ");
         return $stmt->execute([$id_prestamo]);
     }
+
+    // Helpers para notificaciones por correo
+    public function obtenerEquiposPorIds(array $ids): array {
+        if (empty($ids)) return [];
+        // construir placeholders dinámicos
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->db->prepare("SELECT id_equipo, nombre_equipo, tipo_equipo FROM equipos WHERE id_equipo IN ($placeholders)");
+        $stmt->execute($ids);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerAulaPorId($id_aula) {
+        $stmt = $this->db->prepare("SELECT id_aula, nombre_aula, tipo FROM aulas WHERE id_aula = ?");
+        $stmt->execute([$id_aula]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
 }

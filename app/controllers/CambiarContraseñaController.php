@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../models/UsuarioModel.php';
 
 // Verificar si el usuario está autenticado
-if (!isset($_SESSION['usuario'])) {
+if (!isset($_SESSION['correo'])) {
     header('Location: ../../Public/index.php');
     exit();
 }
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Verificar la contraseña actual y actualizarla
         $usuarioModel = new UsuarioModel();
-        $usuario = $usuarioModel->obtenerPorCorreo($_SESSION['usuario']);
+        $usuario = $usuarioModel->obtenerPorCorreo($_SESSION['correo']);
 
         if (!$usuario) {
             throw new Exception("Usuario no encontrado.");
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generar el hash de la nueva contraseña
         $hash = password_hash($nueva, PASSWORD_BCRYPT, ['cost' => 12]);
         
-        if (!$usuarioModel->actualizarContraseña($hash, $_SESSION['usuario'])) {
+        if (!$usuarioModel->actualizarContraseña($hash, $_SESSION['correo'])) {
             throw new Exception("Error al actualizar la contraseña. Por favor, inténtelo de nuevo.");
         }
 

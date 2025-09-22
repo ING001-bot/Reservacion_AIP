@@ -2,6 +2,8 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require '../config/conexion.php';
 require '../controllers/HistorialController.php';
+require_once __DIR__ . '/../lib/Mailer.php';
+use App\Lib\Mailer;
 
 // DomPDF
 require '../../vendor/autoload.php';
@@ -14,7 +16,7 @@ if (!isset($_SESSION['id_usuario'])) {
 }
 
 $id_usuario = $_SESSION['id_usuario'];
-$profesor_nombre = $_SESSION['nombre'] ?? '';
+$profesor_nombre = $_SESSION['usuario'] ?? '';
 $start_week = $_POST['start_week'] ?? date('Y-m-d');
 $turno = $_POST['turno'] ?? 'manana';
 
@@ -66,16 +68,29 @@ ob_start();
 <head>
   <meta charset="utf-8">
   <style>
-    body{font-family: DejaVu Sans, Arial, sans-serif; font-size:11px; color:#222; margin:10px;}
-    .header{display:flex; align-items:center; gap:12px; margin-bottom:8px;}
-    .header img{width:80px; height:auto;}
+    /* Paleta institucional */
+    :root{ --brand-color:#1e6bd6; --brand-dark:#155bb8; --brand-light:#eaf3ff; --text-dark:#1f2a44; --border-soft:#d9e2f3; }
+
+    body{font-family: DejaVu Sans, Arial, sans-serif; font-size:11px; color:var(--text-dark); margin:10px;}
+
+    /* Cabecera con logo a la derecha */
+    .header{display:flex; align-items:center; gap:12px; margin-bottom:10px; padding:8px 10px; background:var(--brand-light); border:1px solid var(--border-soft); border-radius:10px; flex-direction:row-reverse;}
+    .header img{width:80px; height:auto; margin-left:12px;}
     .h-main{flex:1;}
-    .h-main h1{margin:0; font-size:18px;}
-    .h-main p{margin:2px 0 0 0; font-size:12px; color:#444;}
-    .table{width:100%; border-collapse:collapse; margin-bottom:10px;}
-    .table th, .table td{border:1px solid #ddd; padding:6px; font-size:10px;}
-    .title-section{background:#f0f0f0; padding:6px; margin-top:8px; font-weight:600;}
-    .reserved{background:#ffefc6;}
+    .h-main h1{margin:0; font-size:18px; color:var(--brand-color);}    
+    .h-main p{margin:2px 0 0 0; font-size:11px; color:#44516d;}
+
+    /* Tablas */
+    .table{width:100%; border-collapse:collapse; margin-bottom:10px; border:1px solid var(--border-soft);}
+    .table thead th{background:var(--brand-color); color:#fff;}
+    .table th, .table td{border:1px solid var(--border-soft); padding:6px; font-size:10px;}
+
+    /* Secciones */
+    .title-section{background:var(--brand-color); color:#fff; padding:6px; margin-top:10px; font-weight:700; border-radius:6px;}
+
+    /* Celdas reservadas */
+    .reserved{background:rgba(30,107,214,0.10);}    
+
     .small{font-size:9px;}
   </style>
 </head>
@@ -178,6 +193,24 @@ try {
     $dompdf->setPaper('A4','landscape');
     $dompdf->render();
     $filename = 'historial_aip_'.$monday.'.pdf';
+
+    // Enviar por correo al usuario logueado (si tenemos correo en sesión)
+    $toEmail = $_SESSION['correo'] ?? '';
+    if ($toEmail) {
+        $mailer = new Mailer();
+        $subject = 'Tu PDF de historial AIP - ' . ($monday ?? 'Semana');
+        $body = '<p>Hola,</p>' .
+                '<p>Adjuntamos el PDF que acabas de generar.</p>' .
+                '<p>Fecha de descarga: ' . htmlspecialchars($fecha_descarga) . '</p>' .
+                '<p>Saludos,</p><p>Aulas de Innovación</p>';
+        $pdfData = $dompdf->output();
+        // Nota: Para adjuntos se recomienda SMTP (PHPMailer). Con mail() básico no se adjuntará.
+        $mailer->send($toEmail, $subject, $body, [
+            ['data' => $pdfData, 'name' => $filename, 'isString' => true]
+        ]);
+    }
+
+    // Descargar en el navegador
     $dompdf->stream($filename, ['Attachment'=>1]);
     exit;
 } catch (\Exception $e) {

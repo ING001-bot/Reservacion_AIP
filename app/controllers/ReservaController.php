@@ -3,6 +3,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 require '../models/ReservaModel.php';
+require_once __DIR__ . '/../lib/Mailer.php';
+use App\Lib\Mailer;
 
 class ReservaController {
     private $model;
@@ -67,6 +69,29 @@ class ReservaController {
             if ($this->model->crearReserva($id_aula, $id_usuario, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
                 $this->mensaje = "✅ Reserva realizada correctamente.";
                 $this->tipo = "success";
+                // Enviar notificación por correo
+                try {
+                    $to = $_SESSION['correo'] ?? '';
+                    if ($to) {
+                        $aula = $this->model->obtenerAulaPorId($id_aula);
+                        $aulaNombre = $aula['nombre_aula'] ?? ('Aula #' . $id_aula);
+                        $subject = 'Confirmación de reserva - ' . $aulaNombre;
+                        $html = '<p>Hola ' . htmlspecialchars($_SESSION['usuario'] ?? 'Usuario') . ',</p>' .
+                                '<p>Has realizado una reserva con estos detalles:</p>' .
+                                '<ul>' .
+                                '<li><strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '</li>' .
+                                '<li><strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '</li>' .
+                                '<li><strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '</li>' .
+                                '<li><strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin) . '</li>' .
+                                '</ul>' .
+                                '<p>Si no fuiste tú, por favor contacta al administrador.</p>';
+                        $mailer = new Mailer();
+                        $mailer->send($to, $subject, $html);
+                    }
+                } catch (\Throwable $e) {
+                    // No interrumpir el flujo por fallo de correo
+                    error_log('Email reserva fallo: ' . $e->getMessage());
+                }
                 return true;
             } else {
                 $this->mensaje = "❌ Error al realizar la reserva.";
@@ -98,11 +123,38 @@ class ReservaController {
             $this->tipo = "danger";
             return false;
         }
+        // Validar motivo recibido por POST
+        $motivo = trim($_POST['motivo'] ?? '');
+        if (strlen($motivo) < 10) { // mínimo 10 caracteres para evitar motivos triviales
+            $this->mensaje = "⚠️ Debes ingresar un motivo válido (mínimo 10 caracteres).";
+            $this->tipo = "danger";
+            return false;
+        }
 
-        $ok = $this->model->eliminarReserva($id_reserva, $id_usuario);
+        $ok = $this->model->cancelarReserva($id_reserva, $id_usuario, $motivo);
         if ($ok) {
             $this->mensaje = "✅ Reserva cancelada correctamente.";
             $this->tipo = "success";
+            // Notificar al colegio por correo
+            try {
+                // Usar from_email del config como destino institucional
+                $cfg = require __DIR__ . '/../config/mail.php';
+                $toColegio = $cfg['from_email'] ?? '';
+                if ($toColegio) {
+                    $mailer = new Mailer();
+                    $subject = 'Cancelación de reserva por ' . ($_SESSION['usuario'] ?? 'Docente');
+                    $html = '<p>Se ha cancelado una reserva.</p>' .
+                            '<ul>' .
+                            '<li><strong>Docente:</strong> ' . htmlspecialchars($_SESSION['usuario'] ?? '') . ' (' . htmlspecialchars($_SESSION['correo'] ?? '') . ')</li>' .
+                            '<li><strong>Fecha de cancelación:</strong> ' . date('Y-m-d H:i:s') . '</li>' .
+                            '<li><strong>Motivo:</strong> ' . nl2br(htmlspecialchars($motivo)) . '</li>' .
+                            '<li><em>Nota:</em> Datos de aula/horario no se incluyen porque la reserva fue eliminada del sistema al cancelar.</li>' .
+                            '</ul>';
+                    $mailer->send($toColegio, $subject, $html);
+                }
+            } catch (\Throwable $e) {
+                error_log('Email cancelacion reserva fallo: ' . $e->getMessage());
+            }
             return true;
         } else {
             $this->mensaje = "⚠️ No se pudo cancelar la reserva (verifica que te pertenezca).";

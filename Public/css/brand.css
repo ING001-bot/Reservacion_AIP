@@ -4,11 +4,13 @@
    🎨 COLORES INSTITUCIONALES
    ============================== */
 :root {
-  --brand-color: #3a8dd8;
-  --brand-dark: #2f79bf;
-  --brand-light: #e9f2fb;
-  --text-dark: #212529;
-  --text-light: #ffffff;
+  --brand-color: #1e6bd6;  /* principal */
+  --brand-dark:  #155bb8;  /* hover/activo */
+  --brand-light: #eaf3ff;  /* fondos claros */
+  --text-dark:   #1f2a44;  /* textos principales */
+  --text-light:  #ffffff;  /* textos sobre azul */
+  --border-soft: #d9e2f3;  /* bordes suaves */
+  --shadow-brand: 0 12px 32px rgba(30, 107, 214, 0.15);
 }
 
 /* ==============================
@@ -16,6 +18,7 @@
    ============================== */
 .bg-brand { background-color: var(--brand-color) !important; }
 .text-brand { color: var(--brand-color) !important; }
+body { color: var(--text-dark); }
 
 /* ==============================
    🔘 BOTONES
@@ -24,17 +27,23 @@
   background-color: var(--brand-color);
   border: 1px solid var(--brand-color);
   color: var(--text-light);
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 8px 18px rgba(30, 107, 214, 0.25);
 }
 .btn-brand:hover {
   background-color: var(--brand-dark);
   border-color: var(--brand-dark);
   color: var(--text-light);
+  transform: translateY(-1px);
 }
 
 .btn-outline-brand {
   background: transparent;
   border: 1px solid var(--brand-color);
   color: var(--brand-color);
+  border-radius: 10px;
+  font-weight: 600;
 }
 .btn-outline-brand:hover {
   background: var(--brand-color);
@@ -45,7 +54,9 @@
    📋 TABLAS
    ============================== */
 .table-brand {
-  border: 1px solid var(--brand-color);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
 }
 .table-brand thead {
   background: var(--brand-color);
@@ -60,7 +71,7 @@
    ============================== */
 .form-control:focus {
   border-color: var(--brand-color);
-  box-shadow: 0 0 0 0.2rem rgba(58, 141, 216, 0.25);
+  box-shadow: 0 0 0 0.25rem rgba(30, 107, 214, 0.15);
 }
 
 label {
@@ -83,7 +94,7 @@ label {
 .sidebar {
   min-width: 240px;
   min-height: 100vh;
-  background: var(--brand-color);
+  background: linear-gradient(180deg, var(--brand-color), var(--brand-dark));
 }
 .link-sidebar {
   color: #ffffffcc;
@@ -101,9 +112,90 @@ label {
    ⚡ UTILIDADES EXTRAS
    ============================== */
 .card-brand {
-  border: 1px solid var(--brand-color);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  box-shadow: var(--shadow-brand);
 }
 .card-brand .card-header {
   background: var(--brand-color);
   color: var(--text-light);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
+
+/* ==============================
+   🧩 PANELES REUTILIZABLES
+   ============================== */
+.panel {
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  box-shadow: var(--shadow-brand);
+}
+.panel-header {
+  background: var(--brand-color);
+  color: var(--text-light);
+  padding: 14px 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+.panel-body {
+  padding: 16px 18px;
+  background: #ffffff;
+}
+.panel-footer {
+  padding: 12px 18px;
+  background: var(--brand-light);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+/* Barra de herramientas dentro de paneles */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Etiquetas/Badges con marca */
+.badge-brand {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ==============================
+   🔒 CAMPOS DE CONTRASEÑA (OJITO)
+   ============================== */
+.password-field { position: relative; }
+.password-field input[type="password"],
+.password-field input[type="text"] {
+  padding-right: 52px;
+}
+.password-field .toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 0;
+  bottom: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0 6px;
+  line-height: 1;
+  z-index: 2;
+}
+.password-field .toggle-password:focus { outline: none; }
+.password-field .toggle-password i { font-size: 1rem; }

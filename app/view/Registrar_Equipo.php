@@ -63,7 +63,7 @@ $mensaje_tipo = $data['mensaje_tipo'];
                 <table class="table table-hover align-middle text-center">
                     <thead class="table-primary">
                         <tr>
-                            <th>ID</th>
+                            <th>N°</th>
                             <th>Nombre</th>
                             <th>Tipo</th>
                             <th>Stock</th>
@@ -72,9 +72,9 @@ $mensaje_tipo = $data['mensaje_tipo'];
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($equipos as $eq): ?>
+                    <?php $i = 1; foreach ($equipos as $eq): ?>
                         <tr>
-                            <td><?= $eq['id_equipo'] ?></td>
+                            <td><?= $i ?></td>
                             <td><?= htmlspecialchars($eq['nombre_equipo']) ?></td>
                             <td><?= htmlspecialchars($eq['tipo_equipo']) ?></td>
                             <td><?= htmlspecialchars($eq['stock']) ?></td>
@@ -97,7 +97,7 @@ $mensaje_tipo = $data['mensaje_tipo'];
                                 <?php endif; ?>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php $i++; endforeach; ?>
                     </tbody>
                 </table>
             </div>

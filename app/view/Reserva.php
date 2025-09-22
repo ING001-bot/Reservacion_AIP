@@ -59,7 +59,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 
     <div class="row g-4">
         <div class="col-lg-6">
-            <div class="card shadow-lg">
+            <div class="card card-brand shadow-lg">
                 <div class="card-body">
                     <form id="form-reserva" method="POST" class="row g-3">
                         <input type="hidden" name="accion" value="guardar">
@@ -144,7 +144,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 
     <h2 class="text-center text-brand my-4">📖 Reservas Registradas</h2>
     <div class="table-responsive shadow-lg">
-        <table class="table table-hover align-middle text-center">
+        <table class="table table-hover align-middle text-center table-brand">
             <thead class="table-primary text-center">
             <tr>
                 <th>Profesor</th>
