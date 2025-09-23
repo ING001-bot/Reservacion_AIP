@@ -1,0 +1,27 @@
+/* Public/css/historial.css */
+body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); color: var(--text-dark, #1f2a44); }
+.container{ max-width:1200px; margin:20px auto; padding:18px; background:#fff; border-radius:16px; box-shadow: 0 12px 32px rgba(30,107,214,0.08); border:1px solid var(--border-soft, #d9e2f3); }
+.controls{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.turnos, .semanas, .pdf { display:flex; gap:8px; align-items:center; }
+.btn{ padding:8px 12px; border-radius:10px; border:1px solid var(--border-soft, #d9e2f3); background:#fff; cursor:pointer; font-weight:600; color: var(--brand-color, #1e6bd6); }
+.btn:hover{ background: var(--brand-light, #eaf3ff); }
+.btn.active{ background: var(--brand-color, #1e6bd6); color:#fff; border-color:transparent; box-shadow: 0 6px 14px rgba(30,107,214,0.25); }
+.calendarios-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px; }
+.calendario-box{ background:#fff; padding:10px; border-radius:16px; border:1px solid var(--border-soft, #d9e2f3); overflow:auto; min-height:340px; box-shadow: 0 12px 32px rgba(30,107,214,0.08); }
+.calendario-box h3{ margin:6px 0 10px 0; font-size:16px; color: var(--brand-color, #1e6bd6); font-weight:700; }
+.calendario-table{ width:100%; border-collapse:separate; border-spacing:0; font-size:12px; table-layout:fixed; border:1px solid var(--border-soft, #d9e2f3); border-radius:12px; overflow:hidden; }
+.calendario-table thead th{ background: var(--brand-color, #1e6bd6); color:#fff; padding:8px; text-align:center; font-weight:700; }
+.calendario-table td, .calendario-table th{ border:1px solid var(--border-soft, #d9e2f3); padding:6px; min-width:70px; height:30px; vertical-align:top; overflow:hidden; background:#fff; }
+.hora-cell{ width:60px; text-align:center; font-weight:700; background: var(--brand-light, #eaf3ff); color: var(--brand-dark, #155bb8); }
+.cell{ background:#fff; }
+.cell.reserved{ background: rgba(30,107,214,0.08); position:relative; border-left:3px solid var(--brand-color, #1e6bd6); }
+.res-label{ font-size:11px; padding:3px 6px; line-height:1; background: var(--brand-light, #eaf3ff); color: var(--brand-dark, #155bb8); border: 1px solid var(--border-soft, #d9e2f3); border-radius:999px; display:inline-block; }
+.prestamos{ margin-top:20px; }
+.tabla-prestamos{ width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border-soft, #d9e2f3); border-radius:12px; overflow:hidden; box-shadow: 0 12px 24px rgba(30,107,214,0.06); }
+.tabla-prestamos th{ background: var(--brand-color, #1e6bd6); color:#fff; padding:8px; font-weight:700; }
+.tabla-prestamos td{ border-top:1px solid var(--border-soft, #d9e2f3); padding:8px; font-size:13px; text-align:center; }
+@media (max-width:900px){
+  .calendarios-grid{ grid-template-columns: 1fr; }
+  .hora-cell{ display:none; }
+  .calendario-table td, .calendario-table th{ font-size:11px; padding:6px; }
+}

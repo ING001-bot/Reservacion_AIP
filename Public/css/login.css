@@ -1,0 +1,159 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body, html {
+    height: 100%;
+}
+
+/* Contenedor principal */
+.login-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.login-container {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #eaf3ff 0%, #ffffff 100%);
+    padding: 24px;
+}
+
+/* Formulario a la izquierda */
+.login-form {
+    flex: 0.55;
+    background: #ffffff;
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #1f2a44;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(30, 107, 214, 0.15);
+    border-top: 6px solid #1e6bd6;
+    gap: 12px;
+}
+
+.login-form h2 {
+    font-size: 2rem;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #1e6bd6;
+    font-weight: 700;
+}
+
+.login-form input {
+    padding: 12px 15px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    border: 1px solid #d9e2f3;
+    font-size: 1rem;
+    outline: none;
+    background: #f7faff;
+    color: #1f2a44;
+}
+
+/* Campo de contraseña con icono dentro (igual que Cambiar_Contraseña) */
+.password-field { position: relative; margin-bottom: 16px; }
+.password-field input { padding-right: 24px; }
+.password-field .toggle-password {
+  position: absolute;
+  right: 6px;
+  top: 0;
+  bottom: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0;
+  line-height: 1;
+  z-index: 2;
+}
+.password-field .toggle-password:focus { outline: none; }
+.password-field .toggle-password i { font-size: 1rem; }
+
+.login-form input:focus {
+    border-color: #1e6bd6;
+    box-shadow: 0 0 0 3px rgba(30, 107, 214, 0.15);
+    background: #ffffff;
+}
+
+.login-form input::placeholder {
+    color: #9eb6df;
+}
+
+.login-form button[type="submit"] {
+    padding: 12px;
+    background: #1e6bd6;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.06s ease, background 0.2s ease;
+    box-shadow: 0 8px 18px rgba(30, 107, 214, 0.25);
+}
+
+.login-form button[type="submit"]:hover {
+    background: #155bb8;
+    transform: translateY(-1px);
+}
+
+/* Mensajes de error */
+.mensaje.error {
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #ffe8ea;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Enlaces */
+.login-form .enlaces {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.login-form .enlaces a {
+    color: #1e6bd6;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.login-form .enlaces a:hover {
+    color: #155bb8;
+}
+
+/* Imagen a la derecha */
+.login-container::after {
+    content: "";
+    flex: 1;
+    background: url('../img/logo_colegio.png') no-repeat center center;
+    background-size: cover;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-container::after {
+        display: none; /* opcional en móvil si no quieres la imagen */
+    }
+
+    .login-form {
+        padding: 40px 20px;
+    }
+}
