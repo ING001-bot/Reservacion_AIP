@@ -12,3 +12,34 @@ function togglePassword(fieldId) {
     if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
   }
 }
+
+// Mejores interacciones del login
+document.addEventListener('DOMContentLoaded', function () {
+  // Theme toggle (persistir en localStorage)
+  var themeBtn = document.getElementById('theme-toggle');
+  var savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark');
+  }
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      document.body.classList.toggle('dark');
+      var isDark = document.body.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+  }
+
+  // Loading state al enviar
+  var form = document.querySelector('form.login-form');
+  var submitBtn = document.getElementById('login-submit');
+  if (form && submitBtn) {
+    form.addEventListener('submit', function () {
+      submitBtn.classList.add('loading');
+      submitBtn.disabled = true;
+      // feedback visual
+      var prev = submitBtn.textContent;
+      submitBtn.dataset.prevText = prev;
+      submitBtn.textContent = 'Ingresando…';
+    });
+  }
+});

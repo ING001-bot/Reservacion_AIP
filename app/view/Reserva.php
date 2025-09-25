@@ -142,8 +142,13 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
         </div>
     </div>
 
-    <h2 class="text-center text-brand my-4">📖 Reservas Registradas</h2>
-    <div class="table-responsive shadow-lg">
+    <div class="d-flex justify-content-center gap-2 my-3">
+        <button id="btn-realizadas" class="btn btn-primary btn-sm" type="button">Reservas realizadas</button>
+        <button id="btn-canceladas" class="btn btn-outline-primary btn-sm" type="button">Reservas canceladas</button>
+    </div>
+
+    <h2 class="text-center text-brand my-2">📖 Reservas Registradas</h2>
+    <div id="tabla-realizadas" class="table-responsive shadow-lg">
         <table class="table table-hover align-middle text-center table-brand">
             <thead class="table-primary text-center">
             <tr>
@@ -179,6 +184,43 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
         </table>
     </div>
 
+    <?php $canceladas = $controller->obtenerCanceladas($_SESSION['id_usuario']); ?>
+    <div id="tabla-canceladas" class="table-responsive shadow-lg" style="display: none;">
+        <table class="table table-hover align-middle text-center table-brand">
+            <thead class="table-secondary text-center">
+            <tr>
+                <th>Estado</th>
+                <th>Aula</th>
+                <th>Fecha reservada</th>
+                <th>Hora Inicio</th>
+                <th>Hora Fin</th>
+                <th>Fecha cancelación</th>
+                <th>Motivo</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if (!empty($canceladas)): ?>
+                <?php foreach ($canceladas as $rc): ?>
+                    <tr>
+                        <td><span class="badge bg-danger">CANCELADO</span></td>
+                        <td><?= htmlspecialchars($rc['nombre_aula'] ?? '—') ?></td>
+                        <td><?= htmlspecialchars($rc['fecha'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($rc['hora_inicio'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($rc['hora_fin'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($rc['fecha_cancelacion'] ?? '') ?></td>
+                        <td class="text-start" style="max-width: 420px; white-space: normal;">
+                            <span class="badge bg-secondary me-1">Motivo</span>
+                            <span class="text-muted"><?= nl2br(htmlspecialchars($rc['motivo'] ?? '')) ?></span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="6" class="text-muted">No tienes reservas canceladas.</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+
     <div class="text-center mt-3">
         <a href="dashboard.php" class="btn btn-outline-brand">⬅ Volver al Dashboard</a>
     </div>
@@ -192,5 +234,48 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
 
 <!-- Script externo -->
 <script src="../../Public/js/Reservas.js"></script>
+<script src="../../Public/js/theme.js"></script>
+
+<script>
+// Alternar tablas realizadas/canceladas
+document.addEventListener('DOMContentLoaded', function() {
+    const btnRealizadas = document.getElementById('btn-realizadas');
+    const btnCanceladas = document.getElementById('btn-canceladas');
+    const tablaRealizadas = document.getElementById('tabla-realizadas');
+    const tablaCanceladas = document.getElementById('tabla-canceladas');
+
+    function mostrarRealizadas() {
+        tablaRealizadas.style.display = '';
+        tablaCanceladas.style.display = 'none';
+        btnRealizadas.classList.remove('btn-outline-primary');
+        btnRealizadas.classList.add('btn-primary');
+        btnCanceladas.classList.remove('btn-primary');
+        btnCanceladas.classList.add('btn-outline-primary');
+    }
+
+    function mostrarCanceladas() {
+        tablaRealizadas.style.display = 'none';
+        tablaCanceladas.style.display = '';
+        btnCanceladas.classList.remove('btn-outline-primary');
+        btnCanceladas.classList.add('btn-primary');
+        btnRealizadas.classList.remove('btn-primary');
+        btnRealizadas.classList.add('btn-outline-primary');
+    }
+
+    btnRealizadas.addEventListener('click', mostrarRealizadas);
+    btnCanceladas.addEventListener('click', mostrarCanceladas);
+
+    // Si venimos de una cancelación exitosa, mostrar directamente la pestaña de canceladas
+    <?php if (!empty($controller->mensaje) && $controller->tipo === 'success' && strpos($controller->mensaje, 'Reserva cancelada') !== false): ?>
+        mostrarCanceladas();
+        // Resaltar la última cancelación (primera fila)
+        const firstRow = tablaCanceladas.querySelector('tbody tr');
+        if (firstRow) {
+            firstRow.classList.add('table-warning');
+            setTimeout(() => firstRow.classList.remove('table-warning'), 3000);
+        }
+    <?php endif; ?>
+});
+</script>
 </body>
 </html>

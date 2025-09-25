@@ -117,6 +117,11 @@ class ReservaController {
         return $this->model->obtenerReservasPorAulaYFecha($id_aula, $fecha);
     }
 
+    // Nuevo: listar reservas canceladas del usuario
+    public function obtenerCanceladas($id_usuario) {
+        return $this->model->obtenerCanceladasPorUsuario($id_usuario);
+    }
+
     public function eliminarReserva($id_reserva, $id_usuario) {
         if (!$id_reserva) {
             $this->mensaje = "❌ ID de reserva inválido.";

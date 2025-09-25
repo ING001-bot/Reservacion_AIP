@@ -58,8 +58,8 @@ class PrestamoController {
         return $this->model->listarPrestamosPorUsuario($id_usuario);
     }
 
-    public function devolverEquipo($id_prestamo) {
-        $ok = $this->model->devolverEquipo($id_prestamo);
+    public function devolverEquipo($id_prestamo, ?string $comentario = null) {
+        $ok = $this->model->devolverEquipo($id_prestamo, $comentario);
         if ($ok) {
             try {
                 $to = $_SESSION['correo'] ?? '';
@@ -67,6 +67,7 @@ class PrestamoController {
                     $subject = 'Confirmación de devolución de equipo';
                     $html = '<p>Hola ' . htmlspecialchars($_SESSION['usuario'] ?? 'Usuario') . ',</p>' .
                             '<p>Se registró la devolución del préstamo #' . htmlspecialchars((string)$id_prestamo) . '.</p>' .
+                            ($comentario ? ('<p><strong>Comentario de devolución:</strong><br>' . nl2br(htmlspecialchars($comentario)) . '</p>') : '') .
                             '<p>Gracias por tu responsabilidad.</p>';
                     $mailer = new Mailer();
                     $mailer->send($to, $subject, $html);
@@ -76,6 +77,10 @@ class PrestamoController {
             }
         }
         return $ok;
+    }
+
+    public function obtenerPrestamosFiltrados(?string $estado, ?string $desde, ?string $hasta, ?string $q): array {
+        return $this->model->obtenerPrestamosFiltrados($estado, $desde, $hasta, $q);
     }
 }
 ?>

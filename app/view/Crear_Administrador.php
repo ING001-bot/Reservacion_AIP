@@ -137,5 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_usuario_adm
     </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../Public/js/theme.js"></script>
 </body>
 </html>

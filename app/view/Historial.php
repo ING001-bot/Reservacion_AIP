@@ -61,6 +61,7 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
       <i class="bi bi-arrow-left"></i> Volver al inicio
     </a>
 
-  <script src="../../Public/js/Historial.js"></script>
+  <?php $v = time(); ?>
+  <script src="../../Public/js/Historial.js?v=<?= $v ?>" defer></script>
 </body>
 </html>

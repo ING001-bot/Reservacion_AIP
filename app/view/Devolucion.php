@@ -9,12 +9,28 @@ if (!isset($_SESSION['usuario']) || $_SESSION['tipo']!=='Encargado') {
     die("Acceso denegado");
 }
 
-if (isset($_GET['devolver'])) {
-    $controller->devolverEquipo($_GET['devolver']);
+$mensaje = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['devolver_id'])) {
+    $id = intval($_POST['devolver_id']);
+    $coment = isset($_POST['comentario']) ? trim($_POST['comentario']) : null;
+    if ($controller->devolverEquipo($id, $coment)) {
+        $mensaje = '✅ Devolución registrada correctamente.';
+    } else {
+        $mensaje = '❌ No se pudo registrar la devolución.';
+    }
 }
 
-$prestamos = $controller->obtenerTodosPrestamos();
-$mensaje = $_GET['mensaje'] ?? '';
+// Filtros simples
+$estado = $_GET['estado'] ?? '';
+$desde = $_GET['desde'] ?? '';
+$hasta = $_GET['hasta'] ?? '';
+$q     = $_GET['q'] ?? '';
+
+if ($estado || $desde || $hasta || $q) {
+    $prestamos = $controller->obtenerPrestamosFiltrados($estado ?: null, $desde ?: null, $hasta ?: null, $q ?: null);
+} else {
+    $prestamos = $controller->obtenerTodosPrestamos();
+}
 $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
@@ -30,8 +46,39 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 </head>
 <body>
     <main class="container py-4">
-        <h1 class="text-center text-success mb-4">📦 Registrar Devolución</h1>
-        <p class="text-center">Encargado: <strong><?= $usuario ?></strong></p>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <h1 class="text-brand m-0">📦 Registrar Devolución</h1>
+            <div class="text-muted">Encargado: <strong><?= $usuario ?></strong></div>
+        </div>
+
+        <form class="card p-3 shadow-sm mb-3" method="get" action="">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-sm-3">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Prestado" <?= $estado==='Prestado'?'selected':'' ?>>Prestado</option>
+                        <option value="Devuelto" <?= $estado==='Devuelto'?'selected':'' ?>>Devuelto</option>
+                    </select>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <label class="form-label">Desde</label>
+                    <input type="date" class="form-control" name="desde" value="<?= htmlspecialchars($desde) ?>">
+                </div>
+                <div class="col-6 col-sm-3">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" class="form-control" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
+                </div>
+                <div class="col-12 col-sm-3">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" class="form-control" name="q" placeholder="Equipo, profesor o aula" value="<?= htmlspecialchars($q) ?>">
+                </div>
+                <div class="col-12 d-flex gap-2 justify-content-end">
+                    <button class="btn btn-brand" type="submit">Aplicar filtros</button>
+                    <a class="btn btn-outline-secondary" href="?view=devolucion">Limpiar</a>
+                </div>
+            </div>
+        </form>
 
         <?php if($mensaje): ?>
             <div class="alert alert-info text-center"><?= htmlspecialchars($mensaje) ?></div>
@@ -80,8 +127,13 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
                                     </td>
                                     <td>
                                         <?php if($row['estado']==='Prestado'): ?>
-                                            <a href="?devolver=<?= $row['id_prestamo'] ?>" 
-                                               class="btn btn-sm btn-outline-success">Devolver</a>
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalDevolver" 
+                                                    data-id="<?= (int)$row['id_prestamo'] ?>"
+                                                    data-equipo="<?= htmlspecialchars($row['nombre_equipo']) ?>">
+                                                Devolver
+                                            </button>
                                         <?php else: ?>
                                             <span class="text-success fw-bold">✔</span>
                                         <?php endif; ?>
@@ -103,5 +155,45 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
             <a href="dashboard.php" class="btn btn-outline-primary">⬅ Volver al Dashboard</a>
         </div>
     </main>
+
+    <!-- Modal Devolver -->
+    <div class="modal fade" id="modalDevolver" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="post" action="?view=devolucion">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirmar Devolución</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="devolver_id" id="devolver-id" value="">
+              <div class="mb-2">
+                <div class="small text-muted">Equipo</div>
+                <div id="devolver-equipo" class="fw-semibold"></div>
+              </div>
+              <label class="form-label">Comentario (opcional)</label>
+              <textarea class="form-control" name="comentario" rows="3" placeholder="Observaciones de la devolución..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-success">Marcar como Devuelto</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const modal = document.getElementById('modalDevolver');
+  if (!modal) return;
+  modal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const id = button?.getAttribute('data-id') || '';
+    const equipo = button?.getAttribute('data-equipo') || '';
+    modal.querySelector('#devolver-id').value = id;
+    modal.querySelector('#devolver-equipo').textContent = equipo;
+  });
+});
+</script>
 </body>
 </html>

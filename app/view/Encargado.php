@@ -60,14 +60,15 @@ $vista = $_GET['view'] ?? 'inicio';
   <?php
   switch ($vista) {
       case 'historial':
-          include 'historial.php';
+          // Mostrar el Historial Global también para Encargado
+          include 'HistorialGlobal.php';
           break;
       case 'devolucion':
           include 'devolucion.php';
           break;
       default: ?>
           <div class="text-center mb-4">
-              <h1 class="fw-bold text-brand">Panel del Encargado</h1>
+              <h1 class="fw-bold text-brand">🧰 Panel del Encargado</h1>
               <p class="text-muted">Gestione devoluciones y consulte historiales.</p>
           </div>
           <div class="row g-4 justify-content-center">
@@ -97,5 +98,6 @@ $vista = $_GET['view'] ?? 'inicio';
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../Public/js/theme.js"></script>
 </body>
 </html>

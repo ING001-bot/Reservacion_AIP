@@ -40,12 +40,18 @@ CREATE TABLE prestamos (
 );
 CREATE TABLE reservas_canceladas (
     id_cancelacion INT AUTO_INCREMENT PRIMARY KEY,
-    id_reserva INT NOT NULL,
+    id_reserva INT NULL,
     id_usuario INT NOT NULL,
     motivo VARCHAR(255) NOT NULL,
     fecha_cancelacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    -- Snapshot de la reserva en el momento de cancelación
+    id_aula INT NULL,
+    fecha DATE NULL,
+    hora_inicio TIME NULL,
+    hora_fin TIME NULL,
+    FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva) ON DELETE SET NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
+    FOREIGN KEY (id_aula) REFERENCES aulas(id_aula)
 );
 ALTER TABLE prestamos
 ADD COLUMN hora_inicio TIME NOT NULL
@@ -94,3 +100,7 @@ ALTER TABLE usuarios
 ADD COLUMN login_token VARCHAR(255) NULL AFTER activo;
 ALTER TABLE usuarios
 ADD COLUMN login_expira DATETIME NULL AFTER login_token;
+
+-- Comentario de devolución de equipos
+ ALTER TABLE prestamos
+  ADD COLUMN comentario_devolucion TEXT NULL AFTER fecha_devolucion;

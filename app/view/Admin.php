@@ -66,7 +66,8 @@ $vista = $_GET['view'] ?? 'inicio';
         <a class="nav-link link-sidebar <?= $vista==='usuarios'?'active':'' ?>" href="Admin.php?view=usuarios">👤 Usuarios</a>
         <a class="nav-link link-sidebar <?= $vista==='aulas'?'active':'' ?>" href="Admin.php?view=aulas">🏫 Aulas</a>
         <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos">💻 Inventario de Equipos</a>
-        <a class="nav-link link-sidebar <?= $vista==='historial'?'active':'' ?>" href="Admin.php?view=historial">📄 Historial / PDF</a>
+        <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial General</a>
+        <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
         <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
         <a class="nav-link link-sidebar text-danger" href="../controllers/LogoutController.php">🚪 Cerrar sesión</a>
       </nav>
@@ -87,15 +88,18 @@ $vista = $_GET['view'] ?? 'inicio';
       case 'equipos':
         include 'registrar_equipo.php';
         break;
-      case 'historial':
-        include 'historial.php';
+      case 'historial_global':
+        include 'HistorialGlobal.php';
+        break;
+      case 'reportes':
+        include 'HistorialReportes.php';
         break;
       case 'password':
         include 'cambiar_contraseña.php';
         break;
       default: ?>
         <div class="d-flex align-items-center justify-content-between flex-wrap">
-          <h2 class="mb-3 text-brand">Panel de Administración</h2>
+          <h2 class="mb-3 text-brand">🧑‍💼 Panel de Administración</h2>
         </div>
         <div class="row g-3">
           <div class="col-md-4">
@@ -133,5 +137,6 @@ $vista = $_GET['view'] ?? 'inicio';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../Public/js/theme.js"></script>
 </body>
 </html>

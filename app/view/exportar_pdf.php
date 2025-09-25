@@ -39,120 +39,43 @@ $aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAula($aip_ids[0], $mo
 $aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAula($aip_ids[1], $monday, $id_usuario)
                     : array_fill_keys($controller->getWeekDates($monday), []);
 
-// Solo los préstamos del profesor logueado
 $prestamos_completos = $controller->obtenerPrestamos();
 $prestamos = array_filter($prestamos_completos, function($p) use ($id_usuario) {
     return isset($p['id_usuario']) && $p['id_usuario'] == $id_usuario;
 });
+
+// Cancelaciones del profesor en la semana, mapeadas a las dos aulas AIP seleccionadas
+$canceladas_semana = $controller->obtenerCanceladasSemana($monday, $id_usuario);
+$cancel1 = array_fill_keys($controller->getWeekDates($monday), []);
+$cancel2 = array_fill_keys($controller->getWeekDates($monday), []);
+foreach ($canceladas_semana as $c) {
+    $fecha = $c['fecha'] ?? null;
+    if (!$fecha) continue;
+    $item = [
+        'hora_inicio' => substr($c['hora_inicio'] ?? '', 0, 8),
+        'hora_fin'    => substr($c['hora_fin'] ?? '', 0, 8),
+        'motivo'      => $c['motivo'] ?? ''
+    ];
+    if ($aip_ids[0] && intval($c['id_aula'] ?? 0) === intval($aip_ids[0])) {
+        $cancel1[$fecha][] = $item;
+    } elseif ($aip_ids[1] && intval($c['id_aula'] ?? 0) === intval($aip_ids[1])) {
+        $cancel2[$fecha][] = $item;
+    }
+}
 
 // Datos
 $colegio = "Colegio Juan Tomis Stack";
 $logoFile = '../../Public/img/logo_colegio.png'; // ruta relativa desde este archivo
 $fecha_descarga = date('Y-m-d H:i:s');
 
-// Preparar logo en base64 (si existe) para evitar problemas de rutas
-$logoDataUri = '';
-if (file_exists($logoFile) && is_readable($logoFile)) {
-    $imgData = file_get_contents($logoFile);
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mime = finfo_buffer($finfo, $imgData);
-    finfo_close($finfo);
-    $base64 = base64_encode($imgData);
-    $logoDataUri = "data:$mime;base64,$base64";
-}
-
-// GENERAR HTML
-ob_start();
-?><!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <style>
-    /* Paleta institucional */
-    :root{ --brand-color:#1e6bd6; --brand-dark:#155bb8; --brand-light:#eaf3ff; --text-dark:#1f2a44; --border-soft:#d9e2f3; }
-
-    body{font-family: DejaVu Sans, Arial, sans-serif; font-size:11px; color:var(--text-dark); margin:10px;}
-
-    /* Cabecera con logo a la derecha */
-    .header{display:flex; align-items:center; gap:12px; margin-bottom:10px; padding:8px 10px; background:var(--brand-light); border:1px solid var(--border-soft); border-radius:10px; flex-direction:row-reverse;}
-    .header img{width:80px; height:auto; margin-left:12px;}
-    .h-main{flex:1;}
-    .h-main h1{margin:0; font-size:18px; color:var(--brand-color);}    
-    .h-main p{margin:2px 0 0 0; font-size:11px; color:#44516d;}
-
-    /* Tablas */
-    .table{width:100%; border-collapse:collapse; margin-bottom:10px; border:1px solid var(--border-soft);}
-    .table thead th{background:var(--brand-color); color:#fff;}
-    .table th, .table td{border:1px solid var(--border-soft); padding:6px; font-size:10px;}
-
-    /* Secciones */
-    .title-section{background:var(--brand-color); color:#fff; padding:6px; margin-top:10px; font-weight:700; border-radius:6px;}
-
-    /* Celdas reservadas */
-    .reserved{background:rgba(30,107,214,0.10);}    
-
-    .small{font-size:9px;}
-  </style>
-</head>
-<body>
-  <div class="header">
-    <?php if ($logoDataUri): ?>
-      <img src="<?php echo $logoDataUri; ?>" alt="Logo">
-    <?php endif; ?>
-    <div class="h-main">
-      <h1><?php echo htmlspecialchars($colegio); ?></h1>
-      <p class="small">Profesor: <?php echo htmlspecialchars($profesor_nombre); ?> — Fecha de descarga: <?php echo htmlspecialchars($fecha_descarga); ?></p>
-      <p class="small">Semana (lunes): <?php echo htmlspecialchars($monday); ?> — Turno: <?php echo ($turno==='manana')? 'Mañana (06:00-12:45)' : 'Tarde (13:00-19:00)'; ?></p>
-    </div>
-  </div>
-
-<?php
-// Helper para imprimir calendario
-function printCalendarPdf($aip, $label, $turno){
+// Helper para imprimir calendario (con cancelaciones)
+function printCalendarPdf($aip, $label, $turno, $cancelPorFecha){
     echo "<div class=\"title-section\">" . htmlspecialchars($label) . "</div>";
     $dates = array_keys($aip);
     echo '<table class="table"><thead><tr><th>Hora</th>';
     $diasMap = ['Monday'=>'Lunes','Tuesday'=>'Martes','Wednesday'=>'Miércoles','Thursday'=>'Jueves','Friday'=>'Viernes','Saturday'=>'Sábado','Sunday'=>'Domingo'];
     foreach($dates as $d) {
-        $key = date('l', strtotime($d));
-        $labelDay = $diasMap[$key] ?? $key;
-        echo "<th>" . htmlspecialchars($labelDay) . "<br><small>" . htmlspecialchars($d) . "</small></th>";
-    }
-    echo '</tr></thead><tbody>';
-
-    if ($turno === 'manana') { $start = '06:00'; $end = '12:45'; }
-    else { $start = '13:00'; $end = '19:00'; }
-    $sh = strtotime($start); $eh = strtotime($end);
-    for ($ts = $sh; $ts <= $eh; $ts += 15*60) {
-        $time = date('H:i', $ts);
-        echo '<tr><td>' . htmlspecialchars($time) . '</td>';
-        foreach($dates as $d) {
-            $cell = ''; $cls = '';
-            foreach($aip[$d] as $r) {
-                $hi = substr($r['hora_inicio'],0,5);
-                $hf = substr($r['hora_fin'],0,5);
-                if ($time >= $hi && $time < $hf) {
-                    $cell = $hi . ' - ' . $hf . ' ' . ($r['profesor'] ?? '');
-                    $cls = 'reserved';
-                    break;
-                }
-            }
-            echo '<td class="' . $cls . '">' . htmlspecialchars($cell) . '</td>';
-        }
-        echo '</tr>';
-    }
-
-    echo '</tbody></table>';
-}
-
-printCalendarPdf($aip1, ($aip_names[0]?:'AIP 1'), $turno);
-printCalendarPdf($aip2, ($aip_names[1]?:'AIP 2'), $turno);
-?>
-
-<?php if (!empty($prestamos)): ?>
-  <div class="title-section">Préstamos del profesor</div>
-  <table class="table">
-    <thead>
+        echo '<th>' . htmlspecialchars($diasMap[date('l', strtotime($d))] ?? $d) . '<br><small>' . htmlspecialchars($d) . '</small></th>';
       <tr><th>ID</th><th>Equipo</th><th>Aula</th><th>Fecha</th><th>Hora inicio</th><th>Hora fin</th><th>Estado</th></tr>
     </thead>
     <tbody>

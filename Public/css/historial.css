@@ -7,15 +7,26 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 .btn:hover{ background: var(--brand-light, #eaf3ff); }
 .btn.active{ background: var(--brand-color, #1e6bd6); color:#fff; border-color:transparent; box-shadow: 0 6px 14px rgba(30,107,214,0.25); }
 .calendarios-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px; }
-.calendario-box{ background:#fff; padding:10px; border-radius:16px; border:1px solid var(--border-soft, #d9e2f3); overflow:auto; min-height:340px; box-shadow: 0 12px 32px rgba(30,107,214,0.08); }
+.calendario-box{ background:#fff; padding:10px; border-radius:16px; border:1px solid var(--border-soft, #d9e2f3); overflow:auto; -webkit-overflow-scrolling: touch; min-height:340px; box-shadow: 0 12px 32px rgba(30,107,214,0.08); }
 .calendario-box h3{ margin:6px 0 10px 0; font-size:16px; color: var(--brand-color, #1e6bd6); font-weight:700; }
-.calendario-table{ width:100%; border-collapse:separate; border-spacing:0; font-size:12px; table-layout:fixed; border:1px solid var(--border-soft, #d9e2f3); border-radius:12px; overflow:hidden; }
-.calendario-table thead th{ background: var(--brand-color, #1e6bd6); color:#fff; padding:8px; text-align:center; font-weight:700; }
-.calendario-table td, .calendario-table th{ border:1px solid var(--border-soft, #d9e2f3); padding:6px; min-width:70px; height:30px; vertical-align:top; overflow:hidden; background:#fff; }
+.calendario-table{ width:100%; min-width: 720px; border-collapse:separate; border-spacing:0; font-size:12px; table-layout:fixed; border:1px solid var(--border-soft, #d9e2f3); border-radius:12px; overflow:hidden; }
+.calendario-table thead th{ position: sticky; top: 0; z-index: 2; background: var(--brand-color, #1e6bd6); color:#fff; padding:8px; text-align:center; font-weight:700; }
+.calendario-table td, .calendario-table th{ border:1px solid var(--border-soft, #d9e2f3); padding:6px; min-width:78px; vertical-align:top; background:#fff; height:auto; overflow:visible; word-break:break-word; }
+/* Primera columna pegajosa (horas) para mejor orientación */
+.calendario-table th:first-child,
+.calendario-table td:first-child{ position: sticky; left: 0; z-index: 3; background: #f7faff; }
 .hora-cell{ width:60px; text-align:center; font-weight:700; background: var(--brand-light, #eaf3ff); color: var(--brand-dark, #155bb8); }
 .cell{ background:#fff; }
 .cell.reserved{ background: rgba(30,107,214,0.08); position:relative; border-left:3px solid var(--brand-color, #1e6bd6); }
-.res-label{ font-size:11px; padding:3px 6px; line-height:1; background: var(--brand-light, #eaf3ff); color: var(--brand-dark, #155bb8); border: 1px solid var(--border-soft, #d9e2f3); border-radius:999px; display:inline-block; }
+.res-label{ font-size:11px; padding:3px 6px; line-height:1.1; background: var(--brand-light, #eaf3ff); color: var(--brand-dark, #155bb8); border: 1px solid var(--border-soft, #d9e2f3); border-radius:8px; display:inline-block; }
+/* Canceladas */
+.cell.canceled{ box-shadow: inset 0 0 0 2px rgba(192,57,43,0.2); position:relative; }
+.cancel-label{ font-size:16px; font-weight:800; padding:10px 12px; line-height:1.35; text-align:center; letter-spacing:0.3px; text-transform:uppercase; background:#ffe3e3; color:#b00020; border:1px solid #e2a5ab; border-radius:12px; display:block; white-space:normal; margin-top:4px; box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset; }
+.cell.canceled-below{ background: rgba(192,57,43,0.06); }
+.cell.canceled-below .cancel-label{ background: rgba(192,57,43,0.18); }
+.cancel-label small{ color:#a74236; }
+.cancel-motivo{ font-size:10px; margin-top:2px; color:#6b1f17; white-space:normal; overflow:hidden; text-overflow:ellipsis; }
+.mt-1{ margin-top:4px; }
 .prestamos{ margin-top:20px; }
 .tabla-prestamos{ width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border-soft, #d9e2f3); border-radius:12px; overflow:hidden; box-shadow: 0 12px 24px rgba(30,107,214,0.06); }
 .tabla-prestamos th{ background: var(--brand-color, #1e6bd6); color:#fff; padding:8px; font-weight:700; }
@@ -23,5 +34,18 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 @media (max-width:900px){
   .calendarios-grid{ grid-template-columns: 1fr; }
   .hora-cell{ display:none; }
-  .calendario-table td, .calendario-table th{ font-size:11px; padding:6px; }
+  .calendario-table{ min-width: 640px; }
+  .calendario-table td, .calendario-table th{ font-size:13px; padding:10px; height:auto; }
+  .res-label{ display:block; text-align:center; }
+}
+
+/* Mobile muy pequeño */
+@media (max-width:600px){
+  .container{ padding:12px; }
+  .controls{ gap:10px; }
+  .btn{ padding:8px 10px; }
+  .calendario-box{ padding:8px; }
+  .calendario-table{ min-width: 580px; font-size:12px; }
+  .calendario-table td, .calendario-table th{ padding:12px 8px; height:auto; }
+  .cancel-label{ font-size:16px; padding:12px 12px; line-height:1.4; }
 }

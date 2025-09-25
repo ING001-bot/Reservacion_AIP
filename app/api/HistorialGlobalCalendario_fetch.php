@@ -1,9 +1,11 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-require '../config/conexion.php';
-require '../controllers/HistorialController.php';
+require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../controllers/HistorialController.php';
 
-if (!isset($_SESSION['id_usuario'])) {
+header('Content-Type: application/json; charset=utf-8');
+
+if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso denegado']);
     exit;
@@ -11,16 +13,13 @@ if (!isset($_SESSION['id_usuario'])) {
 
 $start = $_GET['start'] ?? date('Y-m-d');
 $turno = $_GET['turno'] ?? 'manana';
-$id_usuario = $_SESSION['id_usuario'];
-$profesor_nombre = $_SESSION['usuario'] ?? '';
+$profesorLike = isset($_GET['profesor']) && $_GET['profesor'] !== '' ? $_GET['profesor'] : null; // filtro opcional por nombre
 
 $controller = new HistorialController($conexion);
 $monday = $controller->getMondayOfWeek($start);
 
 // Traer aulas tipo AIP dinámicamente
 $aulas = $controller->obtenerAulasPorTipo('AIP');
-
-// Tomamos las dos primeras aulas AIP (AIP1 = izquierda, AIP2 = derecha)
 $aip_ids = [];
 $aip_names = [];
 foreach ($aulas as $a) {
@@ -28,19 +27,14 @@ foreach ($aulas as $a) {
     $aip_names[] = $a['nombre_aula'];
     if (count($aip_ids) >= 2) break;
 }
-if (count($aip_ids) < 2) {
-    while (count($aip_ids) < 2) {
-        $aip_ids[] = null;
-        $aip_names[] = '';
-    }
-}
+while (count($aip_ids) < 2) { $aip_ids[] = null; $aip_names[] = ''; }
 
-// Filtrar solo las reservas del profesor logueado
-$aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAula($aip_ids[0], $monday, $id_usuario) : array_fill_keys($controller->getWeekDates($monday), []);
-$aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAula($aip_ids[1], $monday, $id_usuario) : array_fill_keys($controller->getWeekDates($monday), []);
+// Reservas de TODOS los profesores
+$aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAulaTodos($aip_ids[0], $monday, $profesorLike) : array_fill_keys($controller->getWeekDates($monday), []);
+$aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAulaTodos($aip_ids[1], $monday, $profesorLike) : array_fill_keys($controller->getWeekDates($monday), []);
 
-// Cancelaciones del usuario en la semana, agrupadas por aula/fecha
-$cancelaciones = $controller->obtenerCanceladasSemana($monday, $id_usuario);
+// Cancelaciones de TODOS
+$cancelaciones = $controller->obtenerCanceladasSemanaTodos($monday, null, $profesorLike);
 $weekDates = $controller->getWeekDates($monday);
 $cancel1 = array_fill_keys($weekDates, []);
 $cancel2 = array_fill_keys($weekDates, []);
@@ -51,7 +45,7 @@ foreach ($cancelaciones as $c) {
         'hora_inicio' => substr($c['hora_inicio'] ?? '', 0, 8),
         'hora_fin' => substr($c['hora_fin'] ?? '', 0, 8),
         'motivo' => $c['motivo'] ?? '',
-        'profesor' => $profesor_nombre
+        'profesor' => $c['profesor'] ?? ''
     ];
     if ($aip_ids[0] && intval($c['id_aula'] ?? 0) === intval($aip_ids[0])) {
         $cancel1[$fecha][] = $item;
@@ -60,7 +54,6 @@ foreach ($cancelaciones as $c) {
     }
 }
 
-header('Content-Type: application/json');
 echo json_encode([
     'monday' => $monday,
     'aip1' => $aip1,
@@ -68,6 +61,5 @@ echo json_encode([
     'cancel1' => $cancel1,
     'cancel2' => $cancel2,
     'aip1_nombre' => $aip_names[0],
-    'aip2_nombre' => $aip_names[1],
-    'profesor' => $profesor_nombre
+    'aip2_nombre' => $aip_names[1]
 ]);

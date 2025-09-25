@@ -77,7 +77,7 @@ $vista = $_GET['view'] ?? 'inicio';
           break;
       default: ?>
           <div class="text-center mb-4">
-              <h1 class="fw-bold text-brand">Panel del Profesor</h1>
+              <h1 class="fw-bold text-brand">👨‍🏫 Panel del Profesor</h1>
               <p class="text-muted">Realice rápidamente sus reservas y prestamos.</p>
           </div>
           <div class="row g-4 justify-content-center">
@@ -127,6 +127,6 @@ $vista = $_GET['view'] ?? 'inicio';
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../Public/js/theme.js"></script>
 </body>
 </html>
-  

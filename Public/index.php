@@ -20,25 +20,45 @@ unset($_SESSION['login_msg'], $_SESSION['login_msg_type']);
 <body>
 <main class="login-container">
     <form method="post" class="login-form" action="../app/controllers/LoginController.php">
-        <h2>🔑 Iniciar Sesión</h2>
+        <div class="brand-header">
+            <img src="img/logo_colegio.png" alt="Logo del colegio" class="brand-logo" onerror="this.style.display='none'">
+            <div class="brand-text">
+                <h1 class="title">Aulas de Innovación</h1>
+                <p class="subtitle">Accede a tu cuenta para gestionar reservas y préstamos</p>
+            </div>
+            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cambiar tema">🌓</button>
+        </div>
 
         <?php if (!empty($mensaje)): ?>
             <div class="mensaje <?= htmlspecialchars($mensajeClase) ?>"><?= htmlspecialchars($mensaje) ?></div>
         <?php endif; ?>
 
-        <input type="email" name="correo" placeholder="Correo electrónico" required>
+        <label class="sr-only" for="login-email">Correo</label>
+        <input id="login-email" type="email" name="correo" placeholder="Correo electrónico" required autocomplete="username">
+
         <div class="password-field">
-            <input type="password" name="contraseña" id="login-password" placeholder="Contraseña" required>
+            <label class="sr-only" for="login-password">Contraseña</label>
+            <input type="password" name="contraseña" id="login-password" placeholder="Contraseña" required autocomplete="current-password">
             <button type="button" class="toggle-password" aria-label="Mostrar/Ocultar contraseña" onclick="togglePassword('login-password')">
                 <i class="far fa-eye"></i>
             </button>
         </div>
-        <button type="submit">Ingresar</button>
+
+        <div class="form-row">
+            <label class="remember">
+                <input type="checkbox" name="remember" value="1"> Recordarme
+            </label>
+            <a class="forgot" href="recuperar_contraseña.php">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <button type="submit" id="login-submit" class="btn-primary">Ingresar</button>
 
         <div class="enlaces">
-            <a href="../app/view/Registrar_Usuario.php">Crear cuenta</a> | 
-            <a href="recuperar_contraseña.php">¿Olvidaste tu contraseña?</a>
+            <a href="../app/view/Registrar_Usuario.php">Crear cuenta</a>
         </div>
+        <footer class="login-footer">
+            <small>© <?= date('Y') ?> Colegio Monseñor Juan Tomis Stack</small>
+        </footer>
     </form>
 </main>
 <script src="js/login.js"></script>

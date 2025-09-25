@@ -35,8 +35,20 @@ document.addEventListener('DOMContentLoaded', function(){
 
     async function loadAll(){
         try {
-            const resp = await fetch(`../../app/api/Historial_fetch.php?start=${startOfWeek}&turno=${turno}`);
+            const urlHist = `/Sistema_reserva_AIP/app/api/Historial_fetch.php?start=${startOfWeek}&turno=${turno}&_=${Date.now()}`;
+            console.log('Fetch historial URL:', urlHist);
+            const resp = await fetch(urlHist);
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status} al cargar historial. Respuesta: ${text.slice(0,300)}`);
+            }
+            const ct = resp.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) {
+                const text = await resp.text();
+                throw new Error(`Respuesta no JSON desde Historial_fetch.php. Content-Type: ${ct}. Cuerpo: ${text.slice(0,300)}`);
+            }
             const data = await resp.json();
+            console.log('Historial_fetch data:', data);
             renderCalendarios(data, turno);
             loadPrestamos();
         } catch (e) {
@@ -46,7 +58,18 @@ document.addEventListener('DOMContentLoaded', function(){
 
     async function loadPrestamos(){
         try {
-            const resp = await fetch('../../app/api/prestamos_fetch.php');
+            const urlPrest = `/Sistema_reserva_AIP/app/api/Prestamo_fetch.php?_=${Date.now()}`;
+            console.log('Fetch prestamos URL:', urlPrest);
+            const resp = await fetch(urlPrest);
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status} al cargar prestamos. Respuesta: ${text.slice(0,300)}`);
+            }
+            const ct = resp.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) {
+                const text = await resp.text();
+                throw new Error(`Respuesta no JSON desde Prestamo_fetch.php. Content-Type: ${ct}. Cuerpo: ${text.slice(0,300)}`);
+            }
             const data = await resp.json();
             renderPrestamos(data);
         } catch (e) {
@@ -64,15 +87,17 @@ document.addEventListener('DOMContentLoaded', function(){
         containerRight.className = 'calendario-box';
 
         const titleLeft = document.createElement('h3');
-        titleLeft.textContent = data.aip1_nombre || 'AIP 1';
+        const cancelCount1 = Object.values(data.cancel1 || {}).reduce((acc, arr)=> acc + (arr?.length||0), 0);
+        titleLeft.textContent = (data.aip1_nombre || 'AIP 1') + (cancelCount1 ? `  ·  ${cancelCount1} cancelada(s)` : '');
         const titleRight = document.createElement('h3');
-        titleRight.textContent = data.aip2_nombre || 'AIP 2';
+        const cancelCount2 = Object.values(data.cancel2 || {}).reduce((acc, arr)=> acc + (arr?.length||0), 0);
+        titleRight.textContent = (data.aip2_nombre || 'AIP 2') + (cancelCount2 ? `  ·  ${cancelCount2} cancelada(s)` : '');
 
         containerLeft.appendChild(titleLeft);
         containerRight.appendChild(titleRight);
 
-        const tableLeft = buildTableForAula(data.aip1, turno);
-        const tableRight = buildTableForAula(data.aip2, turno);
+        const tableLeft = buildTableForAula(data.aip1, data.cancel1, turno);
+        const tableRight = buildTableForAula(data.aip2, data.cancel2, turno);
 
         containerLeft.appendChild(tableLeft);
         containerRight.appendChild(tableRight);
@@ -81,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function(){
         calendarios.appendChild(containerRight);
     }
 
-   function buildTableForAula(aipData, turno){
+   function buildTableForAula(aipData, cancelData, turno){
     const table = document.createElement('table');
     table.className = 'calendario-table';
 
@@ -104,7 +129,11 @@ document.addEventListener('DOMContentLoaded', function(){
     const tbody = document.createElement('tbody');
     const times = getTimesForTurno(turno);
 
-    times.forEach(time => {
+    // cancelBelow: agenda de colocación para la palabra CANCELADO por fecha (columna) y fila (índice de times)
+    // Estructura: { [fecha]: { [rowIndex]: true } }
+    const cancelBelow = {};
+
+    times.forEach((time, idx) => {
         const tr = document.createElement('tr');
         const timeTd = document.createElement('td');
         timeTd.className = 'hora-cell';
@@ -118,17 +147,48 @@ document.addEventListener('DOMContentLoaded', function(){
             td.className = 'cell';
 
             const reservas = aipData[fecha] || [];
+            const canceladas = (cancelData && cancelData[fecha]) ? cancelData[fecha] : [];
+
+            // 1) Si está agendado que en ESTA fila/fecha vaya "CANCELADO", colócalo primero
+            if (cancelBelow[fecha] && cancelBelow[fecha][idx]) {
+                td.classList.add('canceled-below');
+                td.innerHTML = `<div class="cancel-label">CANCELADO</div>`;
+                delete cancelBelow[fecha][idx];
+            }
+
+            // 2) Mostrar reservas (solo las horas) en la PRIMERA celda del rango
+            //    Si esta celda está designada para mostrar "CANCELADO" abajo, NO sobrescribirla con horas
             reservas.forEach(r => {
+                if (td.classList.contains('canceled-below')) return; // mantener solo CANCELADO aquí
                 if (isTimeBetween(time, r.hora_inicio, r.hora_fin)) {
                     td.classList.add('reserved');
-
-                    // Mostrar solo en la primera celda del rango
                     if (!r._shown) {
-                        td.innerHTML = `<div class="res-label">
-                            ${r.hora_inicio.substr(0,5)} - ${r.hora_fin.substr(0,5)}
-                            <br><small>${r.profesor}</small>
-                        </div>`;
-                        r._shown = true; // marcamos que ya se mostró
+                        td.innerHTML = `<div class="res-label">${r.hora_inicio.substr(0,5)} - ${r.hora_fin.substr(0,5)}</div>`;
+                        r._shown = true;
+                    }
+                }
+            });
+
+            // 3) Si hay cancelaciones para este bloque, imprimimos SOLO las horas en esta fila
+            //    y agendamos mostrar "CANCELADO" en la fila inmediatamente inferior (idx+1)
+            canceladas.forEach(c => {
+                if (isTimeBetween(time, c.hora_inicio || '', c.hora_fin || '')) {
+                    td.classList.add('canceled');
+                    if (!c._scheduled) {
+                        const horas = `${(c.hora_inicio||'').substr(0,5)} - ${(c.hora_fin||'').substr(0,5)}`;
+                        if (!td.innerHTML) {
+                            td.innerHTML = `<div class="res-label">${horas}</div>`;
+                        }
+                        const nextIdx = idx + 1;
+                        if (nextIdx < times.length) {
+                            if (!cancelBelow[fecha]) cancelBelow[fecha] = {};
+                            cancelBelow[fecha][nextIdx] = true;
+                        } else {
+                            // Fila final: mostrar también aquí como respaldo
+                            td.classList.add('canceled-below');
+                            td.innerHTML += `<div class="cancel-label">CANCELADO</div>`;
+                        }
+                        c._scheduled = true;
                     }
                 }
             });

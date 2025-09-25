@@ -5,6 +5,11 @@ class ReservaModel {
     private $db;
     public function __construct($conexion) { $this->db = $conexion; }
 
+    // Permite a controladores ejecutar consultas personalizadas cuando el modelo no tiene un método específico
+    public function getDb(): PDO {
+        return $this->db;
+    }
+
     public function crearReserva($id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin) {
         $stmt = $this->db->prepare("
             INSERT INTO reservas (id_aula, id_usuario, fecha, hora_inicio, hora_fin)
@@ -105,32 +110,56 @@ class ReservaModel {
     public function cancelarReserva($id_reserva, $id_usuario, $motivo) {
         try {
             $this->db->beginTransaction();
-            // Insertar cancelación
-            $stmt = $this->db->prepare("INSERT INTO reservas_canceladas (id_reserva, id_usuario, motivo) VALUES (?, ?, ?)");
-            $stmt->execute([$id_reserva, $id_usuario, $motivo]);
+            // Leer la reserva para validar pertenencia y tomar snapshot
+            $stmtSel = $this->db->prepare("SELECT id_aula, fecha, hora_inicio, hora_fin FROM reservas WHERE id_reserva = ? AND id_usuario = ? FOR UPDATE");
+            $stmtSel->execute([$id_reserva, $id_usuario]);
+            $reserva = $stmtSel->fetch(PDO::FETCH_ASSOC);
+            if (!$reserva) {
+                // No pertenece al usuario o no existe
+                $this->db->rollBack();
+                return false;
+            }
+
+            // Insertar cancelación con snapshot
+            $stmtIns = $this->db->prepare("INSERT INTO reservas_canceladas (id_reserva, id_usuario, motivo, id_aula, fecha, hora_inicio, hora_fin) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtIns->execute([
+                $id_reserva,
+                $id_usuario,
+                $motivo,
+                $reserva['id_aula'],
+                $reserva['fecha'],
+                $reserva['hora_inicio'],
+                $reserva['hora_fin']
+            ]);
+
             // Eliminar reserva original
-            $stmt2 = $this->db->prepare("DELETE FROM reservas WHERE id_reserva = ? AND id_usuario = ?");
-            $stmt2->execute([$id_reserva, $id_usuario]);
+            $stmtDel = $this->db->prepare("DELETE FROM reservas WHERE id_reserva = ? AND id_usuario = ?");
+            $stmtDel->execute([$id_reserva, $id_usuario]);
+
             $this->db->commit();
             return true;
         } catch (\PDOException $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return false;
         }
     }
 
     // Listar cancelaciones del usuario
     public function obtenerCanceladasPorUsuario($id_usuario) {
-        $stmt = $this->db->prepare("
-            SELECT rc.id_cancelacion, rc.motivo, rc.fecha_cancelacion,
-                   r.fecha, r.hora_inicio, r.hora_fin, a.nombre_aula, a.tipo
-            FROM reservas_canceladas rc
-            LEFT JOIN reservas r ON rc.id_reserva = r.id_reserva
-            LEFT JOIN aulas a ON r.id_aula = a.id_aula
-            WHERE rc.id_usuario = ?
-            ORDER BY rc.fecha_cancelacion DESC
-        ");
+        $stmt = $this->db->prepare("\n            SELECT rc.id_cancelacion, rc.motivo, rc.fecha_cancelacion,\n                   rc.fecha, rc.hora_inicio, rc.hora_fin, a.nombre_aula, a.tipo\n            FROM reservas_canceladas rc\n            LEFT JOIN aulas a ON rc.id_aula = a.id_aula\n            WHERE rc.id_usuario = ?\n            ORDER BY rc.fecha_cancelacion DESC\n        ");
         $stmt->execute([$id_usuario]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Listar cancelaciones del usuario dentro de un rango de fechas (por fecha reservada)
+    public function obtenerCanceladasPorUsuarioYRango($id_usuario, $desde, $hasta) {
+        $stmt = $this->db->prepare("\n            SELECT rc.id_cancelacion, rc.id_aula, rc.motivo, rc.fecha_cancelacion,\n                   rc.fecha, rc.hora_inicio, rc.hora_fin, a.nombre_aula, a.tipo\n            FROM reservas_canceladas rc\n            LEFT JOIN aulas a ON rc.id_aula = a.id_aula\n            WHERE rc.id_usuario = :id_usuario\n              AND rc.fecha BETWEEN :desde AND :hasta\n            ORDER BY rc.fecha ASC, rc.hora_inicio ASC\n        ");
+        $stmt->bindValue(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmt->bindValue(':desde', $desde);
+        $stmt->bindValue(':hasta', $hasta);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
