@@ -22,23 +22,7 @@ $vista = $_GET['view'] ?? 'inicio';
   <link rel="stylesheet" href="../../Public/css/brand.css">
 </head>
 <body class="bg-light">
-
-<!-- Navbar principal -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-brand">
-  <div class="container-fluid">
-    <a class="navbar-brand d-flex align-items-center" href="#">
-      <img src="../../Public/img/logo_colegio.png" alt="Logo" class="me-2" style="height:40px;">
-      Colegio Monseñor Juan Tomis Stack
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu" aria-controls="offcanvasMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="d-none d-lg-flex align-items-center">
-      <span class="text-white-50 me-3">Encargado: <?= $usuario ?></span>
-      <a class="btn btn-outline-light btn-sm" href="../controllers/LogoutController.php">Cerrar sesión</a>
-    </div>
-  </div>
-</nav>
+<?php require __DIR__ . '/partials/navbar.php'; ?>
 
 <!-- Offcanvas lateral -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">

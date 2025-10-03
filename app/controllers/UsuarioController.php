@@ -1,7 +1,9 @@
 <?php
 require_once '../models/UsuarioModel.php';
 require_once __DIR__ . '/../lib/Mailer.php';
+require_once __DIR__ . '/../lib/MailboxChecker.php';
 use App\Lib\Mailer;
+use App\Lib\MailboxChecker;
 
 class UsuarioController {
     private $usuarioModel;
@@ -12,7 +14,7 @@ class UsuarioController {
         $this->mailer = new Mailer();
     }
 
-    /** Registrar usuario admin (auto-verificado, sin correo de verificación) */
+    /** Registrar usuario (incluye Admin) con verificación obligatoria por correo */
     public function registrarUsuario($nombre, $correo, $contraseña, $tipo_usuario) {
         $nombre = trim($nombre);
         // Solo letras (incluye acentos) y espacios
@@ -49,22 +51,20 @@ class UsuarioController {
             return ['error' => true, 'mensaje' => '⚠️ La contraseña debe tener al menos 6 caracteres'];
         }
         $hash = password_hash($contraseña, PASSWORD_BCRYPT);
-        // Admin: registrar como verificado directamente pero solo si el correo acepta notificación
-        $ok = $this->usuarioModel->registrarVerificado($nombre, $correo, $hash, $tipo_usuario);
+        // Registro con verificación obligatoria (verificado = 0)
+        $token = bin2hex(random_bytes(32));
+        $expira = date('Y-m-d H:i:s', time() + 24*60*60);
+        $ok = $this->usuarioModel->registrarConVerificacion($nombre, $correo, $hash, $tipo_usuario, $token, $expira);
         if ($ok) {
-            // Enviar correo de notificación para validar existencia del buzón
-            $subject = 'Se te creó una cuenta - Aulas de Innovación';
-            $html = '<p>Hola ' . htmlspecialchars($nombre) . ',</p>' .
-                    '<p>Un administrador ha creado tu cuenta en el sistema Aulas de Innovación con este correo.</p>' .
-                    '<p>Ya puedes iniciar sesión con tu correo y la contraseña definida.</p>';
-            $sent = $this->mailer->send($correo, $subject, $html);
+            $link = $this->buildVerificationLink($correo, $token);
+            $sent = $this->enviarCorreoVerificacion($correo, $nombre, $link);
             if (!$sent) {
                 // rollback si no se pudo enviar (correo inexistente/no aceptado por el servidor SMTP)
                 $this->usuarioModel->eliminarPorCorreo($correo);
                 return ['error' => true, 'mensaje' => '❌ Ese correo no existe o no acepta mensajes. Solo se permiten correos existentes (verificados por envío).'];
             }
         }
-        return ['error' => !$ok, 'mensaje' => $ok ? '✅ Usuario registrado, verificado y notificado por correo.' : '❌ Error al registrar'];
+        return ['error' => !$ok, 'mensaje' => $ok ? '✅ Usuario creado. Debe verificar su correo para activar la cuenta.' : '❌ Error al registrar'];
     }
 
     /** Registrar profesor público */
@@ -217,16 +217,58 @@ class UsuarioController {
 
     // Validación estricta de correo: formato, MX y dominios comunes escritos correctamente
     private function validarCorreoEstricto(string $correo): array {
+        $correo = trim(strtolower($correo));
         if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             return ['error' => true, 'mensaje' => '⚠️ Completa correctamente el correo. Ejemplo: usuario@gmail.com'];
         }
-        $dominio = substr(strrchr($correo, '@'), 1) ?: '';
-        // Reglas específicas: si es Gmail, debe terminar exactamente en gmail.com
-        if (preg_match('/@gmail\\./i', $correo) && !preg_match('/@gmail\.com$/i', $correo)) {
+        $atPos = strrpos($correo, '@');
+        if ($atPos === false) {
+            return ['error' => true, 'mensaje' => '⚠️ Correo inválido.'];
+        }
+        $dominio = substr($correo, $atPos + 1);
+
+        // 1) Correcciones para dominios comunes mal escritos (p. ej., gmai.com en vez de gmail.com)
+        $comunes = ['gmail.com','hotmail.com','outlook.com','yahoo.com','live.com','icloud.com','proton.me','protonmail.com'];
+        foreach ($comunes as $ok) {
+            // distancia de edición pequeña o misma cadena sin puntos
+            $dist = levenshtein($dominio, $ok);
+            $sinPuntosIgual = (str_replace('.', '', $dominio) === str_replace('.', '', $ok));
+            if ($dist > 0 && $dist <= 1 || $sinPuntosIgual && $dominio !== $ok) {
+                return ['error' => true, 'mensaje' => '⚠️ El dominio parece incorrecto. ¿Quisiste decir @' . $ok . '?'];
+            }
+        }
+
+        // 2) Regla específica Gmail: debe ser exactamente gmail.com
+        if (strpos($dominio, 'gmail') !== false && $dominio !== 'gmail.com') {
             return ['error' => true, 'mensaje' => '⚠️ Para correos Gmail usa el dominio correcto: @gmail.com'];
         }
-        if ($dominio && function_exists('checkdnsrr') && !checkdnsrr($dominio, 'MX')) {
+
+        // 3) Validación MX (con fallback a dns_get_record)
+        $tieneMX = null;
+        if ($dominio) {
+            if (function_exists('checkdnsrr')) {
+                $tieneMX = checkdnsrr($dominio, 'MX');
+            }
+            if ($tieneMX === null && function_exists('dns_get_record')) {
+                $mxRecords = @dns_get_record($dominio, DNS_MX);
+                $tieneMX = is_array($mxRecords) && count($mxRecords) > 0;
+            }
+        }
+        if ($tieneMX === false) {
             return ['error' => true, 'mensaje' => '⚠️ El dominio del correo no tiene registros MX válidos. Solo se aceptan correos existentes.'];
+        }
+        // 3.5) (sin API externa) continuar con chequeo RCPT-TO local y verificación por enlace
+        // 4) Chequeo SMTP RCPT TO (si el servidor responde 550/551 -> inexistente)
+        try {
+            $checker = new MailboxChecker();
+            $rcpt = $checker->check($correo, 5);
+            if ($rcpt === false) {
+                return ['error' => true, 'mensaje' => '⚠️ Ese buzón no existe según su servidor de correo. Verifica el correo ingresado.'];
+            }
+            // Si $rcpt es null (indeterminado), permitir continuar a verificación por enlace.
+            // Grandes proveedores (Gmail/Outlook/etc.) suelen responder indeterminado.
+        } catch (\Throwable $e) {
+            // Ignorar errores del checker; seguiremos con verificación por enlace
         }
         return ['error' => false, 'mensaje' => ''];
     }

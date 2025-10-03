@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-require '../config/conexion.php';
-require '../controllers/PrestamoController.php';
+require_once '../config/conexion.php';
+require_once '../controllers/PrestamoController.php';
 
 $controller = new PrestamoController($conexion);
 $data = $controller->obtenerTodosPrestamos();

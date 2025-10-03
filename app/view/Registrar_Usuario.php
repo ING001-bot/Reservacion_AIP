@@ -6,6 +6,23 @@ if (session_status() === PHP_SESSION_NONE) {
 $rol = $_SESSION['tipo'] ?? null;
 $esAdmin = ($rol === 'Administrador');
 
+// Bloquear registro público si la instalación ya fue completada
+require_once __DIR__ . '/../config/conexion.php';
+$setupCompleted = '0';
+try {
+    $stmtCfg = $conexion->prepare("SELECT cfg_value FROM app_config WHERE cfg_key='setup_completed'");
+    $stmtCfg->execute();
+    $setupCompleted = (string)($stmtCfg->fetchColumn() ?: '0');
+} catch (\Throwable $e) {
+    // Si falla, no bloquear pero registrar
+    error_log('setup_completed read failed: ' . $e->getMessage());
+}
+if (!$esAdmin && $setupCompleted === '1') {
+    // Si no es admin y el setup ya se completó, bloquear el acceso a crear cuenta
+    header('Location: ../../Public/index.php');
+    exit();
+}
+
 require '../controllers/UsuarioController.php';
 $controller = new UsuarioController();
 $data = $controller->handleRequest();

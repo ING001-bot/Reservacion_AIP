@@ -102,5 +102,45 @@ ALTER TABLE usuarios
 ADD COLUMN login_expira DATETIME NULL AFTER login_token;
 
 -- Comentario de devolución de equipos
- ALTER TABLE prestamos
-  ADD COLUMN comentario_devolucion TEXT NULL AFTER fecha_devolucion;
+ALTER TABLE prestamos
+ADD COLUMN comentario_devolucion TEXT NULL AFTER fecha_devolucion;
+
+-- Packs de préstamos (encabezado + detalle) y stock por tipo
+-- Encabezado de préstamo (un registro por solicitud)
+CREATE TABLE IF NOT EXISTS prestamos_pack (
+    id_pack INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_aula INT NOT NULL,
+    fecha_prestamo DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NULL,
+    estado ENUM('Prestado','Devuelto') NOT NULL DEFAULT 'Prestado',
+    fecha_devolucion DATE NULL,
+    comentario_devolucion TEXT NULL,
+    CONSTRAINT fk_pack_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
+    CONSTRAINT fk_pack_aula FOREIGN KEY (id_aula) REFERENCES aulas(id_aula)
+);
+
+-- Detalle de ítems prestados dentro del pack (por tipo/cantidad)
+CREATE TABLE IF NOT EXISTS prestamos_pack_items (
+    id_item INT AUTO_INCREMENT PRIMARY KEY,
+    id_pack INT NOT NULL,
+    tipo_equipo VARCHAR(50) NOT NULL,
+    es_complemento TINYINT(1) NOT NULL DEFAULT 0,
+    cantidad INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_items_pack FOREIGN KEY (id_pack) REFERENCES prestamos_pack(id_pack) ON DELETE CASCADE
+);
+
+-- Stock por tipo de equipo (agregada)
+CREATE TABLE IF NOT EXISTS stock_equipos (
+    tipo_equipo VARCHAR(50) PRIMARY KEY,
+    stock_total INT NOT NULL
+);
+
+-- Semilla/actualización inicial de stock a partir de 'equipos' activos
+INSERT INTO stock_equipos (tipo_equipo, stock_total)
+SELECT e.tipo_equipo, COUNT(*) as stock_total
+FROM equipos e
+WHERE e.activo = 1
+GROUP BY e.tipo_equipo
+ON DUPLICATE KEY UPDATE stock_total = VALUES(stock_total);

@@ -5,6 +5,19 @@ $mensaje = $_SESSION['login_msg'] ?? '';
 $mensajeClase = $_SESSION['login_msg_type'] ?? 'error';
 // limpiar para evitar que persista al refrescar
 unset($_SESSION['login_msg'], $_SESSION['login_msg_type']);
+
+// Leer flag para ocultar "Crear cuenta" si la instalación ya fue completada
+$ocultarCrearCuenta = false;
+try {
+    require_once __DIR__ . '/../app/config/conexion.php';
+    if (isset($conexion)) {
+        $stmtCfg = $conexion->prepare("SELECT cfg_value FROM app_config WHERE cfg_key='setup_completed'");
+        $stmtCfg->execute();
+        $ocultarCrearCuenta = ((string)($stmtCfg->fetchColumn() ?: '0') === '1');
+    }
+} catch (\Throwable $e) {
+    // si falla, no ocultar para no romper el login
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -54,7 +67,9 @@ unset($_SESSION['login_msg'], $_SESSION['login_msg_type']);
         <button type="submit" id="login-submit" class="btn-primary">Ingresar</button>
 
         <div class="enlaces">
-            <a href="../app/view/Registrar_Usuario.php">Crear cuenta</a>
+            <?php if (!$ocultarCrearCuenta): ?>
+                <a href="../app/view/Registrar_Usuario.php">Crear cuenta</a>
+            <?php endif; ?>
         </div>
         <footer class="login-footer">
             <small>© <?= date('Y') ?> Colegio Monseñor Juan Tomis Stack</small>

@@ -35,6 +35,7 @@ $vista = $_GET['view'] ?? 'inicio';
   </style>
 </head>
 <body class="bg-light">
+<?php require __DIR__ . '/partials/navbar.php'; ?>
 
 <!-- Barra superior (solo visible en móvil) -->
 <nav class="navbar navbar-dark bg-brand d-lg-none">
