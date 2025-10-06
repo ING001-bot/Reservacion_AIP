@@ -49,8 +49,14 @@ $badge = count($no_leidas);
             </div>
           </div>
         </li>
-        <li class="nav-item">
+        <li class="nav-item d-none d-lg-block">
           <span class="nav-link">👤 <?= $nombre ?><?= $tipo? ' · '.$tipo : '' ?></span>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="../controllers/LogoutController.php" title="Cerrar sesión">
+            <span class="d-inline d-lg-none">🚪</span>
+            <span class="d-none d-lg-inline">🚪 Cerrar sesión</span>
+          </a>
         </li>
       </ul>
     </div>

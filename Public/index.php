@@ -8,15 +8,32 @@ unset($_SESSION['login_msg'], $_SESSION['login_msg_type']);
 
 // Leer flag para ocultar "Crear cuenta" si la instalación ya fue completada
 $ocultarCrearCuenta = false;
+require_once __DIR__ . '/../app/config/conexion.php';
+
+// 1) Verificar existencia de usuarios: si 0 o falla (sin tablas), redirigir al registro inicial
 try {
-    require_once __DIR__ . '/../app/config/conexion.php';
+    if (isset($conexion)) {
+        $stmtCount = $conexion->query("SELECT COUNT(*) FROM usuarios");
+        $totalUsuarios = (int)$stmtCount->fetchColumn();
+        if ($totalUsuarios === 0) {
+            header('Location: ../app/view/Crear_Administrador.php');
+            exit;
+        }
+    }
+} catch (\Throwable $e) {
+    header('Location: ../app/view/Crear_Administrador.php');
+    exit;
+}
+
+// 2) Leer app_config opcionalmente para ocultar "Crear cuenta"; NO redirigir si falla
+try {
     if (isset($conexion)) {
         $stmtCfg = $conexion->prepare("SELECT cfg_value FROM app_config WHERE cfg_key='setup_completed'");
         $stmtCfg->execute();
         $ocultarCrearCuenta = ((string)($stmtCfg->fetchColumn() ?: '0') === '1');
     }
 } catch (\Throwable $e) {
-    // si falla, no ocultar para no romper el login
+    // Ignorar: dejar $ocultarCrearCuenta=false
 }
 ?>
 <!DOCTYPE html>

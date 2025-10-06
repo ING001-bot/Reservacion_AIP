@@ -155,11 +155,12 @@ CREATE TABLE app_config (
 
 -- Valor inicial: instalación no completada (la app lo pondrá en '1' en el primer login de un Administrador)
 INSERT INTO app_config (cfg_key, cfg_value)
-VALUES ('setup_completed', '0')
+VALUES ('setup_completed', '0');
 -- Índices útiles (opcional)
 -- ===========================================
 CREATE INDEX idx_prestamos_usuario_fecha ON prestamos (id_usuario, fecha_prestamo);
 CREATE INDEX idx_prestamos_estado_fecha ON prestamos (estado, fecha_prestamo);
+CREATE INDEX idx_reservas_usuario_fecha ON reservas (id_usuario, fecha, hora_inicio);
 
 -- ===========================================
 -- Notificaciones internas (in-app)
@@ -174,5 +175,3 @@ CREATE TABLE IF NOT EXISTS notificaciones (
   creada_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE INDEX idx_reservas_usuario_fecha ON reservas (id_usuario, fecha, hora_inicio);

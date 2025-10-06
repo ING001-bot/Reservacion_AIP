@@ -25,8 +25,12 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
         <div class="text-muted small">Vista de calendarios de reservas y cancelaciones de las aulas AIP</div>
       </div>
       <div class="d-flex gap-2">
-        <a class="btn btn-outline-brand" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
-        <a class="btn btn-outline-secondary" href="Admin.php?view=inicio">Volver</a>
+        <?php if ($rol === 'Administrador'): ?>
+          <a class="btn btn-outline-brand" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
+          <a class="btn btn-outline-secondary" href="Admin.php?view=inicio">Volver</a>
+        <?php elseif ($rol === 'Encargado'): ?>
+          <a class="btn btn-outline-secondary" href="Encargado.php">Volver</a>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -42,7 +46,7 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
             <button id="btn-manana" class="btn btn-brand btn-sm active">Mañana</button>
             <button id="btn-tarde" class="btn btn-outline-brand btn-sm">Tarde</button>
           </div>
-          <form id="form-pdf-global" action="../view/exportar_pdf_global.php" method="POST" target="_blank" class="m-0">
+          <form id="form-pdf-global" action="../view/exportar_pdf.php" method="POST" target="_blank" class="m-0">
             <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo date('Y-m-d'); ?>">
             <input type="hidden" name="turno" id="pdf-turno" value="manana">
             <input type="hidden" name="profesor" id="pdf-prof" value="">
