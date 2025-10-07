@@ -6,6 +6,7 @@ if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo'])) {
 }
 $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
 ?>
+<?php if (!defined('EMBEDDED_VIEW')): ?>
 <!doctype html>
 <html lang="es">
 <head>
@@ -14,10 +15,12 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
   <title>Reportes y Filtros</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../Public/css/brand.css">
+  <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="../../Public/css/historial_global.css?v=<?php echo time(); ?>">
 </head>
 <body>
   <main class="container my-3" id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
+<?php endif; ?>
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
       <div>
         <h1 class="m-0 text-brand">Reportes y Filtros</h1>
@@ -172,11 +175,12 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
         </table>
       </div>
     </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="../../Public/js/HistorialReportes.js?v=<?php echo time(); ?>"></script>
   <script src="../../Public/js/HistorialEstadisticas.js?v=<?php echo time(); ?>"></script>
+<?php if (!defined('EMBEDDED_VIEW')): ?>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<?php endif; ?>

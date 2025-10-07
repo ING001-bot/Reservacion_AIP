@@ -57,12 +57,13 @@ class UsuarioController {
         $ok = $this->usuarioModel->registrarConVerificacion($nombre, $correo, $hash, $tipo_usuario, $token, $expira);
         if ($ok) {
             $link = $this->buildVerificationLink($correo, $token);
-            $sent = $this->enviarCorreoVerificacion($correo, $nombre, $link);
-            if (!$sent) {
-                // rollback si no se pudo enviar (correo inexistente/no aceptado por el servidor SMTP)
-                $this->usuarioModel->eliminarPorCorreo($correo);
-                return ['error' => true, 'mensaje' => '❌ Ese correo no existe o no acepta mensajes. Solo se permiten correos existentes (verificados por envío).'];
-            }
+            // Enviar el correo DESPUÉS de terminar la respuesta para no bloquear la UI
+            $mailer = $this->mailer;
+            register_shutdown_function(function() use ($mailer, $correo, $nombre, $link){
+                try { $mailer->send($correo, 'Verifica tu cuenta - Aulas de Innovación',
+                    '<p>Hola '.htmlspecialchars($nombre).',</p><p>Verifica tu cuenta: <a href="'.htmlspecialchars($link).'">'.htmlspecialchars($link).'</a></p>'); }
+                catch (\Throwable $e) { /* log si es necesario */ }
+            });
         }
         return ['error' => !$ok, 'mensaje' => $ok ? '✅ Usuario creado. Debe verificar su correo para activar la cuenta.' : '❌ Error al registrar'];
     }
@@ -106,12 +107,12 @@ class UsuarioController {
         $ok = $this->usuarioModel->registrarConVerificacion($nombre, $correo, $hash, 'Profesor', $token, $expira);
         if ($ok) {
             $link = $this->buildVerificationLink($correo, $token);
-            $sent = $this->enviarCorreoVerificacion($correo, $nombre, $link);
-            if (!$sent) {
-                // Si no se pudo enviar, revertimos el registro para evitar cuentas imposibles de verificar
-                $this->usuarioModel->eliminarPorCorreo($correo);
-                return ['error' => true, 'mensaje' => '❌ Ese correo no existe o no acepta mensajes. Solo se permiten correos existentes (verificados por envío).'];
-            }
+            $mailer = $this->mailer;
+            register_shutdown_function(function() use ($mailer, $correo, $nombre, $link){
+                try { $mailer->send($correo, 'Verifica tu cuenta - Aulas de Innovación',
+                    '<p>Hola '.htmlspecialchars($nombre).',</p><p>Verifica tu cuenta: <a href="'.htmlspecialchars($link).'">'.htmlspecialchars($link).'</a></p>'); }
+                catch (\Throwable $e) { /* log si es necesario */ }
+            });
         }
         return ['error' => !$ok, 'mensaje' => $ok ? '✅ Cuenta creada. Revisa tu correo para verificarla.' : '❌ Error al crear cuenta'];
     }
@@ -133,12 +134,37 @@ class UsuarioController {
     /** Editar usuario */
     public function editarUsuario($id_usuario, $nombre, $correo, $tipo_usuario) {
         if (!$nombre || !$correo || !$tipo_usuario) {
-            return ['error' => true, 'mensaje' => '⚠ Todos los campos son obligatorios.'];
+            return ['error' => true, 'mensaje' => '⚠️ Todos los campos son obligatorios.'];
         }
+        // Normalizar entradas
+        $nombre = trim($nombre);
+        $correo = trim(strtolower($correo));
+        $tipo_usuario = trim($tipo_usuario);
+
+        // Validar nombre (letras y espacios)
+        if (!preg_match('/^[\p{L}\s]+$/u', $nombre)) {
+            return ['error' => true, 'mensaje' => '⚠️ El nombre solo puede contener letras y espacios.'];
+        }
+
+        // Validar tipo permitido
+        $permitidos = ['Profesor','Encargado','Administrador'];
+        if (!in_array($tipo_usuario, $permitidos, true)) {
+            return ['error' => true, 'mensaje' => '⚠️ Tipo de usuario inválido.'];
+        }
+
+        // Validar correo (formato, etc.)
+        $val = $this->validarCorreoEstricto($correo);
+        if ($val['error']) { return $val; }
+
+        // Evitar duplicidad de correo con otro usuario activo
+        if ($this->usuarioModel->existeCorreoDeOtro($correo, (int)$id_usuario)) {
+            return ['error' => true, 'mensaje' => '⚠️ El correo ya está en uso por otro usuario.'];
+        }
+
         $ok = $this->usuarioModel->actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario);
         return [
             'error' => !$ok,
-            'mensaje' => $ok ? "✅ Usuario actualizado correctamente." : "❌ Error al actualizar."
+            'mensaje' => $ok ? '✅ Usuario actualizado correctamente.' : '❌ Error al actualizar.'
         ];
     }
 
@@ -147,29 +173,49 @@ class UsuarioController {
         $mensaje = '';
         $mensaje_tipo = '';
 
+        // Leer flash message si existe (PRG)
+        if (!empty($_SESSION['flash_msg'])) {
+            $mensaje = $_SESSION['flash_msg'];
+            $mensaje_tipo = $_SESSION['flash_type'] ?? 'success';
+            unset($_SESSION['flash_msg'], $_SESSION['flash_type']);
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['registrar_usuario_admin'])) {
                 $res = $this->registrarUsuario($_POST['nombre'], $_POST['correo'], $_POST['contraseña'], $_POST['tipo']);
                 $mensaje = $res['mensaje'];
-                $mensaje_tipo = $res['error'] ? 'error' : 'success';
+                $mensaje_tipo = $res['error'] ? 'danger' : 'success';
             }
 
             if (isset($_POST['registrar_profesor_publico'])) {
                 $res = $this->registrarProfesorPublico($_POST['nombre'], $_POST['correo'], $_POST['contraseña']);
                 $mensaje = $res['mensaje'];
-                $mensaje_tipo = $res['error'] ? 'error' : 'success';
+                $mensaje_tipo = $res['error'] ? 'danger' : 'success';
             }
 
             if (isset($_POST['eliminar_usuario'])) {
                 $res = $this->eliminarUsuario($_POST['id_usuario']);
                 $mensaje = $res['mensaje'];
-                $mensaje_tipo = $res['error'] ? 'error' : 'success';
+                $mensaje_tipo = $res['error'] ? 'danger' : 'success';
             }
 
             if (isset($_POST['editar_usuario'])) {
                 $res = $this->editarUsuario($_POST['id_usuario'], $_POST['nombre'], $_POST['correo'], $_POST['tipo']);
                 $mensaje = $res['mensaje'];
-                $mensaje_tipo = $res['error'] ? 'error' : 'success';
+                $mensaje_tipo = $res['error'] ? 'danger' : 'success';
+                if (!$res['error']) {
+                    // PRG: guardar flash y redirigir a la vista de usuarios en Admin
+                    $_SESSION['flash_msg'] = $mensaje;
+                    $_SESSION['flash_type'] = $mensaje_tipo;
+                    if (!headers_sent()) {
+                        header('Location: Admin.php?view=usuarios');
+                        exit;
+                    } else {
+                        // Fallback si ya se enviaron headers: redirección en cliente
+                        echo "<script>location.href='Admin.php?view=usuarios';</script>";
+                        exit;
+                    }
+                }
             }
         }
 
@@ -258,15 +304,18 @@ class UsuarioController {
             return ['error' => true, 'mensaje' => '⚠️ El dominio del correo no tiene registros MX válidos. Solo se aceptan correos existentes.'];
         }
         // 3.5) (sin API externa) continuar con chequeo RCPT-TO local y verificación por enlace
-        // 4) Chequeo SMTP RCPT TO (si el servidor responde 550/551 -> inexistente)
+        // 4) Chequeo SMTP RCPT TO (acelerado)
         try {
-            $checker = new MailboxChecker();
-            $rcpt = $checker->check($correo, 5);
-            if ($rcpt === false) {
-                return ['error' => true, 'mensaje' => '⚠️ Ese buzón no existe según su servidor de correo. Verifica el correo ingresado.'];
+            $comunes = ['gmail.com','hotmail.com','outlook.com','yahoo.com','live.com','icloud.com','proton.me','protonmail.com'];
+            if (!in_array($dominio, $comunes, true)) {
+                $checker = new MailboxChecker();
+                // Reducir timeout para no bloquear la UI
+                $rcpt = $checker->check($correo, 3);
+                if ($rcpt === false) {
+                    return ['error' => true, 'mensaje' => '⚠️ Ese buzón no existe según su servidor de correo. Verifica el correo ingresado.'];
+                }
+                // Si null (indeterminado), continuar y verificar por enlace.
             }
-            // Si $rcpt es null (indeterminado), permitir continuar a verificación por enlace.
-            // Grandes proveedores (Gmail/Outlook/etc.) suelen responder indeterminado.
         } catch (\Throwable $e) {
             // Ignorar errores del checker; seguiremos con verificación por enlace
         }

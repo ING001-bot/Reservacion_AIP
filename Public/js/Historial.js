@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', function(){
         containerLeft.appendChild(titleLeft);
         containerRight.appendChild(titleRight);
 
-        const tableLeft = buildTableForAula(data.aip1, data.cancel1, turno);
-        const tableRight = buildTableForAula(data.aip2, data.cancel2, turno);
+        const tableLeft = buildTableForAula(data.aip1, data.cancel1, turno, startOfWeek);
+        const tableRight = buildTableForAula(data.aip2, data.cancel2, turno, startOfWeek);
 
         containerLeft.appendChild(tableLeft);
         containerRight.appendChild(tableRight);
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function(){
         calendarios.appendChild(containerRight);
     }
 
-   function buildTableForAula(aipData, cancelData, turno){
+   function buildTableForAula(aipData, cancelData, turno, startWeek){
     const table = document.createElement('table');
     table.className = 'calendario-table';
 
@@ -116,11 +116,13 @@ document.addEventListener('DOMContentLoaded', function(){
     thEmpty.textContent = '';
     trHead.appendChild(thEmpty);
 
-    const dias = Object.keys(aipData);
+    const dias = getWeekDates(startWeek);
     dias.forEach(fecha => {
         const th = document.createElement('th');
         const d = new Date(fecha + 'T00:00:00');
-        th.innerHTML = `${d.toLocaleDateString('es-PE', {weekday:'long'})}<br><small>${fecha}</small>`;
+        const label = d.toLocaleDateString('es-PE', { weekday:'long' });
+        const nice = label.charAt(0).toUpperCase() + label.slice(1);
+        th.innerHTML = `${nice}<br><small>${fecha}</small>`;
         trHead.appendChild(th);
     });
     thead.appendChild(trHead);
@@ -146,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function(){
             td.dataset.hora = time;
             td.className = 'cell';
 
-            const reservas = aipData[fecha] || [];
+            const reservas = (aipData && aipData[fecha]) ? aipData[fecha] : [];
             const canceladas = (cancelData && cancelData[fecha]) ? cancelData[fecha] : [];
 
             // 1) Si está agendado que en ESTA fila/fecha vaya "CANCELADO", colócalo primero
@@ -202,6 +204,21 @@ document.addEventListener('DOMContentLoaded', function(){
     table.appendChild(tbody);
     return table;
 }
+
+    function getWeekDates(start){
+        // Genera fechas de Lunes a Sábado (6 días) a partir de start (que debe ser lunes)
+        const base = new Date(start + 'T00:00:00');
+        const days = [];
+        for (let i=0; i<6; i++){
+            const d = new Date(base);
+            d.setDate(base.getDate()+i);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth()+1).padStart(2,'0');
+            const dd = String(d.getDate()).padStart(2,'0');
+            days.push(`${yyyy}-${mm}-${dd}`);
+        }
+        return days;
+    }
 
     function getTimesForTurno(turno){
         const times = [];

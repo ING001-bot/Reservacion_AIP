@@ -2,7 +2,7 @@
 body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); color: var(--text-dark, #1f2a44); }
 .container{ max-width:1200px; margin:20px auto; padding:18px; background:#fff; border-radius:16px; box-shadow: 0 12px 32px rgba(30,107,214,0.08); border:1px solid var(--border-soft, #d9e2f3); }
 .controls{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
-.turnos, .semanas, .pdf { display:flex; gap:8px; align-items:center; }
+.turnos, .semanas, .pdf { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .btn{ padding:8px 12px; border-radius:10px; border:1px solid var(--border-soft, #d9e2f3); background:#fff; cursor:pointer; font-weight:600; color: var(--brand-color, #1e6bd6); }
 .btn:hover{ background: var(--brand-light, #eaf3ff); }
 .btn.active{ background: var(--brand-color, #1e6bd6); color:#fff; border-color:transparent; box-shadow: 0 6px 14px rgba(30,107,214,0.25); }
@@ -11,6 +11,7 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 .calendario-box h3{ margin:6px 0 10px 0; font-size:16px; color: var(--brand-color, #1e6bd6); font-weight:700; }
 .calendario-table{ width:100%; min-width: 720px; border-collapse:separate; border-spacing:0; font-size:12px; table-layout:fixed; border:1px solid var(--border-soft, #d9e2f3); border-radius:12px; overflow:hidden; }
 .calendario-table thead th{ position: sticky; top: 0; z-index: 2; background: var(--brand-color, #1e6bd6); color:#fff; padding:8px; text-align:center; font-weight:700; }
+.calendario-table thead th small{ display:block; opacity:.9; }
 .calendario-table td, .calendario-table th{ border:1px solid var(--border-soft, #d9e2f3); padding:6px; min-width:78px; vertical-align:top; background:#fff; height:auto; overflow:visible; word-break:break-word; }
 /* Primera columna pegajosa (horas) para mejor orientación */
 .calendario-table th:first-child,
@@ -33,8 +34,9 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 .tabla-prestamos td{ border-top:1px solid var(--border-soft, #d9e2f3); padding:8px; font-size:13px; text-align:center; }
 @media (max-width:900px){
   .calendarios-grid{ grid-template-columns: 1fr; }
-  .hora-cell{ display:none; }
-  .calendario-table{ min-width: 640px; }
+  /* Mostrar columna de horas también en móvil, compacta y sticky */
+  .hora-cell{ display:table-cell; width:50px; font-size:12px; }
+  .calendario-table{ min-width: 620px; }
   .calendario-table td, .calendario-table th{ font-size:13px; padding:10px; height:auto; }
   .res-label{ display:block; text-align:center; }
 }
@@ -42,10 +44,52 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 /* Mobile muy pequeño */
 @media (max-width:600px){
   .container{ padding:12px; }
-  .controls{ gap:10px; }
-  .btn{ padding:8px 10px; }
+  .controls{ gap:10px; flex-direction: column; align-items: stretch; }
+  .turnos, .semanas, .pdf{ width:100%; }
+  .turnos .btn, .semanas .btn{ flex:1 1 48%; min-width:unset; }
+  .pdf{ justify-content: flex-start; }
+  .pdf .btn{ width:100%; }
+  .btn{ padding:10px 12px; }
   .calendario-box{ padding:8px; }
-  .calendario-table{ min-width: 580px; font-size:12px; }
-  .calendario-table td, .calendario-table th{ padding:12px 8px; height:auto; }
+  .calendario-table{ min-width: 560px; font-size:12px; }
+  .calendario-table thead th{ padding:6px; font-size:12px; }
+  .calendario-table thead th small{ font-size:11px; }
+  .calendario-table td, .calendario-table th{ padding:10px 6px; height:auto; }
   .cancel-label{ font-size:16px; padding:12px 12px; line-height:1.4; }
+  /* Ocultar bloque PDF estándar y usar FAB */
+  .controls .pdf{ display:none; }
 }
+
+/* Mejoras de botones en móviles para que no se "salgan" */
+.controls .btn{ white-space:nowrap; }
+.controls .semanas, .controls .turnos{ width:100%; }
+.controls .pdf{ width:100%; justify-content:flex-end; }
+
+/* Bordes limpios última columna para evitar recortes feos */
+.calendario-table tr > th:last-child,
+.calendario-table tr > td:last-child{ border-right:1px solid var(--border-soft, #d9e2f3); }
+
+/* Botón flotante PDF en móvil */
+.fab-pdf{
+  position: fixed;
+  right: 16px;
+  bottom: 84px;
+  z-index: 1055;
+  background: var(--brand-color, #1e6bd6);
+  color: #fff;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(30,107,214,0.35);
+  border: none;
+}
+.fab-pdf i{ font-size: 20px; }
+@media (max-width:600px){ .fab-pdf{ display:flex; } }
+
+/* Barra inferior móvil dentro del sistema (no se sale del viewport) */
+.mobile-bottom-bar{ position: sticky; bottom: 0; left:0; right:0; background:#fff; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); border-top:1px solid var(--border-soft, #d9e2f3); box-shadow: 0 -6px 18px rgba(30,107,214,0.06); display:none; }
+.mobile-bottom-bar .btn{ width:100%; }
+@media (max-width: 600px){ .mobile-bottom-bar{ display:block; } }

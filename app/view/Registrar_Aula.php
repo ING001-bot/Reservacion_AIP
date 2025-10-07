@@ -24,6 +24,7 @@ $aulas = $controller->listarAulas();
 $id_editar = $_GET['editar'] ?? null;
 ?>
 
+<?php if (!defined('EMBEDDED_VIEW')): ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -32,10 +33,11 @@ $id_editar = $_GET['editar'] ?? null;
 <title>🏫 Gestión de Aulas</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="../../Public/css/brand.css">
+<link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?= time() ?>">
 </head>
 <body class="bg-light">
-
 <main class="container py-4">
+<?php endif; ?>
 
 <h1 class="mb-4 text-brand">🏫 Gestión de Aulas</h1>
 
@@ -135,6 +137,7 @@ $id_editar = $_GET['editar'] ?? null;
 
 <a href="admin.php" class="btn btn-outline-brand mt-3">🔙 Volver al Panel</a>
 
+<?php if (!defined('EMBEDDED_VIEW')): ?>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -142,3 +145,4 @@ $id_editar = $_GET['editar'] ?? null;
 <script src="../../Public/js/aulas.js"></script>
 </body>
 </html>
+<?php endif; ?>

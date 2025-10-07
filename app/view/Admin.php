@@ -22,6 +22,11 @@ $vista = $_GET['view'] ?? 'inicio';
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Estilos de marca -->
   <link rel="stylesheet" href="../../Public/css/brand.css">
+  <!-- Responsive Admin -->
+  <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?php echo time(); ?>">
+  <!-- Calendarios/Historial estilos base para vistas embebidas -->
+  <link rel="stylesheet" href="../../Public/css/historial_global.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="../../Public/css/historial.css?v=<?php echo time(); ?>">
   <style>
     /* Para que sidebar quede fijo en escritorio */
     @media (min-width: 992px) {
@@ -36,18 +41,6 @@ $vista = $_GET['view'] ?? 'inicio';
 </head>
 <body class="bg-light">
 <?php require __DIR__ . '/partials/navbar.php'; ?>
-
-<!-- Barra superior (solo visible en móvil) -->
-<nav class="navbar navbar-dark bg-brand d-lg-none">
-  <div class="container-fluid">
-    <button class="btn btn-outline-light" data-bs-toggle="offcanvas" data-bs-target="#sidebarAdmin">
-      ☰ Menú
-    </button>
-    <span class="navbar-text text-white ms-auto">
-      <?= $usuario ?> (Admin)
-    </span>
-  </div>
-</nav>
 
 <div class="d-flex">
   <!-- Sidebar (Offcanvas) -->
@@ -70,7 +63,6 @@ $vista = $_GET['view'] ?? 'inicio';
         <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial General</a>
         <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
         <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
-        <a class="nav-link link-sidebar text-danger" href="../controllers/LogoutController.php">🚪 Cerrar sesión</a>
       </nav>
       <div class="mt-auto small text-white-50">Admin: <?= $usuario ?></div>
     </div>
@@ -79,6 +71,8 @@ $vista = $_GET['view'] ?? 'inicio';
   <!-- Contenido dinámico -->
   <main class="content p-4 flex-grow-1 min-vh-100">
     <?php
+    // Señal para que las vistas no rendericen su propio <html>/<head>/<body>
+    if (!defined('EMBEDDED_VIEW')) { define('EMBEDDED_VIEW', true); }
     switch ($vista) {
       case 'usuarios':
         include 'Registrar_Usuario.php';

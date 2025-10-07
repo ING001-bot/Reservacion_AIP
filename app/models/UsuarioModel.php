@@ -16,6 +16,13 @@ class UsuarioModel {
         return $stmt->rowCount() > 0;
     }
 
+    // Verifica si el correo ya está usado por otro usuario activo distinto al dado
+    public function existeCorreoDeOtro(string $correo, int $id_usuario): bool {
+        $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND activo = 1 AND id_usuario <> ?");
+        $stmt->execute([$correo, $id_usuario]);
+        return $stmt->rowCount() > 0;
+    }
+
     public function existeCorreoInactivo($correo) {
         $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND activo = 0");
         $stmt->execute([$correo]);

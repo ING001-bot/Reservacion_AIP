@@ -1,0 +1,80 @@
+/* Admin mobile/global responsive polish */
+:root{
+  --adm-text: #1f2a44;
+}
+
+/********************
+ General containers
+********************/ 
+@media (max-width: 600px){
+  .content, main.container, .container{ padding: 14px !important; }
+  h1,h2,h3{ font-size: 1.15rem; }
+}
+
+/********************
+ Forms
+********************/
+.password-field{ position: relative; }
+.password-field .toggle-password{
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  background:transparent; border:0; color:#6b7280;
+}
+
+@media (max-width: 600px){
+  form .form-label{ font-size: .9rem; }
+  form .form-control, form .form-select{ font-size: .95rem; padding:.55rem .65rem; }
+  .btn{ padding:.55rem .75rem; font-weight:600; }
+  .btn.w-100, .col-12 .btn{ width:100%; }
+  .row.g-3>[class^="col-"]{ margin-bottom:.5rem; }
+}
+
+/********************
+ Tables
+********************/
+.table-responsive{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+@media (max-width: 600px){
+  table.table, .table{ font-size: .9rem; }
+  .table th, .table td{ padding: .5rem .4rem; vertical-align: middle; }
+  /* Ocultar columna numeración en pantallas muy pequeñas */
+  .table .col-num{ display: none; }
+  .table-action-cell{ display:flex; gap:8px; flex-direction: column; align-items: stretch; }
+  .table-action-cell .btn{ width:100%; }
+}
+
+/********************
+ Cards & blocks
+********************/
+.card{ border-radius: 14px; }
+.card-header.bg-brand{ border-top-left-radius:14px; border-top-right-radius:14px; }
+.card-brand{ border:1px solid var(--border-soft, #d9e2f3); }
+
+/********************
+ Sidebar admin & offcanvas
+********************/
+@media (max-width: 991.98px){
+  #sidebarAdmin .nav-link{ color:#fff; border-radius:8px; padding:.55rem .75rem; }
+  #sidebarAdmin .nav-link.active{ background:rgba(255,255,255,.15); }
+}
+
+/********************
+ Filters and buttons groups
+********************/
+.btn-control{ min-height: 38px; }
+@media (max-width: 600px){
+  .btn-group>.btn{ flex: 1 1 50%; }
+  .d-flex.gap-2>.btn, .d-flex.gap-2>form>.btn{ flex:1 1 48%; }
+  .filters-actions{ flex-direction: column !important; align-items: stretch !important; }
+  .filters-actions .btn{ width:100%; }
+}
+
+/********************
+ Utilities
+********************/
+.text-brand{ color: var(--brand-color, #1e6bd6) !important; }
+.table-brand thead, .table-primary{ background: var(--brand-color, #1e6bd6) !important; color:#fff; }
+
+/* Helpers */
+@media (max-width:600px){
+  .stack-xs{ flex-direction: column !important; }
+  .w-xs-100{ width: 100% !important; }
+}

@@ -283,9 +283,7 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
             </div>
         </div>
 
-        <div class="text-center">
-            <a href="dashboard.php" class="btn btn-outline-primary">⬅ Volver al Dashboard</a>
-        </div>
+        
     </main>
 
     <!-- Toast feedback -->

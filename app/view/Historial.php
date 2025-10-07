@@ -24,27 +24,33 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
-  <main class="container">
-    <h1 class="text-brand">Historial de Aulas AIP</h1>
+  <?php require __DIR__ . '/partials/navbar.php'; ?>
+  <main class="container py-3">
+    <h1 class="text-brand h3 mb-3">📜 Historial de Aulas</h1>
 
     <div class="controls">
-      <div class="turnos">
-        <button id="btn-manana" class="btn btn-brand active">Turno Mañana (06:00 - 12:45)</button>
-        <button id="btn-tarde" class="btn btn-outline-brand">Turno Tarde (13:00 - 19:00)</button>
-      </div>
-
-      <div class="semanas">
-        <button id="prev-week" class="btn btn-outline-brand">« Semana anterior</button>
-        <button id="next-week" class="btn btn-outline-brand">Semana siguiente »</button>
-        <input type="hidden" id="start-of-week" value="<?php echo $startOfWeek; ?>">
-      </div>
-
-      <div class="pdf">
-        <form action="../view/exportar_pdf.php" method="POST" target="_blank">
-          <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo $startOfWeek; ?>">
-          <input type="hidden" name="turno" id="pdf-turno" value="manana">
-          <button type="submit" class="btn btn-outline-brand">Descargar PDF</button>
-        </form>
+      <div class="row g-2 align-items-stretch">
+        <div class="col-12 col-md-6">
+          <div class="btn-group w-100" role="group" aria-label="Seleccionar turno">
+            <button id="btn-manana" class="btn btn-brand btn-control w-50 active">Mañana</button>
+            <button id="btn-tarde" class="btn btn-outline-brand btn-control w-50">Tarde</button>
+          </div>
+          <div class="small text-muted mt-1">Mañana (06:00–12:45) · Tarde (13:00–19:00)</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <div class="d-flex gap-2">
+            <button id="prev-week" class="btn btn-outline-brand btn-control flex-fill">« Semana anterior</button>
+            <button id="next-week" class="btn btn-outline-brand btn-control flex-fill">Semana siguiente »</button>
+          </div>
+          <input type="hidden" id="start-of-week" value="<?php echo $startOfWeek; ?>">
+        </div>
+        <div class="col-12">
+          <form action="../view/exportar_pdf.php" method="POST" target="_blank" class="w-100">
+            <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo $startOfWeek; ?>">
+            <input type="hidden" name="turno" id="pdf-turno" value="manana">
+            <button type="submit" class="btn btn-outline-brand btn-control w-100">Descargar PDF</button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -56,12 +62,35 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
       <h2>Préstamos realizados</h2>
       <div id="tabla-prestamos"></div>
     </section>
+
+    <!-- Barra inferior móvil para PDF (no se sale del sistema) -->
+    <div class="mobile-bottom-bar">
+      <form action="../view/exportar_pdf.php" method="POST" target="_blank" class="w-100 m-0">
+        <input type="hidden" name="start_week" id="pdf-start-week-bottom" value="<?php echo $startOfWeek; ?>">
+        <input type="hidden" name="turno" id="pdf-turno-bottom" value="manana">
+        <button type="submit" class="btn btn-brand w-100">
+          <i class="fas fa-file-arrow-down me-1"></i> Descargar PDF
+        </button>
+      </form>
+    </div>
   </main>
-    <a href="Profesor.php" class="btn btn-primary mb-3">
-      <i class="bi bi-arrow-left"></i> Volver al inicio
-    </a>
 
   <?php $v = time(); ?>
   <script src="../../Public/js/Historial.js?v=<?= $v ?>" defer></script>
+  <script>
+  // Mantener sincronizados los campos del PDF de la barra inferior
+  document.addEventListener('DOMContentLoaded', function(){
+    const topStart = document.getElementById('pdf-start-week');
+    const topTurno = document.getElementById('pdf-turno');
+    const botStart = document.getElementById('pdf-start-week-bottom');
+    const botTurno = document.getElementById('pdf-turno-bottom');
+    function sync(){
+      if (topStart && botStart) botStart.value = topStart.value;
+      if (topTurno && botTurno) botTurno.value = topTurno.value;
+    }
+    sync();
+    [topStart, topTurno].forEach(el => el && el.addEventListener('change', sync));
+  });
+  </script>
 </body>
 </html>

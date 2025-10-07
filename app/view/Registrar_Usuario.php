@@ -1,7 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 $rol = $_SESSION['tipo'] ?? null;
 $esAdmin = ($rol === 'Administrador');
@@ -13,15 +11,8 @@ try {
     $stmtCfg = $conexion->prepare("SELECT cfg_value FROM app_config WHERE cfg_key='setup_completed'");
     $stmtCfg->execute();
     $setupCompleted = (string)($stmtCfg->fetchColumn() ?: '0');
-} catch (\Throwable $e) {
-    // Si falla, no bloquear pero registrar
-    error_log('setup_completed read failed: ' . $e->getMessage());
-}
-if (!$esAdmin && $setupCompleted === '1') {
-    // Si no es admin y el setup ya se completó, bloquear el acceso a crear cuenta
-    header('Location: ../../Public/index.php');
-    exit();
-}
+} catch (\Throwable $e) { error_log('setup_completed read failed: ' . $e->getMessage()); }
+if (!$esAdmin && $setupCompleted === '1') { header('Location: ../../Public/index.php'); exit(); }
 
 require '../controllers/UsuarioController.php';
 $controller = new UsuarioController();
@@ -33,19 +24,21 @@ $mensaje_tipo = $data['mensaje_tipo'];
 $id_editar = $_GET['editar'] ?? null; // Para edición inline
 ?>
 
+<?php if (!defined('EMBEDDED_VIEW')): ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>👤 <?= $esAdmin ? "Usuarios" : "Crear Cuenta" ?></title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="../../Public/css/brand.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👤 <?= $esAdmin ? "Usuarios" : "Crear Cuenta" ?></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../Public/css/brand.css">
+  <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?= time() ?>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-light">
-
-<main class="container py-4">
+  <main class="container py-4">
+<?php endif; ?>
 
 <h1 class="mb-4 text-brand">👤 <?= $esAdmin ? "Gestión de Usuarios" : "Crear Cuenta" ?></h1>
 
@@ -62,15 +55,15 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
     <div class="card-header bg-brand text-white">Registrar Usuario</div>
     <div class="card-body">
         <form method="post" class="row g-3">
-            <div class="col-md-4">
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Nombre</label>
                 <input type="text" name="nombre" id="admin-name" class="form-control" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Correo</label>
                 <input type="email" name="correo" class="form-control" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Contraseña</label>
                 <div class="password-field">
                     <input type="password" name="contraseña" id="admin-pass" class="form-control" required minlength="6">
@@ -79,7 +72,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                     </button>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Tipo de Usuario</label>
                 <select name="tipo" class="form-select" required>
                     <option value="">-- Selecciona un tipo --</option>
@@ -89,7 +82,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 </select>
             </div>
             <div class="col-12">
-                <button type="submit" name="registrar_usuario_admin" class="btn btn-brand">Registrar Usuario</button>
+                <button type="submit" name="registrar_usuario_admin" class="btn btn-brand w-100">Registrar Usuario</button>
             </div>
         </form>
     </div>
@@ -103,7 +96,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
             <table class="table table-hover align-middle table-brand">
                 <thead class="table-primary text-center">
                     <tr>
-                        <th>N°</th>
+                        <th class="col-num">N°</th>
                         <th>Nombre</th>
                         <th>Correo</th>
                         <th>Tipo</th>
@@ -115,7 +108,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                     <?php if ($id_editar == $user['id_usuario']): ?>
                         <form method="post">
                         <tr>
-                            <td><?= $i ?></td>
+                            <td class="col-num"><?= $i ?></td>
                             <td><input type="text" name="nombre" value="<?= htmlspecialchars($user['nombre']) ?>" class="form-control" required></td>
                             <td><input type="email" name="correo" value="<?= htmlspecialchars($user['correo']) ?>" class="form-control" required></td>
                             <td>
@@ -125,21 +118,21 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                                     <option value="Administrador" <?= $user['tipo_usuario']=='Administrador'?'selected':'' ?>>Administrador</option>
                                 </select>
                             </td>
-                            <td>
+                            <td class="text-center table-action-cell">
                                 <input type="hidden" name="id_usuario" value="<?= $user['id_usuario'] ?>">
                                 <button type="submit" name="editar_usuario" class="btn btn-sm btn-success">💾 Guardar</button>
-                                <a href="Registrar_Usuario.php" class="btn btn-sm btn-secondary">❌ Cancelar</a>
+                                <a href="Admin.php?view=usuarios" class="btn btn-sm btn-secondary">❌ Cancelar</a>
                             </td>
                         </tr>
                         </form>
                     <?php else: ?>
                         <tr>
-                            <td><?= $i ?></td>
+                            <td class="col-num"><?= $i ?></td>
                             <td><?= htmlspecialchars($user['nombre']) ?></td>
                             <td><?= htmlspecialchars($user['correo']) ?></td>
                             <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
-                            <td class="text-center">
-                                <a href="?editar=<?= $user['id_usuario'] ?>" class="btn btn-sm btn-outline-primary">✏️ Editar</a>
+                            <td class="text-center table-action-cell">
+                                <a href="Admin.php?view=usuarios&editar=<?= $user['id_usuario'] ?>" class="btn btn-sm btn-outline-primary">✏️ Editar</a>
                                 <form method="post" class="d-inline form-eliminar-usuario">
                                     <input type="hidden" name="id_usuario" value="<?= $user['id_usuario'] ?>">
                                     <button type="submit" name="eliminar_usuario" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
@@ -189,11 +182,12 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
     <a href="<?= $esAdmin ? 'Admin.php' : '../../Public/index.php' ?>" class="btn btn-outline-brand">🔙 Volver</a>
 </div>
 
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="../../Public/js/registrar_usuario.js"></script>
-<script src="../../Public/js/usuarios.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../../Public/js/registrar_usuario.js"></script>
+  <script src="../../Public/js/usuarios.js"></script>
+<?php if (!defined('EMBEDDED_VIEW')): ?>
+  </main>
 </body>
 </html>
+<?php endif; ?>

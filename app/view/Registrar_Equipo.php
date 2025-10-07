@@ -1,8 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-if ($_SESSION['tipo'] !== 'Administrador') {
-    header('Location: Dashboard.php'); exit;
-}
+if ($_SESSION['tipo'] !== 'Administrador') { header('Location: Dashboard.php'); exit; }
 
 require '../controllers/EquipoController.php';
 $controller = new EquipoController();
@@ -11,6 +9,7 @@ $equipos = $data['equipos'];
 $mensaje = $data['mensaje'];
 $mensaje_tipo = $data['mensaje_tipo'];
 ?>
+<?php if (!defined('EMBEDDED_VIEW')): ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,9 +18,11 @@ $mensaje_tipo = $data['mensaje_tipo'];
     <title>💻 Equipos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../Public/css/brand.css">
+    <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?= time() ?>">
 </head>
 <body class="bg-light">
 <main class="container py-4">
+<?php endif; ?>
     <h1 class="mb-4 text-brand">💻 Gestión de Equipos</h1>
 
     <!-- Formulario registro -->
@@ -107,6 +108,7 @@ $mensaje_tipo = $data['mensaje_tipo'];
     <div class="mt-4">
         <a href="admin.php" class="btn btn-outline-brand">🔙 Volver al Panel</a>
     </div>
+<?php if (!defined('EMBEDDED_VIEW')): ?>
 </main>
 
 <!-- Bootstrap y SweetAlert -->
@@ -126,3 +128,4 @@ Swal.fire({
 <?php endif; ?>
 </body>
 </html>
+<?php endif; ?>
