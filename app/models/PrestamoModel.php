@@ -1,5 +1,5 @@
 <?php
-require "../config/conexion.php";
+if (!class_exists('PrestamoModel')) {
 class PrestamoModel {
     private $db;
     public function __construct($conexion) { $this->db = $conexion; }
@@ -12,9 +12,28 @@ class PrestamoModel {
         if (!$id_usuario || empty($equipos) || !$id_aula) {
             return ['mensaje'=>'⚠ No se proporcionó usuario, equipos o aula.','tipo'=>'error'];
         }
+        
+        // Validar fecha mínima: debe ser al menos 1 día después
+        date_default_timezone_set('America/Lima');
+        $hoy = new DateTime('today', new DateTimeZone('America/Lima'));
+        $minima = (clone $hoy)->modify('+1 day');
+        $fechaPrestamo = DateTime::createFromFormat('Y-m-d', $fecha_prestamo);
+        
+        if (!$fechaPrestamo || $fechaPrestamo < $minima) {
+            return ['mensaje'=>'⚠️ Solo puedes solicitar préstamos a partir del día siguiente. Los préstamos deben hacerse con anticipación, no el mismo día.','tipo'=>'error'];
+        }
+        
+        // Validar que el aula existe
+        $checkAula = $this->db->prepare("SELECT id_aula FROM aulas WHERE id_aula = ? AND activo = 1");
+        $checkAula->execute([$id_aula]);
+        if (!$checkAula->fetch()) {
+            return ['mensaje'=>'❌ El aula seleccionada no existe o está inactiva. Por favor, selecciona otra aula.','tipo'=>'error'];
+        }
+        
         $this->db->beginTransaction();
         try {
-            $stmt = $this->db->prepare("\n                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)
+            $stmt = $this->db->prepare("
+                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)
                 VALUES (?, ?, ?, ?, 'Prestado', ?, ?)
             ");
             foreach ($equipos as $val) {
@@ -23,12 +42,22 @@ class PrestamoModel {
             $this->db->commit();
             return ['mensaje'=>'✅ Préstamos registrados correctamente.','tipo'=>'success'];
         } catch (PDOException $e) {
+            $this->db->rollBack();
             return ['mensaje'=>'❌ Error al registrar préstamos: '.$e->getMessage(),'tipo'=>'error'];
         }
     }
 
     public function listarEquiposPorTipo($tipo) {
-        $stmt = $this->db->prepare("\n            SELECT id_equipo, nombre_equipo\n            FROM equipos\n            WHERE tipo_equipo = ?\n            AND id_equipo NOT IN (\n                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()\n            )\n        ");
+        $tipo = strtoupper(trim($tipo)); // Normalizar a mayúsculas
+        $stmt = $this->db->prepare("
+            SELECT id_equipo, nombre_equipo, tipo_equipo
+            FROM equipos
+            WHERE UPPER(tipo_equipo) = ?
+            AND activo = 1
+            AND id_equipo NOT IN (
+                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()
+            )
+        ");
         $stmt->execute([$tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -98,6 +127,12 @@ class PrestamoModel {
         return $row ? (int)$row['id_usuario'] : null;
     }
 
+    public function obtenerUsuarioPorId(int $id_usuario): ?array {
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo FROM usuarios WHERE id_usuario = ?");
+        $stmt->execute([$id_usuario]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     // Listar notificaciones de un usuario
     public function listarNotificacionesUsuario(int $id_usuario, bool $soloNoLeidas = false, int $limit = 50): array {
         if (!$id_usuario) return [];
@@ -148,10 +183,20 @@ class PrestamoModel {
      * $items: array de ['tipo' => string, 'cantidad' => int, 'es_complemento' => bool]
      */
     public function crearPrestamoPack(int $id_usuario, int $id_aula, string $fecha_prestamo, string $hora_inicio, ?string $hora_fin, array $items): array {
-        // Normalizar items: filtrar cantidades > 0
+        // Validar fecha mínima: debe ser al menos 1 día después
+        date_default_timezone_set('America/Lima');
+        $hoy = new DateTime('today', new DateTimeZone('America/Lima'));
+        $minima = (clone $hoy)->modify('+1 day');
+        $fechaPrestamo = DateTime::createFromFormat('Y-m-d', $fecha_prestamo);
+        
+        if (!$fechaPrestamo || $fechaPrestamo < $minima) {
+            return ['tipo'=>'error', 'mensaje'=>'⚠️ Solo puedes solicitar préstamos a partir del día siguiente. Los préstamos deben hacerse con anticipación, no el mismo día.'];
+        }
+        
+        // Normalizar items: filtrar cantidades > 0 y normalizar tipos a MAYÚSCULAS
         $norm = [];
         foreach ($items as $it) {
-            $tipo = trim((string)($it['tipo'] ?? ''));
+            $tipo = strtoupper(trim((string)($it['tipo'] ?? '')));
             $cant = (int)($it['cantidad'] ?? 0);
             if ($tipo !== '' && $cant > 0) {
                 $norm[] = [
@@ -252,7 +297,7 @@ class PrestamoModel {
 
     /** Suma lo prestado por tipo en una fecha (packs activos) */
     private function sumarPrestadoPorTipoEnFecha(string $fecha_prestamo): array {
-        $sql = "SELECT i.tipo_equipo, COALESCE(SUM(i.cantidad),0) AS prestado FROM prestamos_pack p JOIN prestamos_pack_items i ON p.id_pack = i.id_pack WHERE p.estado = 'Prestado' AND p.fecha_prestamo = :f GROUP BY i.tipo_equipo";
+        $sql = "SELECT UPPER(i.tipo_equipo) AS tipo_equipo, COALESCE(SUM(i.cantidad),0) AS prestado FROM prestamos_pack p JOIN prestamos_pack_items i ON p.id_pack = i.id_pack WHERE p.estado = 'Prestado' AND p.fecha_prestamo = :f GROUP BY UPPER(i.tipo_equipo)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':f' => $fecha_prestamo]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -266,7 +311,7 @@ class PrestamoModel {
      * Así, cualquier alta/baja desde Admin se refleja inmediatamente sin depender de stock_equipos.
      */
     private function obtenerStockPorTipo(): array {
-        $sql = "SELECT tipo_equipo, COUNT(*) AS stock_total FROM equipos WHERE activo = 1 GROUP BY tipo_equipo";
+        $sql = "SELECT UPPER(tipo_equipo) AS tipo_equipo, COUNT(*) AS stock_total FROM equipos WHERE activo = 1 GROUP BY UPPER(tipo_equipo)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -311,4 +356,5 @@ class PrestamoModel {
         }
         return $disp;
     }
+}
 }

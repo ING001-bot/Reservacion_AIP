@@ -45,25 +45,32 @@ $vista = $_GET['view'] ?? 'inicio';
 <div class="d-flex">
   <!-- Sidebar (Offcanvas) -->
   <div class="offcanvas offcanvas-start bg-brand text-white offcanvas-lg" tabindex="-1" id="sidebarAdmin">
-    <div class="offcanvas-header d-lg-none">
-      <h5 class="offcanvas-title">Menú Admin</h5>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    <div class="offcanvas-header d-lg-none align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <img src="../../Public/img/logo_colegio.png" alt="Logo" style="height:44px; width:auto; object-fit:contain;">
+        <div class="fw-bold" style="font-size:1.1rem; line-height:1.2;">Colegio<br>Juan Tomis Stack</div>
+      </div>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column p-3">
-      <div class="d-flex align-items-center mb-3">
-        <img src="../../Public/img/logo_colegio.png" alt="Logo" style="height:40px;" class="me-2">
-        <strong>Colegio MJS</strong>
-      </div>
       <hr class="border-light opacity-50">
       <nav class="nav flex-column gap-1">
         <a class="nav-link link-sidebar <?= $vista==='inicio'?'active':'' ?>" href="Admin.php?view=inicio">🏠 Inicio</a>
         <a class="nav-link link-sidebar <?= $vista==='usuarios'?'active':'' ?>" href="Admin.php?view=usuarios">👤 Usuarios</a>
         <a class="nav-link link-sidebar <?= $vista==='aulas'?'active':'' ?>" href="Admin.php?view=aulas">🏫 Aulas</a>
         <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos">💻 Inventario de Equipos</a>
+        <a class="nav-link link-sidebar <?= $vista==='tipos_equipo'?'active':'' ?>" href="Admin.php?view=tipos_equipo">⚙ Tipos de Equipo</a>
         <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial General</a>
         <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
         <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
       </nav>
+      <hr class="border-light opacity-50 d-lg-none">
+      <!-- Cerrar sesión destacado en móvil -->
+      <div class="d-lg-none">
+        <a href="../controllers/LogoutController.php" class="btn btn-sm btn-light w-100 fw-semibold text-danger">
+          <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
+        </a>
+      </div>
       <div class="mt-auto small text-white-50">Admin: <?= $usuario ?></div>
     </div>
   </div>
@@ -82,6 +89,9 @@ $vista = $_GET['view'] ?? 'inicio';
         break;
       case 'equipos':
         include 'registrar_equipo.php';
+        break;
+      case 'tipos_equipo':
+        include 'Gestion_Tipos_Equipo.php';
         break;
       case 'historial_global':
         include 'HistorialGlobal.php';
@@ -102,7 +112,7 @@ $vista = $_GET['view'] ?? 'inicio';
               <div class="card-body">
                 <h5 class="card-title">Usuarios</h5>
                 <p class="card-text text-muted">Crear, editar y gestionar permisos.</p>
-                <a href="dashboard_admin.php?view=usuarios" class="btn btn-outline-brand">Gestionar</a>
+                <a href="Admin.php?view=usuarios" class="btn btn-outline-brand">Gestionar</a>
               </div>
             </div>
           </div>
@@ -111,7 +121,7 @@ $vista = $_GET['view'] ?? 'inicio';
               <div class="card-body">
                 <h5 class="card-title">Aulas</h5>
                 <p class="card-text text-muted">Alta y mantenimiento de aulas.</p>
-                <a href="dashboard_admin.php?view=aulas" class="btn btn-outline-brand">Gestionar</a>
+                <a href="Admin.php?view=aulas" class="btn btn-outline-brand">Gestionar</a>
               </div>
             </div>
           </div>
@@ -120,7 +130,7 @@ $vista = $_GET['view'] ?? 'inicio';
               <div class="card-body">
                 <h5 class="card-title">Equipos</h5>
                 <p class="card-text text-muted">Inventario y préstamos.</p>
-                <a href="dashboard_admin.php?view=equipos" class="btn btn-outline-brand">Gestionar</a>
+                <a href="Admin.php?view=equipos" class="btn btn-outline-brand">Gestionar</a>
               </div>
             </div>
           </div>
@@ -132,6 +142,16 @@ $vista = $_GET['view'] ?? 'inicio';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?php if ($vista === 'aulas'): ?>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../../Public/js/aulas.js?v=<?= time() ?>"></script>
+<?php elseif ($vista === 'equipos'): ?>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../../Public/js/equipo.js?v=<?= time() ?>"></script>
+<?php elseif ($vista === 'tipos_equipo'): ?>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../../Public/js/tipos_equipo.js?v=<?= time() ?>"></script>
+<?php endif; ?>
 <script src="../../Public/js/theme.js"></script>
 </body>
 </html>

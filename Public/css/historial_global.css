@@ -122,3 +122,97 @@
 @media (max-width: 992px){
   .calendarios-grid{ grid-template-columns: 1fr; }
 }
+
+/* Mejoras para el rango de semana */
+#week-range-display{
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-width: 150px;
+  text-align: center;
+}
+
+/* Botón PDF mejorado */
+.btn-success{
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.btn-success:hover{
+  background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px){
+  #week-range-display{
+    font-size: 0.85rem;
+    min-width: 120px;
+  }
+  .calendario-table{
+    font-size: 12px;
+  }
+  .hora-cell{
+    width: 60px;
+    font-size: 11px;
+  }
+  .res-label, .cancel-label{
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  /* Mejorar diseño en móvil */
+  #historial-global .d-flex.justify-content-between{
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  /* Botones de navegación más compactos */
+  .btn-sm{
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  /* Navegación de semanas en móvil */
+  .d-flex.gap-2.align-items-center.justify-content-center{
+    flex-wrap: wrap;
+  }
+  
+  .d-flex.gap-2.align-items-center.justify-content-center .btn-outline-brand{
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* Móvil pequeño */
+@media (max-width: 576px){
+  /* Botón PDF ocupa todo el ancho en móvil */
+  .w-100.w-md-auto{
+    width: 100% !important;
+  }
+  
+  .btn-group{
+    width: 100%;
+  }
+  
+  .btn-group .btn{
+    flex: 1;
+  }
+  
+  /* Ajustar navegación de semanas */
+  #week-range-display{
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0;
+  }
+  
+  .d-flex.gap-2.align-items-center.justify-content-center{
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .d-flex.gap-2.align-items-center.justify-content-center .btn-outline-brand{
+    width: 100%;
+  }
+}

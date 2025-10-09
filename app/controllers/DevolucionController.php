@@ -1,7 +1,7 @@
 <?php
 session_start();
 require '../config/conexion.php';
-require '../models/PrestamoModel.php';
+require_once '../models/PrestamoModel.php';
 
 class DevolucionController {
     private $model;

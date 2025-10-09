@@ -304,21 +304,8 @@ class UsuarioController {
             return ['error' => true, 'mensaje' => '⚠️ El dominio del correo no tiene registros MX válidos. Solo se aceptan correos existentes.'];
         }
         // 3.5) (sin API externa) continuar con chequeo RCPT-TO local y verificación por enlace
-        // 4) Chequeo SMTP RCPT TO (acelerado)
-        try {
-            $comunes = ['gmail.com','hotmail.com','outlook.com','yahoo.com','live.com','icloud.com','proton.me','protonmail.com'];
-            if (!in_array($dominio, $comunes, true)) {
-                $checker = new MailboxChecker();
-                // Reducir timeout para no bloquear la UI
-                $rcpt = $checker->check($correo, 3);
-                if ($rcpt === false) {
-                    return ['error' => true, 'mensaje' => '⚠️ Ese buzón no existe según su servidor de correo. Verifica el correo ingresado.'];
-                }
-                // Si null (indeterminado), continuar y verificar por enlace.
-            }
-        } catch (\Throwable $e) {
-            // Ignorar errores del checker; seguiremos con verificación por enlace
-        }
+        // 4) Chequeo SMTP RCPT TO deshabilitado para velocidad (solo verificación por enlace)
+        // La validación real se hace al enviar el correo de verificación
         return ['error' => false, 'mensaje' => ''];
     }
 }

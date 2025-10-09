@@ -135,7 +135,7 @@ $id_editar = $_GET['editar'] ?? null;
     </div>
 </div>
 
-<a href="admin.php" class="btn btn-outline-brand mt-3">🔙 Volver al Panel</a>
+<a href="Admin.php" class="btn btn-outline-brand mt-3 hide-xs">🔙 Volver al Panel</a>
 
 <?php if (!defined('EMBEDDED_VIEW')): ?>
 </main>

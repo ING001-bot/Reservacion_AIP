@@ -11,11 +11,23 @@
   const pdfTurno = document.getElementById('pdf-turno');
   const pdfProf = document.getElementById('pdf-prof');
   const profFilter = document.getElementById('calendar-prof-filter');
+  const weekRangeDisplay = document.getElementById('week-range-display');
 
   if (!startInput || !btnPrev || !btnNext || !btnManana || !btnTarde || !calendarios) return;
 
   let turno = 'manana';
   let startOfWeek = startInput.value || new Date().toISOString().substr(0,10);
+  
+  function updateWeekRangeDisplay(monday){
+    if(!weekRangeDisplay) return;
+    const start = new Date(monday+'T00:00:00');
+    const end = new Date(monday+'T00:00:00');
+    end.setDate(end.getDate() + 5); // +5 días = sábado
+    const opts = {day:'2-digit', month:'short'};
+    const startStr = start.toLocaleDateString('es-PE', opts);
+    const endStr = end.toLocaleDateString('es-PE', opts);
+    weekRangeDisplay.textContent = `${startStr} - ${endStr}`;
+  }
 
   function setActiveTurn(button){
     btnManana.classList.remove('active');
@@ -26,8 +38,8 @@
   btnManana.addEventListener('click', ()=>{ turno='manana'; setActiveTurn(btnManana); pdfTurno.value='manana'; loadCalendar(); });
   btnTarde.addEventListener('click', ()=>{ turno='tarde'; setActiveTurn(btnTarde); pdfTurno.value='tarde'; loadCalendar(); });
 
-  btnPrev.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value=startOfWeek; pdfStart.value=startOfWeek; loadCalendar(); });
-  btnNext.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value=startOfWeek; pdfStart.value=startOfWeek; loadCalendar(); });
+  btnPrev.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value=startOfWeek; pdfStart.value=startOfWeek; updateWeekRangeDisplay(startOfWeek); loadCalendar(); });
+  btnNext.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value=startOfWeek; pdfStart.value=startOfWeek; updateWeekRangeDisplay(startOfWeek); loadCalendar(); });
 
   function shiftWeek(dateStr, delta){
     const d = new Date(dateStr+'T00:00:00');
@@ -136,5 +148,6 @@
   }
 
   // init
+  updateWeekRangeDisplay(startOfWeek);
   loadCalendar();
 })();

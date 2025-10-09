@@ -153,6 +153,20 @@ class ReservaModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Listar usuarios por rol (para notificaciones)
+    public function listarUsuariosPorRol(array $roles): array {
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo FROM usuarios WHERE tipo_usuario IN ($placeholders) AND activo = 1");
+        $stmt->execute($roles);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Crear notificación interna
+    public function crearNotificacion(int $id_usuario, string $titulo, string $mensaje, string $url = ''): bool {
+        $stmt = $this->db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
+        return $stmt->execute([$id_usuario, $titulo, $mensaje, $url]);
+    }
+
     // Listar cancelaciones del usuario dentro de un rango de fechas (por fecha reservada)
     public function obtenerCanceladasPorUsuarioYRango($id_usuario, $desde, $hasta) {
         $stmt = $this->db->prepare("\n            SELECT rc.id_cancelacion, rc.id_aula, rc.motivo, rc.fecha_cancelacion,\n                   rc.fecha, rc.hora_inicio, rc.hora_fin, a.nombre_aula, a.tipo\n            FROM reservas_canceladas rc\n            LEFT JOIN aulas a ON rc.id_aula = a.id_aula\n            WHERE rc.id_usuario = :id_usuario\n              AND rc.fecha BETWEEN :desde AND :hasta\n            ORDER BY rc.fecha ASC, rc.hora_inicio ASC\n        ");

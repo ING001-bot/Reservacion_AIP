@@ -48,7 +48,7 @@ class ReservaController {
         $minima_str = $minima->format('Y-m-d');
 
         if ($fecha_reserva_str < $minima_str) {
-            $this->mensaje = "⚠️ Solo puedes reservar a partir del día siguiente.";
+            $this->mensaje = "⚠️ Solo puedes reservar a partir del día siguiente. Las reservas deben hacerse con anticipación, no el mismo día.";
             $this->tipo = "danger";
             return false;
         }
@@ -69,29 +69,68 @@ class ReservaController {
             if ($this->model->crearReserva($id_aula, $id_usuario, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
                 $this->mensaje = "✅ Reserva realizada correctamente.";
                 $this->tipo = "success";
-                // Enviar notificación por correo
+                
+                // Obtener datos una sola vez
+                $aula = $this->model->obtenerAulaPorId($id_aula);
+                $aulaNombre = $aula['nombre_aula'] ?? ('Aula #' . $id_aula);
+                $usuarios = $this->model->listarUsuariosPorRol(['Administrador','Encargado']);
+                
+                // Notificar a Admin y Encargado (sistema)
                 try {
-                    $to = $_SESSION['correo'] ?? '';
-                    if ($to) {
-                        $aula = $this->model->obtenerAulaPorId($id_aula);
-                        $aulaNombre = $aula['nombre_aula'] ?? ('Aula #' . $id_aula);
-                        $subject = 'Confirmación de reserva - ' . $aulaNombre;
-                        $html = '<p>Hola ' . htmlspecialchars($_SESSION['usuario'] ?? 'Usuario') . ',</p>' .
-                                '<p>Has realizado una reserva con estos detalles:</p>' .
+                    $msg = 'Nueva reserva de aula por '.($_SESSION['usuario'] ?? 'Usuario').'. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
+                    foreach ($usuarios as $u) {
+                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Nueva reserva de aula', $msg, 'Admin.php?view=historial_global');
+                    }
+                } catch (\Throwable $e) { /* log suave */ }
+                
+                // Enviar notificación por correo al profesor (async)
+                $to = $_SESSION['correo'] ?? '';
+                if ($to) {
+                    $usuario = $_SESSION['usuario'] ?? 'Usuario';
+                    register_shutdown_function(function() use ($to, $aulaNombre, $usuario, $fecha_reserva_str, $hora_inicio, $hora_fin) {
+                        try {
+                            $mailer = new Mailer();
+                            $subject = 'Confirmación de reserva - ' . $aulaNombre;
+                            $html = '<p>Hola ' . htmlspecialchars($usuario) . ',</p>' .
+                                    '<p>Has realizado una reserva con estos detalles:</p>' .
+                                    '<ul>' .
+                                    '<li><strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '</li>' .
+                                    '<li><strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '</li>' .
+                                    '<li><strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '</li>' .
+                                    '<li><strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin) . '</li>' .
+                                    '</ul>' .
+                                    '<p>Si no fuiste tú, por favor contacta al administrador.</p>';
+                            $mailer->send($to, $subject, $html);
+                        } catch (\Throwable $e) {
+                            error_log('Email reserva profesor fallo: ' . $e->getMessage());
+                        }
+                    });
+                }
+                
+                // Notificar por correo a Admin y Encargado (async)
+                $usuario = $_SESSION['usuario'] ?? 'Docente';
+                $correo = $_SESSION['correo'] ?? '';
+                register_shutdown_function(function() use ($usuarios, $aulaNombre, $usuario, $correo, $fecha_reserva_str, $hora_inicio, $hora_fin) {
+                    try {
+                        $mailer = new Mailer();
+                        $subject = 'Nueva reserva de aula - ' . $usuario;
+                        $html = '<p>Se ha registrado una nueva reserva de aula:</p>' .
                                 '<ul>' .
+                                '<li><strong>Docente:</strong> ' . htmlspecialchars($usuario) . ' (' . htmlspecialchars($correo) . ')</li>' .
                                 '<li><strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '</li>' .
                                 '<li><strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '</li>' .
                                 '<li><strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '</li>' .
                                 '<li><strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin) . '</li>' .
-                                '</ul>' .
-                                '<p>Si no fuiste tú, por favor contacta al administrador.</p>';
-                        $mailer = new Mailer();
-                        $mailer->send($to, $subject, $html);
+                                '</ul>';
+                        foreach ($usuarios as $u) {
+                            if (!empty($u['correo'])) {
+                                $mailer->send($u['correo'], $subject, $html);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        error_log('Email notif admin/encargado reserva fallo: ' . $e->getMessage());
                     }
-                } catch (\Throwable $e) {
-                    // No interrumpir el flujo por fallo de correo
-                    error_log('Email reserva fallo: ' . $e->getMessage());
-                }
+                });
                 return true;
             } else {
                 $this->mensaje = "❌ Error al realizar la reserva.";

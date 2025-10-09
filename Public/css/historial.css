@@ -93,3 +93,32 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 .mobile-bottom-bar{ position: sticky; bottom: 0; left:0; right:0; background:#fff; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); border-top:1px solid var(--border-soft, #d9e2f3); box-shadow: 0 -6px 18px rgba(30,107,214,0.06); display:none; }
 .mobile-bottom-bar .btn{ width:100%; }
 @media (max-width: 600px){ .mobile-bottom-bar{ display:block; } }
+
+/* Mejoras para el rango de semana */
+#week-range-display{
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-width: 150px;
+  text-align: center;
+}
+
+/* Botón PDF mejorado */
+.btn-success{
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.btn-success:hover{
+  background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px){
+  #week-range-display{
+    font-size: 0.85rem;
+    min-width: 120px;
+  }
+}

@@ -61,6 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
             Swal.fire("⚠️ Campos incompletos", "Por favor completa todos los campos antes de reservar.", "warning");
             return;
         }
+
+        // Validar que la fecha sea al menos 1 día después de hoy
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const mañana = new Date(hoy);
+        mañana.setDate(mañana.getDate() + 1);
+        const fechaSeleccionada = new Date(fecha + 'T00:00:00');
+        
+        if (fechaSeleccionada < mañana) {
+            Swal.fire("⚠️ Fecha no permitida", "Solo puedes reservar a partir del día siguiente. Las reservas deben hacerse con anticipación.", "error");
+            return;
+        }
+
         if (horaInicio >= horaFin) {
             Swal.fire("⚠️ Error en horas", "La hora de inicio debe ser menor a la hora de fin.", "error");
             return;

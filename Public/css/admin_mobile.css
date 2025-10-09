@@ -1,25 +1,32 @@
 /* Admin mobile/global responsive polish */
-:root{
+ :root{
   --adm-text: #1f2a44;
-}
+ }
 
 /********************
- General containers
+General containers
 ********************/ 
 @media (max-width: 600px){
   .content, main.container, .container{ padding: 14px !important; }
   h1,h2,h3{ font-size: 1.15rem; }
 }
 
+@media (max-width: 768px){
+  .content, main.container, .container{ padding: 16px !important; }
+}
+
+/* Imágenes y media fluidas */
+img, .img-fluid { max-width: 100%; height: auto; }
+svg{ max-width: 100%; height: auto; }
+
 /********************
- Forms
+Forms
 ********************/
 .password-field{ position: relative; }
 .password-field .toggle-password{
   position:absolute; right:10px; top:50%; transform:translateY(-50%);
   background:transparent; border:0; color:#6b7280;
 }
-
 @media (max-width: 600px){
   form .form-label{ font-size: .9rem; }
   form .form-control, form .form-select{ font-size: .95rem; padding:.55rem .65rem; }
@@ -28,8 +35,14 @@
   .row.g-3>[class^="col-"]{ margin-bottom:.5rem; }
 }
 
+/* Grupos de botones apilables en pantallas pequeñas */
+.btn-group-wrap{ display:flex; flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 600px){
+  .btn-group-wrap > .btn{ flex: 1 1 48%; }
+}
+
 /********************
- Tables
+Tables
 ********************/
 .table-responsive{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 @media (max-width: 600px){
@@ -41,23 +54,42 @@
   .table-action-cell .btn{ width:100%; }
 }
 
+/* ruptura de palabras para evitar desbordes en celdas */
+.table td, .table th{ word-break: break-word; overflow-wrap: anywhere; }
+
 /********************
- Cards & blocks
+Cards & blocks
 ********************/
 .card{ border-radius: 14px; }
 .card-header.bg-brand{ border-top-left-radius:14px; border-top-right-radius:14px; }
 .card-brand{ border:1px solid var(--border-soft, #d9e2f3); }
 
+/* Ajustes de márgenes compactos en móvil */
+@media (max-width: 600px){
+  .card .card-body{ padding: 0.85rem; }
+}
+
 /********************
- Sidebar admin & offcanvas
+Sidebar admin & offcanvas
 ********************/
 @media (max-width: 991.98px){
   #sidebarAdmin .nav-link{ color:#fff; border-radius:8px; padding:.55rem .75rem; }
   #sidebarAdmin .nav-link.active{ background:rgba(255,255,255,.15); }
 }
 
+/* Evitar solape del offcanvas con la navbar fija */
+@media (max-width: 991.98px){
+  .offcanvas{ padding-bottom: 16px; }
+  /* Marca grande y bonita dentro del header del offcanvas */
+  #sidebarAdmin .offcanvas-header .fw-bold{
+    font-size: 1.25rem;
+    line-height: 1.2;
+    letter-spacing: .2px;
+  }
+}
+
 /********************
- Filters and buttons groups
+Filters and buttons groups
 ********************/
 .btn-control{ min-height: 38px; }
 @media (max-width: 600px){
@@ -68,7 +100,7 @@
 }
 
 /********************
- Utilities
+Utilities
 ********************/
 .text-brand{ color: var(--brand-color, #1e6bd6) !important; }
 .table-brand thead, .table-primary{ background: var(--brand-color, #1e6bd6) !important; color:#fff; }
@@ -77,4 +109,22 @@
 @media (max-width:600px){
   .stack-xs{ flex-direction: column !important; }
   .w-xs-100{ width: 100% !important; }
+  /* Ocultar botones redundantes de navegación en móvil */
+  .btn-back, .btn-hide-xs, .hide-xs{ display: none !important; }
+}
+
+/* Helpers para medianos */
+@media (max-width: 768px){
+  .stack-sm{ flex-direction: column !important; }
+  .gap-sm-2{ gap: .5rem !important; }
+}
+
+/* Layout desktop: centrar y limitar el ancho del contenido para mejor legibilidad */
+@media (min-width: 1200px){
+  .content{ max-width: 1200px; margin-left: auto; margin-right: auto; }
+}
+
+/* Ajuste fino de paddings del contenido para que no se vea "aplastado" */
+@media (min-width: 992px){
+  .content{ padding-top: 2rem !important; padding-bottom: 2rem !important; }
 }

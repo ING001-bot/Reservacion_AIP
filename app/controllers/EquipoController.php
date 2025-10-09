@@ -1,5 +1,6 @@
 <?php
 require_once '../models/EquipoModel.php';
+require_once '../models/TipoEquipoModel.php';
 
 class EquipoController {
     private $equipoModel;
@@ -12,6 +13,11 @@ class EquipoController {
     public function registrarEquipo($nombre_equipo, $tipo_equipo, $stock) {
         if (!$nombre_equipo || !$tipo_equipo || $stock < 0) {
             return ['error' => true, 'mensaje' => '⚠ Todos los campos son obligatorios y el stock no puede ser negativo.'];
+        }
+        // Validar existencia del tipo
+        $tipoModel = new TipoEquipoModel();
+        if (!$tipoModel->existeNombre($tipo_equipo)) {
+            return ['error' => true, 'mensaje' => '⚠ Debes crear primero el tipo de equipo "'.htmlspecialchars($tipo_equipo).'" en ⚙ Tipos de Equipo.'];
         }
         $ok = $this->equipoModel->registrarEquipo($nombre_equipo, $tipo_equipo, $stock);
         return [

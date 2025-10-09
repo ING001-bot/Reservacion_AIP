@@ -97,23 +97,24 @@ $badge = count($no_leidas);
     </a>
     <?php endif; ?>
     
-    <a class="navbar-brand fw-bold d-flex align-items-center" href="../view/Dashboard.php" title="Juan Tomis Stack">
-      <img src="../../Public/img/logo_colegio.png" alt="Logo" class="me-2" style="height:28px; width:auto; object-fit:contain;">
-      <span>Juan Tomis Stack</span>
+    <a class="navbar-brand fw-bold d-flex align-items-center brand-navbar" href="../view/Dashboard.php" title="Juan Tomis Stack">
+      <img src="../../Public/img/logo_colegio.png" alt="Logo" class="me-2 brand-logo">
+      <span class="brand-title">Juan Tomis Stack</span>
     </a>
     
     <div class="d-flex align-items-center ms-auto">
-      <!-- Notificaciones -->
+      <!-- Notificaciones (solo Admin y Encargado) -->
+      <?php if ($es_admin || $es_encargado): ?>
       <div class="dropdown me-3">
-        <a class="nav-link dropdown-toggle position-relative text-white p-0" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="btn btn-link nav-link position-relative text-white p-2 border-0" id="notifDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
           <i class="fas fa-bell fa-lg"></i>
           <?php if ($badge > 0): ?>
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
               <?= $badge ?>
             </span>
           <?php endif; ?>
-        </a>
-        <div class="dropdown-menu dropdown-menu-end p-0 shadow" aria-labelledby="notifDropdown" style="min-width: 320px;">
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end p-0 shadow" aria-labelledby="notifDropdown" style="min-width: 320px; max-width: 400px;">
           <div class="px-3 py-2 d-flex justify-content-between align-items-center border-bottom">
             <strong>Notificaciones</strong>
             <button class="btn btn-sm btn-outline-secondary rounded-pill" id="notif-markall">Marcar todas</button>
@@ -135,15 +136,16 @@ $badge = count($no_leidas);
               <?php endforeach; ?>
             <?php endif; ?>
           </div>
-        </div>
+        </ul>
       </div>
+      <?php endif; ?>
       
       <!-- Perfil de usuario (solo escritorio) -->
       <div class="dropdown d-none d-lg-block">
-        <a href="#" class="nav-link text-white dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-          <i class="fas fa-user-circle me-1"></i>
-          <?= $nombre ?>
-        </a>
+        <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
+          <i class="fas fa-user-circle me-2"></i>
+          <span><?= $nombre ?></span>
+        </button>
         <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
           <li><span class="dropdown-item-text small text-muted"><?= $tipo ?></span></li>
           <li><hr class="dropdown-divider"></li>
@@ -235,10 +237,79 @@ body.dark #notif-list::-webkit-scrollbar-thumb {
 body.dark #notif-list::-webkit-scrollbar-thumb:hover {
   background: #718096;
 }
-/* estilos existentes */
+
+/* Estilos para dropdowns en navbar - Mejorados */
+.navbar .btn-link {
+  text-decoration: none !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.75rem;
+  background: transparent !important;
+  border-radius: 8px;
+}
+
+.navbar .btn-link:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+.navbar .btn-link:focus,
+.navbar .btn-link:active {
+  color: #fff !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.navbar .dropdown-toggle::after {
+  margin-left: 0.5em;
+  vertical-align: middle;
+  border-top-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Asegurar que los iconos sean visibles con sombra sutil */
+.navbar .fas {
+  color: #fff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Badge de notificaciones mejorado */
+.navbar .badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Forzar visibilidad del dropdown */
+.dropdown-menu.show {
+  display: block !important;
+  animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
 
 <style>
+/* Marca grande y bonita en navbar (desktop/tablet) */
+.brand-navbar .brand-logo{ height:28px; width:auto; object-fit:contain; }
+@media (min-width: 992px){
+  .brand-navbar .brand-logo{ height:32px; }
+  .brand-navbar .brand-title{ font-size: 1.25rem; font-weight: 800; letter-spacing:.2px; }
+}
+@media (min-width: 1400px){
+  .brand-navbar .brand-title{ font-size: 1.35rem; }
+}
+
 /* Botón Atrás unificado (móvil) */
 .btn-back{
   background:#fff;
@@ -271,38 +342,81 @@ body.dark #notif-list::-webkit-scrollbar-thumb:hover {
 body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); border-color: var(--border-soft); }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../Public/js/notifications.js"></script>
 <script>
-// Fallback por si el Dropdown de Bootstrap no se inicializa
-(function(){
-  function toggleMenu(triggerId){
-    var trigger = document.getElementById(triggerId);
-    if (!trigger) return;
-    var dropdown = trigger.closest('.dropdown');
-    if (!dropdown) return;
-    var menu = dropdown.querySelector('.dropdown-menu');
-    if (!menu) return;
-    trigger.addEventListener('click', function(e){
-      e.preventDefault();
-      // Si Bootstrap está disponible, delega en él
-      if (window.bootstrap && bootstrap.Dropdown){
-        try{ new bootstrap.Dropdown(trigger).toggle(); return; }catch(err){}
+// FORZAR dropdowns a funcionar SIEMPRE
+(function() {
+  'use strict';
+  
+  function forceDropdowns() {
+    // Esperar a Bootstrap
+    if (typeof bootstrap === 'undefined' || !bootstrap.Dropdown) {
+      setTimeout(forceDropdowns, 100);
+      return;
+    }
+    
+    console.log('🔧 Inicializando dropdowns forzadamente...');
+    
+    // Obtener todos los triggers
+    var triggers = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    
+    triggers.forEach(function(trigger) {
+      try {
+        // Destruir instancia previa
+        var instance = bootstrap.Dropdown.getInstance(trigger);
+        if (instance) instance.dispose();
+        
+        // Crear nueva instancia FORZADA
+        var dropdown = new bootstrap.Dropdown(trigger, {
+          autoClose: true,
+          popperConfig: null
+        });
+        
+        // Forzar que el click funcione
+        trigger.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropdown.toggle();
+        });
+        
+        console.log('✅ Dropdown OK:', trigger.id);
+      } catch (err) {
+        console.error('❌ Error en dropdown:', trigger.id, err);
       }
-      // Fallback manual
-      var open = menu.classList.contains('show');
-      document.querySelectorAll('.dropdown-menu.show').forEach(function(m){ m.classList.remove('show'); });
-      if (!open){ menu.classList.add('show'); }
     });
   }
-  // Cerrar al hacer click fuera
-  document.addEventListener('click', function(e){
-    var inside = e.target.closest('.dropdown');
-    if (!inside){ document.querySelectorAll('.dropdown-menu.show').forEach(function(m){ m.classList.remove('show'); }); }
+  
+  // Ejecutar múltiples veces para asegurar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', forceDropdowns);
+  } else {
+    forceDropdowns();
+  }
+  
+  window.addEventListener('load', function() {
+    setTimeout(forceDropdowns, 500);
   });
-  // Cerrar con Escape
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ document.querySelectorAll('.dropdown-menu.show').forEach(function(m){ m.classList.remove('show'); }); }});
-  toggleMenu('notifDropdown');
-  toggleMenu('userDropdown');
+})();
+</script>
+
+<script>
+// Ocultar enlaces/botones "Volver" o "Atrás" en pantallas pequeñas
+(function(){
+  function hideBackButtons(){
+    try{
+      var isSmall = window.matchMedia('(max-width: 600px)').matches;
+      var candidates = Array.prototype.slice.call(document.querySelectorAll('a.btn, button.btn, a, button'));
+      candidates.forEach(function(el){
+        var txt = (el.textContent || '').trim().toLowerCase();
+        if (/(^|\s)(volver|atrás|atras|regresar|back)(\s|$)/.test(txt)){
+          if (isSmall){ el.style.display = 'none'; }
+          else { if (el.dataset._wasHidden !== '1') { el.style.display = ''; } }
+        }
+      });
+    }catch(e){ /* noop */ }
+  }
+  document.addEventListener('DOMContentLoaded', hideBackButtons);
+  window.addEventListener('resize', hideBackButtons);
 })();
 </script>

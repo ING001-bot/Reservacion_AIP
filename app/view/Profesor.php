@@ -20,47 +20,13 @@ $vista = $_GET['view'] ?? 'inicio';
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../Public/css/brand.css">
+  <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?= time() ?>">
 </head>
 <body class="bg-light">
-
-<!-- Navbar principal -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-brand">
-  <div class="container-fluid">
-    <a class="navbar-brand d-flex align-items-center" href="#">
-      <img src="../../Public/img/logo_colegio.png" alt="Logo" class="me-2" style="height:40px;">
-      Colegio Monseñor Juan Tomis Stack
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu" aria-controls="offcanvasMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="d-none d-lg-flex align-items-center">
-      <span class="text-white-50 me-3">Profesor: <?= $usuario ?></span>
-      <a class="btn btn-outline-light btn-sm" href="../controllers/LogoutController.php">Cerrar sesión</a>
-    </div>
-  </div>
-</nav>
-
-<!-- Offcanvas lateral para móviles -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
-  <div class="offcanvas-header bg-brand text-white">
-    <h5 class="offcanvas-title" id="offcanvasMenuLabel">Menú</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body d-flex flex-column">
-    <a class="nav-link mb-2" href="?view=reserva">📅 Reservar Aula</a>
-    <a class="nav-link mb-2" href="?view=prestamo">💻 Préstamo de Equipos</a>
-    <a class="nav-link mb-2" href="?view=historial">📄 Mis Reservas/Préstamos</a>
-    <a class="nav-link mb-2" href="?view=password">🔑 Cambiar Contraseña</a>
-    <a class="nav-link mb-2" href="dashboard.php">⬅ Inicio</a>
-
-    <div class="mt-auto">
-      <a class="nav-link text-danger" href="../controllers/LogoutController.php">🚪 Cerrar sesión</a>
-    </div>
-  </div>
-</div>
+<?php require __DIR__ . '/partials/navbar.php'; ?>
 
 <!-- Contenido dinámico -->
-<main class="container py-5">
+<main class="container py-5 content">
   <?php
   switch ($vista) {
       case 'reserva':

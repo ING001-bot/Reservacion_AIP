@@ -10,6 +10,7 @@ class UsuarioModel {
     }
 
     public function existeCorreo($correo) {
+        $correo = strtolower(trim($correo));
         // Solo considera usuarios activos para bloquear registros
         $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND activo = 1");
         $stmt->execute([$correo]);
@@ -18,36 +19,46 @@ class UsuarioModel {
 
     // Verifica si el correo ya está usado por otro usuario activo distinto al dado
     public function existeCorreoDeOtro(string $correo, int $id_usuario): bool {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND activo = 1 AND id_usuario <> ?");
         $stmt->execute([$correo, $id_usuario]);
         return $stmt->rowCount() > 0;
     }
 
     public function existeCorreoInactivo($correo) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND activo = 0");
         $stmt->execute([$correo]);
         return $stmt->rowCount() > 0;
     }
 
     public function registrar($nombre, $correo, $contraseña, $tipo_usuario) {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario) VALUES (?, ?, ?, ?)");
         return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario]);
     }
 
     // Registrar con verificación por correo (verificado=0 y token)
     public function registrarConVerificacion($nombre, $correo, $contraseña, $tipo_usuario, $verification_token, $token_expira) {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario, verificado, verification_token, token_expira) VALUES (?, ?, ?, ?, 0, ?, ?)");
         return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario, $verification_token, $token_expira]);
     }
 
     // Registrar con verificado=1 (para cuentas creadas por administrador)
     public function registrarVerificado($nombre, $correo, $contraseña, $tipo_usuario) {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario, verificado, verification_token, token_expira) VALUES (?, ?, ?, ?, 1, NULL, NULL)");
         return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario]);
     }
 
     // Reactivar (reusar fila existente por UNIQUE correo) para admin
     public function reactivarUsuarioAdmin($nombre, $correo, $contraseña, $tipo_usuario) {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, contraseña = ?, tipo_usuario = ?, verificado = 1, verification_token = NULL, token_expira = NULL, activo = 1 WHERE correo = ?");
         return $stmt->execute([$nombre, $contraseña, $tipo_usuario, $correo]);
     }
@@ -65,16 +76,20 @@ class UsuarioModel {
     }
 
     public function eliminarPorCorreo($correo) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("DELETE FROM usuarios WHERE correo = ?");
         return $stmt->execute([$correo]);
     }
 
     public function actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario) {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ? WHERE id_usuario = ?");
         return $stmt->execute([$nombre, $correo, $tipo_usuario, $id_usuario]);
     }
 
     public function obtenerPorCorreo($correo) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, contraseña, tipo_usuario, verificado, activo FROM usuarios WHERE correo = ?");
         $stmt->execute([$correo]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -86,6 +101,7 @@ class UsuarioModel {
      }
 
     public function actualizarContraseña($nuevaContraseña, $correo) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET contraseña = ? WHERE correo = ?");
         return $stmt->execute([$nuevaContraseña, $correo]);
     }
@@ -96,6 +112,7 @@ class UsuarioModel {
     }
 
     public function actualizarVerificacionPorToken($correo, $token) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET verificado = 1, verification_token = NULL, token_expira = NULL WHERE correo = ? AND verification_token = ? AND (token_expira IS NULL OR token_expira >= NOW())");
         $stmt->execute([$correo, $token]);
         return $stmt->rowCount() > 0;
@@ -103,11 +120,14 @@ class UsuarioModel {
 
     // Reactivar (reusar fila) para registro público (verificado=0 y set token/expira, tipo Profesor, activo=1)
     public function reactivarUsuarioPublico($nombre, $correo, $contraseña, $token, $expira) {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, contraseña = ?, tipo_usuario = 'Profesor', verificado = 0, verification_token = ?, token_expira = ?, activo = 1 WHERE correo = ?");
         return $stmt->execute([$nombre, $contraseña, $token, $expira, $correo]);
     }
 
     public function guardarResetToken($correo, $token, $expira) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET reset_token = ?, reset_expira = ? WHERE correo = ?");
         return $stmt->execute([$token, $expira, $correo]);
     }
@@ -119,12 +139,14 @@ class UsuarioModel {
     }
 
     public function limpiarResetToken($correo) {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET reset_token = NULL, reset_expira = NULL WHERE correo = ?");
         return $stmt->execute([$correo]);
     }
 
     // -------------------- Magic login (enlace de un solo uso) --------------------
     public function guardarLoginToken(string $correo, string $token, string $expira): bool {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET login_token = ?, login_expira = ? WHERE correo = ?");
         return $stmt->execute([$token, $expira, $correo]);
     }
@@ -137,6 +159,7 @@ class UsuarioModel {
     }
 
     public function limpiarLoginToken(string $correo): bool {
+        $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET login_token = NULL, login_expira = NULL WHERE correo = ?");
         return $stmt->execute([$correo]);
     }

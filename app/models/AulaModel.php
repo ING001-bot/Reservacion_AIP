@@ -7,6 +7,7 @@ class AulaModel {
     }
 
     public function crearAula($nombre, $capacidad, $tipo) {
+        $nombre = strtoupper(trim($nombre));
         $sql = "INSERT INTO aulas (nombre_aula, capacidad, tipo) VALUES (:nombre, :capacidad, :tipo)";
         $stmt = $this->conexion->prepare($sql);
         return $stmt->execute([
@@ -29,6 +30,7 @@ class AulaModel {
     }
 
     public function actualizarAula($id, $nombre, $capacidad, $tipo) {
+        $nombre = strtoupper(trim($nombre));
         $sql = "UPDATE aulas SET nombre_aula = :nombre, capacidad = :capacidad, tipo = :tipo WHERE id_aula = :id";
         $stmt = $this->conexion->prepare($sql);
         return $stmt->execute([

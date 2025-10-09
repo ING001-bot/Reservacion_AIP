@@ -7,10 +7,20 @@ class EquipoModel {
     public function __construct() {
         global $conexion;
         $this->db = $conexion;
+        $this->normalizarTiposExistentes();
+    }
+    
+    /** Normalizar tipos existentes a MAYÚSCULAS (ejecuta una sola vez) */
+    private function normalizarTiposExistentes() {
+        try {
+            $this->db->exec("UPDATE equipos SET tipo_equipo = UPPER(TRIM(tipo_equipo)) WHERE tipo_equipo != UPPER(tipo_equipo)");
+        } catch (\Throwable $e) { /* silencioso */ }
     }
 
     /** Registrar equipo */
     public function registrarEquipo($nombre_equipo, $tipo_equipo, $stock) {
+        $nombre_equipo = ucwords(strtolower(trim($nombre_equipo)));
+        $tipo_equipo = strtoupper(trim($tipo_equipo));
         $stmt = $this->db->prepare("INSERT INTO equipos (nombre_equipo, tipo_equipo, stock, activo) VALUES (?, ?, ?, 1)");
         return $stmt->execute([$nombre_equipo, $tipo_equipo, $stock]);
     }

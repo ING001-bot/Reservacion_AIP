@@ -1,8 +1,8 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-require '../models/ReservaModel.php';
-require '../models/PrestamoModel.php';
+require_once '../models/ReservaModel.php';
+require_once '../models/PrestamoModel.php';
 
 class HistorialController {
     private $reservaModel;
@@ -74,11 +74,13 @@ class HistorialController {
         return date('Y-m-d', $mondayTs);
     }
 
-    // Lunes -> [Lun, Mar, Mie, Jue, Vie, Sab]
+    // Genera array de fechas de lunes a sábado (6 días)
+    // Entrada: $monday = fecha del lunes (YYYY-MM-DD)
+    // Salida: ['2025-01-13', '2025-01-14', ..., '2025-01-18'] (Lun-Sáb)
     public function getWeekDates($monday) {
         $dates = [];
         $ts = strtotime($monday);
-        for ($i = 0; $i < 6; $i++) {
+        for ($i = 0; $i < 6; $i++) { // 6 días: Lunes a Sábado
             $dates[] = date('Y-m-d', strtotime("+{$i} days", $ts));
         }
         return $dates;

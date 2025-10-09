@@ -26,32 +26,35 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
 <body>
   <?php require __DIR__ . '/partials/navbar.php'; ?>
   <main class="container py-3">
-    <h1 class="text-brand h3 mb-3">📜 Historial de Aulas</h1>
-
-    <div class="controls">
-      <div class="row g-2 align-items-stretch">
-        <div class="col-12 col-md-6">
-          <div class="btn-group w-100" role="group" aria-label="Seleccionar turno">
-            <button id="btn-manana" class="btn btn-brand btn-control w-50 active">Mañana</button>
-            <button id="btn-tarde" class="btn btn-outline-brand btn-control w-50">Tarde</button>
-          </div>
-          <div class="small text-muted mt-1">Mañana (06:00–12:45) · Tarde (13:00–19:00)</div>
-        </div>
-        <div class="col-12 col-md-6">
-          <div class="d-flex gap-2">
-            <button id="prev-week" class="btn btn-outline-brand btn-control flex-fill">« Semana anterior</button>
-            <button id="next-week" class="btn btn-outline-brand btn-control flex-fill">Semana siguiente »</button>
-          </div>
-          <input type="hidden" id="start-of-week" value="<?php echo $startOfWeek; ?>">
-        </div>
-        <div class="col-12">
-          <form action="../view/exportar_pdf.php" method="POST" target="_blank" class="w-100">
-            <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo $startOfWeek; ?>">
-            <input type="hidden" name="turno" id="pdf-turno" value="manana">
-            <button type="submit" class="btn btn-outline-brand btn-control w-100">Descargar PDF</button>
-          </form>
-        </div>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="text-brand h3 mb-0">📜 Historial de Aulas</h1>
+        <small class="text-muted">Semana de lunes a sábado</small>
       </div>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="btn-group" role="group">
+          <button id="btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
+          <button id="btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
+        </div>
+        <form action="../view/exportar_pdf.php" method="POST" target="_blank" class="m-0">
+          <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo $startOfWeek; ?>">
+          <input type="hidden" name="turno" id="pdf-turno" value="manana">
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
+      <button id="prev-week" class="btn btn-outline-brand btn-sm">
+        <i class="bi bi-chevron-left"></i> Semana anterior
+      </button>
+      <input type="hidden" id="start-of-week" value="<?php echo $startOfWeek; ?>">
+      <span id="week-range-display" class="badge bg-primary-subtle text-primary-emphasis px-3 py-2"></span>
+      <button id="next-week" class="btn btn-outline-brand btn-sm">
+        Semana siguiente <i class="bi bi-chevron-right"></i>
+      </button>
     </div>
 
     <section id="calendarios" class="calendarios-grid">

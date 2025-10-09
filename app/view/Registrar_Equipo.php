@@ -2,12 +2,15 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 if ($_SESSION['tipo'] !== 'Administrador') { header('Location: Dashboard.php'); exit; }
 
-require '../controllers/EquipoController.php';
+require_once '../controllers/EquipoController.php';
+require_once '../models/TipoEquipoModel.php';
 $controller = new EquipoController();
 $data = $controller->handleRequest();
 $equipos = $data['equipos'];
 $mensaje = $data['mensaje'];
 $mensaje_tipo = $data['mensaje_tipo'];
+$tipoModel = new TipoEquipoModel();
+$tipos = $tipoModel->listar();
 ?>
 <?php if (!defined('EMBEDDED_VIEW')): ?>
 <!DOCTYPE html>
@@ -25,10 +28,23 @@ $mensaje_tipo = $data['mensaje_tipo'];
 <?php endif; ?>
     <h1 class="mb-4 text-brand">💻 Gestión de Equipos</h1>
 
+    <?php if (!empty($mensaje)): ?>
+    <div class="alert alert-<?= $mensaje_tipo === 'error' ? 'danger' : 'success' ?> alert-dismissible fade show shadow-sm" role="alert">
+        <?= htmlspecialchars($mensaje) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    <?php endif; ?>
+
     <!-- Formulario registro -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-brand text-white">Registrar Equipo</div>
         <div class="card-body">
+            <?php if (empty($tipos)): ?>
+            <div class="alert alert-warning d-flex justify-content-between align-items-center">
+              <div>Antes de registrar equipos, <strong>debes crear al menos un Tipo de Equipo</strong>.</div>
+              <a href="Admin.php?view=tipos_equipo" class="btn btn-sm btn-brand">➕ Crear Tipo</a>
+            </div>
+            <?php endif; ?>
             <form method="post" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Nombre del Equipo</label>
@@ -36,13 +52,11 @@ $mensaje_tipo = $data['mensaje_tipo'];
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Tipo de Equipo</label>
-                    <select name="tipo_equipo" class="form-select" required>
+                    <select name="tipo_equipo" class="form-select" required <?= empty($tipos) ? 'disabled' : '' ?>>
                         <option value="" disabled selected>-- Selecciona un tipo --</option>
-                        <option value="Laptop">Laptop</option>
-                        <option value="Mouse">Mouse</option>
-                        <option value="Estabilizador">Estabilizador</option>
-                        <option value="Proyector">Proyector</option>
-                        <option value="Tablet">Tablet</option>
+                        <?php foreach ($tipos as $t): ?>
+                          <option value="<?= htmlspecialchars($t['nombre']) ?>"><?= htmlspecialchars($t['nombre']) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -50,7 +64,10 @@ $mensaje_tipo = $data['mensaje_tipo'];
                     <input type="number" name="stock" class="form-control" min="0" required>
                 </div>
                 <div class="col-12">
-                    <button type="submit" name="registrar_equipo" class="btn btn-brand">Registrar Equipo</button>
+                    <button type="submit" name="registrar_equipo" class="btn btn-brand" <?= empty($tipos) ? 'disabled' : '' ?>>Registrar Equipo</button>
+                    <?php if (empty($tipos)): ?>
+                      <a href="Admin.php?view=tipos_equipo" class="btn btn-outline-brand ms-2">Ir a Tipos de Equipo</a>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>
@@ -106,7 +123,7 @@ $mensaje_tipo = $data['mensaje_tipo'];
     </div>
 
     <div class="mt-4">
-        <a href="admin.php" class="btn btn-outline-brand">🔙 Volver al Panel</a>
+        <a href="Admin.php" class="btn btn-outline-brand hide-xs">🔙 Volver al Panel</a>
     </div>
 <?php if (!defined('EMBEDDED_VIEW')): ?>
 </main>
@@ -128,4 +145,20 @@ Swal.fire({
 <?php endif; ?>
 </body>
 </html>
+<?php endif; ?>
+
+<?php if (defined('EMBEDDED_VIEW')): ?>
+  <?php if (!empty($mensaje)): ?>
+    <script>
+      // Si SweetAlert está disponible via Admin.php, lo usamos para notificar también en vista embebida
+      if (window.Swal) {
+        Swal.fire({
+          icon: '<?= $mensaje_tipo === "success" ? "success" : "error" ?>',
+          title: '<?= $mensaje_tipo === "success" ? "Éxito" : "Error" ?>',
+          text: '<?= $mensaje ?>',
+          confirmButtonColor: '#3085d6'
+        });
+      }
+    </script>
+  <?php endif; ?>
 <?php endif; ?>

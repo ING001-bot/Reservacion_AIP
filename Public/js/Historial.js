@@ -8,9 +8,21 @@ document.addEventListener('DOMContentLoaded', function(){
     const calendarios = document.getElementById('calendarios');
     const pdfStart = document.getElementById('pdf-start-week');
     const pdfTurno = document.getElementById('pdf-turno');
+    const weekRangeDisplay = document.getElementById('week-range-display');
 
     let turno = 'manana';
     let startOfWeek = startInput.value || new Date().toISOString().substr(0,10);
+    
+    function updateWeekRangeDisplay(monday){
+        if(!weekRangeDisplay) return;
+        const start = new Date(monday+'T00:00:00');
+        const end = new Date(monday+'T00:00:00');
+        end.setDate(end.getDate() + 5); // +5 días = sábado
+        const opts = {day:'2-digit', month:'short'};
+        const startStr = start.toLocaleDateString('es-PE', opts);
+        const endStr = end.toLocaleDateString('es-PE', opts);
+        weekRangeDisplay.textContent = `${startStr} - ${endStr}`;
+    }
 
     function setActiveTurn(button){
         btnManana.classList.remove('active');
@@ -21,8 +33,8 @@ document.addEventListener('DOMContentLoaded', function(){
     btnManana.addEventListener('click', ()=>{ turno = 'manana'; setActiveTurn(btnManana); pdfTurno.value='manana'; loadAll(); });
     btnTarde.addEventListener('click', ()=>{ turno = 'tarde'; setActiveTurn(btnTarde); pdfTurno.value='tarde'; loadAll(); });
 
-    prevWeek.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value = startOfWeek; pdfStart.value = startOfWeek; loadAll(); });
-    nextWeek.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value = startOfWeek; pdfStart.value = startOfWeek; loadAll(); });
+    prevWeek.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value = startOfWeek; pdfStart.value = startOfWeek; updateWeekRangeDisplay(startOfWeek); loadAll(); });
+    nextWeek.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value = startOfWeek; pdfStart.value = startOfWeek; updateWeekRangeDisplay(startOfWeek); loadAll(); });
 
     function shiftWeek(dateStr, deltaDays){
         const d = new Date(dateStr + 'T00:00:00');
@@ -49,7 +61,9 @@ document.addEventListener('DOMContentLoaded', function(){
             }
             const data = await resp.json();
             console.log('Historial_fetch data:', data);
-            renderCalendarios(data, turno);
+            // Usar el monday del servidor para asegurar consistencia
+            const monday = data.monday || startOfWeek;
+            renderCalendarios(data, turno, monday);
             loadPrestamos();
         } catch (e) {
             console.error('Error al cargar historial', e);
@@ -77,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     }
 
-    function renderCalendarios(data, turno){
+    function renderCalendarios(data, turno, monday){
         calendarios.innerHTML = '';
 
         const containerLeft = document.createElement('div');
@@ -96,8 +110,9 @@ document.addEventListener('DOMContentLoaded', function(){
         containerLeft.appendChild(titleLeft);
         containerRight.appendChild(titleRight);
 
-        const tableLeft = buildTableForAula(data.aip1, data.cancel1, turno, startOfWeek);
-        const tableRight = buildTableForAula(data.aip2, data.cancel2, turno, startOfWeek);
+        // Usar el monday del servidor para generar las fechas correctas
+        const tableLeft = buildTableForAula(data.aip1, data.cancel1, turno, monday);
+        const tableRight = buildTableForAula(data.aip2, data.cancel2, turno, monday);
 
         containerLeft.appendChild(tableLeft);
         containerRight.appendChild(tableRight);
@@ -113,9 +128,10 @@ document.addEventListener('DOMContentLoaded', function(){
     const thead = document.createElement('thead');
     const trHead = document.createElement('tr');
     const thEmpty = document.createElement('th');
-    thEmpty.textContent = '';
+    thEmpty.textContent = 'Hora';
     trHead.appendChild(thEmpty);
 
+    // Generar fechas de lunes a sábado (6 días) ordenadas
     const dias = getWeekDates(startWeek);
     dias.forEach(fecha => {
         const th = document.createElement('th');
@@ -142,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function(){
         timeTd.textContent = time;
         tr.appendChild(timeTd);
 
+        // Usar el array ordenado de días (lunes a sábado)
         dias.forEach(fecha => {
             const td = document.createElement('td');
             td.dataset.fecha = fecha;
@@ -206,10 +223,13 @@ document.addEventListener('DOMContentLoaded', function(){
 }
 
     function getWeekDates(start){
-        // Genera fechas de Lunes a Sábado (6 días) a partir de start (que debe ser lunes)
+        // Genera fechas de Lunes a Sábado (6 días) ordenadas
+        // Entrada: start = fecha del lunes (YYYY-MM-DD)
+        // Salida: ['2025-01-13', '2025-01-14', '2025-01-15', '2025-01-16', '2025-01-17', '2025-01-18']
+        //         (Lunes, Martes, Miércoles, Jueves, Viernes, Sábado)
         const base = new Date(start + 'T00:00:00');
         const days = [];
-        for (let i=0; i<6; i++){
+        for (let i=0; i<6; i++){ // 6 días: Lunes a Sábado
             const d = new Date(base);
             d.setDate(base.getDate()+i);
             const yyyy = d.getFullYear();
@@ -256,5 +276,6 @@ document.addEventListener('DOMContentLoaded', function(){
         container.innerHTML = html;
     }
 
+    updateWeekRangeDisplay(startOfWeek);
     loadAll();
 });
