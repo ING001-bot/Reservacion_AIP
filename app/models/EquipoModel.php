@@ -10,11 +10,14 @@ class EquipoModel {
         $this->normalizarTiposExistentes();
     }
     
-    /** Normalizar tipos existentes a MAYÚSCULAS (ejecuta una sola vez) */
+    /** Normalizar tipos existentes a MAYÚSCULAS (ejecuta siempre para mantener consistencia) */
     private function normalizarTiposExistentes() {
         try {
-            $this->db->exec("UPDATE equipos SET tipo_equipo = UPPER(TRIM(tipo_equipo)) WHERE tipo_equipo != UPPER(tipo_equipo)");
-        } catch (\Throwable $e) { /* silencioso */ }
+            // Normalizar todos los tipos: MAYÚSCULAS y sin espacios extras
+            $this->db->exec("UPDATE equipos SET tipo_equipo = UPPER(TRIM(tipo_equipo)) WHERE tipo_equipo != UPPER(TRIM(tipo_equipo))");
+        } catch (\Throwable $e) { 
+            error_log("Error al normalizar tipos de equipo: " . $e->getMessage());
+        }
     }
 
     /** Registrar equipo */
@@ -67,6 +70,15 @@ class EquipoModel {
     public function aumentarStock($id_equipo) {
         $stmt = $this->db->prepare("UPDATE equipos SET stock = stock + 1 WHERE id_equipo = ?");
         return $stmt->execute([$id_equipo]);
+    }
+
+    /** Actualizar información del equipo */
+    public function actualizarEquipo($id_equipo, $nombre_equipo, $tipo_equipo, $stock) {
+        $nombre_equipo = ucwords(strtolower(trim($nombre_equipo)));
+        $tipo_equipo = strtoupper(trim($tipo_equipo));
+        
+        $stmt = $this->db->prepare("UPDATE equipos SET nombre_equipo = ?, tipo_equipo = ?, stock = ? WHERE id_equipo = ?");
+        return $stmt->execute([$nombre_equipo, $tipo_equipo, $stock, $id_equipo]);
     }
 }
 ?>

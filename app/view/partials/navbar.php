@@ -140,8 +140,8 @@ $badge = count($no_leidas);
       </div>
       <?php endif; ?>
       
-      <!-- Perfil de usuario (solo escritorio) -->
-      <div class="dropdown d-none d-lg-block">
+      <!-- Perfil de usuario (todas las pantallas) -->
+      <div class="dropdown">
         <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
           <i class="fas fa-user-circle me-2"></i>
           <span><?= $nombre ?></span>

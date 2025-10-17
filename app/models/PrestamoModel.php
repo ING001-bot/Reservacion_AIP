@@ -2,10 +2,25 @@
 if (!class_exists('PrestamoModel')) {
 class PrestamoModel {
     private $db;
-    public function __construct($conexion) { $this->db = $conexion; }
-    // Permite a controladores ejecutar consultas personalizadas cuando el modelo no tiene un método específico
+
+    public function __construct($conexion) {
+        $this->db = $conexion;
+        $this->normalizarTiposEquipo();
+    }
+    
+    /** Permite a controladores ejecutar consultas personalizadas cuando el modelo no tiene un método específico */
     public function getDb(): PDO {
         return $this->db;
+    }
+    
+    /** Normalizar tipos de equipo para asegurar compatibilidad */
+    private function normalizarTiposEquipo() {
+        try {
+            // Normalizar todos los tipos: MAYÚSCULAS y sin espacios extras
+            $this->db->exec("UPDATE equipos SET tipo_equipo = UPPER(TRIM(tipo_equipo)) WHERE tipo_equipo != UPPER(TRIM(tipo_equipo))");
+        } catch (\Throwable $e) { 
+            error_log("Error al normalizar tipos de equipo en préstamos: " . $e->getMessage());
+        }
     }
 
     public function guardarPrestamosMultiple($id_usuario, $equipos, $fecha_prestamo, $hora_inicio, $id_aula, $hora_fin = null) {
@@ -47,18 +62,47 @@ class PrestamoModel {
         }
     }
 
+    public function listarTodosEquipos() {
+        $stmt = $this->db->prepare("SELECT id_equipo, nombre_equipo, tipo_equipo, activo, stock FROM equipos");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function listarEquiposPorTipo($tipo) {
         $tipo = strtoupper(trim($tipo)); // Normalizar a mayúsculas
         $stmt = $this->db->prepare("
             SELECT id_equipo, nombre_equipo, tipo_equipo
             FROM equipos
-            WHERE UPPER(tipo_equipo) = ?
+            WHERE UPPER(TRIM(tipo_equipo)) = ?
             AND activo = 1
             AND id_equipo NOT IN (
                 SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()
             )
         ");
         $stmt->execute([$tipo]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function listarEquiposPorTipoConStock($tipo, $fecha) {
+        $tipo = strtoupper(trim($tipo));
+        $stmt = $this->db->prepare("
+            SELECT 
+                e.id_equipo, 
+                e.nombre_equipo, 
+                e.tipo_equipo,
+                e.stock,
+                (e.stock - COALESCE(
+                    (SELECT COUNT(*) FROM prestamos p 
+                     WHERE p.id_equipo = e.id_equipo 
+                     AND p.fecha_prestamo = ? 
+                     AND p.estado = 'Prestado'), 0
+                )) AS disponible
+            FROM equipos e
+            WHERE UPPER(TRIM(e.tipo_equipo)) = ?
+            AND e.activo = 1
+            HAVING disponible > 0
+        ");
+        $stmt->execute([$fecha, $tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

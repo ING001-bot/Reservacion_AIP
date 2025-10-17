@@ -105,44 +105,65 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 </thead>
                 <tbody>
                 <?php $i = 1; foreach ($usuarios as $user): ?>
-                    <?php if ($id_editar == $user['id_usuario']): ?>
-                        <form method="post">
-                        <tr>
-                            <td class="col-num"><?= $i ?></td>
-                            <td><input type="text" name="nombre" value="<?= htmlspecialchars($user['nombre']) ?>" class="form-control" required></td>
-                            <td><input type="email" name="correo" value="<?= htmlspecialchars($user['correo']) ?>" class="form-control" required></td>
-                            <td>
-                                <select name="tipo" class="form-select" required>
-                                    <option value="Profesor" <?= $user['tipo_usuario']=='Profesor'?'selected':'' ?>>Profesor</option>
-                                    <option value="Encargado" <?= $user['tipo_usuario']=='Encargado'?'selected':'' ?>>Encargado</option>
-                                    <option value="Administrador" <?= $user['tipo_usuario']=='Administrador'?'selected':'' ?>>Administrador</option>
-                                </select>
-                            </td>
-                            <td class="text-center table-action-cell">
+                    <tr>
+                        <td class="col-num"><?= $i ?></td>
+                        <td><?= htmlspecialchars($user['nombre']) ?></td>
+                        <td><?= htmlspecialchars($user['correo']) ?></td>
+                        <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
+                        <td class="text-center table-action-cell text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-editar-usuario"
+                                data-id="<?= $user['id_usuario'] ?>"
+                                data-nombre="<?= htmlspecialchars($user['nombre']) ?>"
+                                data-correo="<?= htmlspecialchars($user['correo']) ?>"
+                                data-tipo="<?= htmlspecialchars($user['tipo_usuario']) ?>">
+                                ✏️ Editar
+                            </button>
+                            <form method="post" class="d-inline form-eliminar-usuario">
                                 <input type="hidden" name="id_usuario" value="<?= $user['id_usuario'] ?>">
-                                <button type="submit" name="editar_usuario" class="btn btn-sm btn-success">💾 Guardar</button>
-                                <a href="Admin.php?view=usuarios" class="btn btn-sm btn-secondary">❌ Cancelar</a>
-                            </td>
-                        </tr>
-                        </form>
-                    <?php else: ?>
-                        <tr>
-                            <td class="col-num"><?= $i ?></td>
-                            <td><?= htmlspecialchars($user['nombre']) ?></td>
-                            <td><?= htmlspecialchars($user['correo']) ?></td>
-                            <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
-                            <td class="text-center table-action-cell">
-                                <a href="Admin.php?view=usuarios&editar=<?= $user['id_usuario'] ?>" class="btn btn-sm btn-outline-primary">✏️ Editar</a>
-                                <form method="post" class="d-inline form-eliminar-usuario">
-                                    <input type="hidden" name="id_usuario" value="<?= $user['id_usuario'] ?>">
-                                    <button type="submit" name="eliminar_usuario" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
-                                </form>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
+                                <button type="submit" name="eliminar_usuario" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
                 <?php $i++; endforeach; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div class="modal fade" id="editarUsuarioModal" tabindex="-1" aria-labelledby="editarUsuarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brand text-white">
+                <h5 class="modal-title" id="editarUsuarioModalLabel">✏️ Editar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formEditarUsuario" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="id_usuario" id="edit_id_usuario">
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_correo" class="form-label">Correo</label>
+                        <input type="email" class="form-control" id="edit_correo" name="correo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_tipo" class="form-label">Tipo de Usuario</label>
+                        <select class="form-select" id="edit_tipo" name="tipo" required>
+                            <option value="Profesor">Profesor</option>
+                            <option value="Encargado">Encargado</option>
+                            <option value="Administrador">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="editar_usuario" class="btn btn-brand">Guardar Cambios</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -182,10 +203,15 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
     <a href="<?= $esAdmin ? 'Admin.php' : '../../Public/index.php' ?>" class="btn btn-outline-brand hide-xs">🔙 Volver</a>
 </div>
 
+<?php if (!defined('EMBEDDED_VIEW')): ?>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../../Public/js/registrar_usuario.js"></script>
-  <script src="../../Public/js/usuarios.js"></script>
+<?php endif; ?>
+
+<!-- Script de usuarios siempre se carga -->
+<script src="../../Public/js/usuarios.js?v=<?= time() ?>"></script>
+
 <?php if (!defined('EMBEDDED_VIEW')): ?>
   </main>
 </body>

@@ -26,6 +26,31 @@ class EquipoController {
         ];
     }
 
+    /** Actualizar equipo */
+    public function actualizarEquipo($id_equipo, $nombre_equipo, $tipo_equipo, $stock) {
+        // Validar que los campos no estén vacíos
+        if (empty($id_equipo) || empty($nombre_equipo) || empty($tipo_equipo) || !isset($stock)) {
+            return ['error' => true, 'mensaje' => '⚠ Todos los campos son obligatorios.'];
+        }
+        
+        // Validar que el stock sea un número válido
+        if (!is_numeric($stock) || $stock < 0) {
+            return ['error' => true, 'mensaje' => '⚠ El stock debe ser un número mayor o igual a 0.'];
+        }
+        
+        // Validar existencia del tipo
+        $tipoModel = new TipoEquipoModel();
+        if (!$tipoModel->existeNombre($tipo_equipo)) {
+            return ['error' => true, 'mensaje' => '⚠ El tipo de equipo "'.htmlspecialchars($tipo_equipo).'" no existe.'];
+        }
+        
+        $ok = $this->equipoModel->actualizarEquipo($id_equipo, $nombre_equipo, $tipo_equipo, $stock);
+        return [
+            'error' => !$ok,
+            'mensaje' => $ok ? "✅ Equipo actualizado correctamente." : "❌ Error al actualizar el equipo."
+        ];
+    }
+
     /** Listar equipos */
     public function listarEquipos($soloActivos = false) {
         return $soloActivos ? $this->equipoModel->obtenerEquiposActivos() : $this->equipoModel->obtenerEquipos();
@@ -81,6 +106,16 @@ class EquipoController {
             }
             if (isset($_POST['eliminar_equipo_def'])) {
                 $res = $this->eliminarEquipoDefinitivo($_POST['id_equipo']);
+                $mensaje = $res['mensaje'];
+                $mensaje_tipo = $res['error'] ? 'error' : 'success';
+            }
+            if (isset($_POST['editar_equipo'])) {
+                $res = $this->actualizarEquipo(
+                    $_POST['id_equipo'],
+                    $_POST['nombre_equipo'],
+                    $_POST['tipo_equipo'],
+                    $_POST['stock']
+                );
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'error' : 'success';
             }

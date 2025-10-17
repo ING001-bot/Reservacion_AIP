@@ -21,13 +21,20 @@ $mensaje_tipo = '';
 // Solo aulas de tipo REGULAR para préstamos (no AIP)
 $aulas = $aulaController->listarAulas('REGULAR');
 
-// Cargar inventario por tipo (activos y no prestados hoy) - Tipos en MAYÚSCULAS
-$laptops = $prestamoController->listarEquiposPorTipo('LAPTOP');
-$proyectores = $prestamoController->listarEquiposPorTipo('PROYECTOR');
-$mouses = $prestamoController->listarEquiposPorTipo('MOUSE');
-$extensiones = $prestamoController->listarEquiposPorTipo('EXTENSIÓN');
-// Opcional: equipos de sonido (Parlante/Radio)
-$parlantes = $prestamoController->listarEquiposPorTipo('PARLANTE');
+// Cargar inventario por tipo con stock disponible (activos y disponibles para la fecha)
+$fecha_prestamo_check = $_POST['fecha_prestamo'] ?? date('Y-m-d', strtotime('+1 day'));
+$laptops = $prestamoController->listarEquiposPorTipoConStock('LAPTOP', $fecha_prestamo_check);
+$proyectores = $prestamoController->listarEquiposPorTipoConStock('PROYECTOR', $fecha_prestamo_check);
+$mouses = $prestamoController->listarEquiposPorTipoConStock('MOUSE', $fecha_prestamo_check);
+$extensiones = $prestamoController->listarEquiposPorTipoConStock('EXTENSIÓN', $fecha_prestamo_check);
+$parlantes = $prestamoController->listarEquiposPorTipoConStock('PARLANTE', $fecha_prestamo_check);
+
+// Calcular totales disponibles
+$total_laptops = array_sum(array_column($laptops, 'disponible'));
+$total_proyectores = array_sum(array_column($proyectores, 'disponible'));
+$total_mouses = array_sum(array_column($mouses, 'disponible'));
+$total_extensiones = array_sum(array_column($extensiones, 'disponible'));
+$total_parlantes = array_sum(array_column($parlantes, 'disponible'));
 
 // Procesar formulario (selección por equipo específico)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -117,8 +124,7 @@ $fecha_default = $fecha_min;
     <?php if (empty($aulas)): ?>
         <div class="alert alert-danger">
             <strong>❌ No hay aulas REGULAR disponibles.</strong> 
-            <p class="mb-0">Debes crear al menos un aula de tipo REGULAR para poder registrar préstamos.</p>
-            <a href="Admin.php?view=aulas" class="btn btn-sm btn-primary mt-2">Ir a Gestión de Aulas</a>
+            <p class="mb-0">Contacta con el administrador para que cree al menos un aula de tipo REGULAR.</p>
         </div>
     <?php endif; ?>
     
@@ -139,13 +145,24 @@ $fecha_default = $fecha_min;
     <div class="card card-brand shadow-lg mb-4">
         <div class="card-body">
             <div class="mb-2 text-uppercase small text-muted fw-semibold">Paso 1 · Selección rápida</div>
+            
+            <!-- Indicadores de stock disponible -->
+            <div class="alert alert-info mb-3">
+                <strong>📊 Stock Disponible:</strong>
+                <span class="badge bg-primary ms-2">💻 Laptops: <?= $total_laptops ?></span>
+                <span class="badge bg-primary ms-2">📽 Proyectores: <?= $total_proyectores ?></span>
+                <span class="badge bg-primary ms-2">🔌 Extensiones: <?= $total_extensiones ?></span>
+                <span class="badge bg-secondary ms-2">🖱 Mouses: <?= $total_mouses ?></span>
+                <span class="badge bg-secondary ms-2">🔊 Parlantes: <?= $total_parlantes ?></span>
+            </div>
+            
             <div class="d-flex flex-wrap gap-2 mb-3 filters-actions">
-                <?php $hasLap = count($laptops)>0; $hasProy = count($proyectores)>0; $hasExt = count($extensiones)>0; $hasParl = count($parlantes)>0; ?>
+                <?php $hasLap = $total_laptops>0; $hasProy = $total_proyectores>0; $hasExt = $total_extensiones>0; $hasParl = $total_parlantes>0; ?>
                 <button type="button" class="btn btn-brand btn-control" id="pack-completo" <?= ($hasLap && $hasProy && $hasExt)?'':'disabled' ?>>📦 Laptop + Proyector + Extensión</button>
                 <button type="button" class="btn btn-outline-brand btn-control" id="pack-proyector" <?= ($hasProy && $hasExt)?'':'disabled' ?>>📽 Solo Proyector + Extensión</button>
                 <button type="button" class="btn btn-outline-brand btn-control" id="pack-laptop" <?= $hasLap?'':'disabled' ?>>💻 Solo Laptop</button>
                 <button type="button" class="btn btn-outline-secondary btn-control" id="pack-parlante" <?= $hasParl?'':'disabled' ?>>🔊 Solo Parlante</button>
-                <button type="button" class="btn btn-secondary btn-control" id="pack-limpiar">✖ Limpiar</button>
+                <button type="button" class="btn btn-outline-danger btn-control" id="pack-limpiar">✖ Limpiar</button>
             </div>
             <form method="POST" class="row g-3">
                 <div class="col-md-4">
@@ -245,9 +262,6 @@ $fecha_default = $fecha_min;
                             <option value="<?= (int)$a['id_aula'] ?>"><?= htmlspecialchars($a['nombre_aula']) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if (empty($aulas)): ?>
-                        <div class="form-text text-danger">No hay aulas REGULAR registradas. <a href="Admin.php?view=aulas" class="fw-bold">Crear aula REGULAR</a></div>
-                    <?php endif; ?>
                 </div>
 
                 <div class="col-md-3">

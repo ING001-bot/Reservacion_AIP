@@ -36,8 +36,9 @@ class UsuarioController {
             if ($reactivado) {
                 // Confirmar existencia del buzón por SMTP
                 $subject = 'Se reactivó tu cuenta - Aulas de Innovación';
+                $rol = htmlspecialchars($tipo_usuario);
                 $html = '<p>Hola ' . htmlspecialchars($nombre) . ',</p>' .
-                        '<p>Tu cuenta de administrador ha sido reactivada.</p>';
+                        '<p>Tu cuenta de ' . $rol . ' ha sido reactivada.</p>';
                 $sent = $this->mailer->send($correo, $subject, $html);
                 if (!$sent) {
                     // Si no se pudo notificar (correo inexistente), volvemos a inactivar para no dejar cuentas inválidas

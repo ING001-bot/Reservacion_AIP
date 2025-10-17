@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     async function loadAll(){
         try {
-            const urlHist = `/Sistema_reserva_AIP/app/api/Historial_fetch.php?start=${startOfWeek}&turno=${turno}&_=${Date.now()}`;
+            const urlHist = `../../app/api/Historial_fetch.php?start=${startOfWeek}&turno=${turno}&_=${Date.now()}`;
             console.log('Fetch historial URL:', urlHist);
             const resp = await fetch(urlHist);
             if (!resp.ok) {
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     async function loadPrestamos(){
         try {
-            const urlPrest = `/Sistema_reserva_AIP/app/api/Prestamo_fetch.php?_=${Date.now()}`;
+            const urlPrest = `../../app/api/Prestamo_fetch.php?_=${Date.now()}`;
             console.log('Fetch prestamos URL:', urlPrest);
             const resp = await fetch(urlPrest);
             if (!resp.ok) {

@@ -48,7 +48,7 @@
 
   async function loadData() {
     try {
-      const url = `/Sistema_reserva_AIP/app/api/HistorialGlobal_fetch.php${buildQuery()}`;
+      const url = `../../app/api/HistorialGlobal_fetch.php${buildQuery()}`;
       const resp = await fetch(url);
       if (!resp.ok) {
         const text = await resp.text();

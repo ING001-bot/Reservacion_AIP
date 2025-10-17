@@ -65,7 +65,12 @@ $mensaje_tipo = $data['mensaje_tipo'];
             <tr>
               <td><?= $i++ ?></td>
               <td><?= htmlspecialchars($t['nombre']) ?></td>
-              <td class="text-center">
+              <td class="text-center text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-primary btn-editar-tipo"
+                  data-id="<?= (int)$t['id_tipo'] ?>"
+                  data-nombre="<?= htmlspecialchars($t['nombre']) ?>">
+                  ✏️ Editar
+                </button>
                 <form method="post" class="d-inline form-eliminar-tipo">
                   <input type="hidden" name="id_tipo" value="<?= (int)$t['id_tipo'] ?>">
                   <button type="submit" name="eliminar_tipo" class="btn btn-sm btn-outline-danger">🗑 Eliminar</button>
@@ -79,6 +84,31 @@ $mensaje_tipo = $data['mensaje_tipo'];
           <?php endif; ?>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Tipo de Equipo -->
+<div class="modal fade" id="editarTipoModal" tabindex="-1" aria-labelledby="editarTipoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-brand text-white">
+        <h5 class="modal-title" id="editarTipoModalLabel">✏️ Editar Tipo de Equipo</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form id="formEditarTipo" method="post">
+        <div class="modal-body">
+          <input type="hidden" name="id_tipo" id="edit_id_tipo">
+          <div class="mb-3">
+            <label for="edit_nombre_tipo" class="form-label">Nombre del Tipo</label>
+            <input type="text" class="form-control" id="edit_nombre_tipo" name="nombre_tipo" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" name="editar_tipo" class="btn btn-brand">Guardar Cambios</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

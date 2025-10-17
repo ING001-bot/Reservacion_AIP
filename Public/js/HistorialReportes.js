@@ -101,7 +101,7 @@
 
   async function loadData(){
     try{
-      const url = `/Sistema_reserva_AIP/app/api/HistorialGlobal_fetch.php${buildQuery()}`;
+      const url = `../../app/api/HistorialGlobal_fetch.php${buildQuery()}`;
       const resp = await fetch(url);
       if (!resp.ok){ const t = await resp.text(); throw new Error(`HTTP ${resp.status}. ${t.slice(0,200)}`); }
       const ct = resp.headers.get('content-type')||'';

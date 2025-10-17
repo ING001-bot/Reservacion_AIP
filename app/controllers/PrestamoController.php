@@ -65,6 +65,14 @@ class PrestamoController {
     public function listarEquiposPorTipo($tipo) {
         return $this->model->listarEquiposPorTipo($tipo);
     }
+    
+    public function listarEquiposPorTipoConStock($tipo, $fecha) {
+        return $this->model->listarEquiposPorTipoConStock($tipo, $fecha);
+    }
+    
+    public function listarTodosEquipos() {
+        return $this->model->listarTodosEquipos();
+    }
 
     public function obtenerTodosPrestamos() {
         return $this->model->obtenerTodosPrestamos();

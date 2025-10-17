@@ -1,4 +1,46 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Manejar clic en botón editar
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('editarEquipoModal'));
+            document.getElementById('edit_id_equipo').value = this.dataset.id;
+            document.getElementById('edit_nombre_equipo').value = this.dataset.nombre;
+            document.getElementById('edit_tipo_equipo').value = this.dataset.tipo;
+            document.getElementById('edit_stock').value = this.dataset.stock;
+            modal.show();
+        });
+    });
+
+    // Confirmación al editar equipo
+    const formEditar = document.getElementById('formEditarEquipo');
+    if (formEditar) {
+        formEditar.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            Swal.fire({
+                title: '¿Guardar cambios?',
+                text: '¿Estás seguro de que deseas actualizar la información de este equipo?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, guardar cambios',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    console.log('✅ Enviando formulario de edición...');
+                    // Crear un input hidden para asegurar que el botón llegue al backend
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'editar_equipo';
+                    hiddenInput.value = '1';
+                    form.appendChild(hiddenInput);
+                    form.submit();
+                }
+            });
+        });
+    }
+
     // Confirmación al dar de baja
     document.querySelectorAll(".form-baja").forEach(form => {
         form.addEventListener("submit", function (e) {

@@ -16,7 +16,21 @@
   if (!startInput || !btnPrev || !btnNext || !btnManana || !btnTarde || !calendarios) return;
 
   let turno = 'manana';
-  let startOfWeek = startInput.value || new Date().toISOString().substr(0,10);
+  
+  // Calcular el lunes de la semana actual
+  function getMondayOfWeek(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
+    const diff = day === 0 ? -6 : 1 - day; // Si es domingo, retroceder 6 días
+    d.setDate(d.getDate() + diff);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  
+  let startOfWeek = getMondayOfWeek(startInput.value || new Date().toISOString().substr(0,10));
+  startInput.value = startOfWeek;
   
   function updateWeekRangeDisplay(monday){
     if(!weekRangeDisplay) return;
@@ -24,8 +38,8 @@
     const end = new Date(monday+'T00:00:00');
     end.setDate(end.getDate() + 5); // +5 días = sábado
     const opts = {day:'2-digit', month:'short'};
-    const startStr = start.toLocaleDateString('es-PE', opts);
-    const endStr = end.toLocaleDateString('es-PE', opts);
+    const startStr = start.toLocaleDateString('es-ES', opts);
+    const endStr = end.toLocaleDateString('es-ES', opts);
     weekRangeDisplay.textContent = `${startStr} - ${endStr}`;
   }
 
@@ -54,7 +68,7 @@
     try{
       const prof = (profFilter?.value || '').trim();
       pdfProf.value = prof;
-      const url = `/Sistema_reserva_AIP/app/api/HistorialGlobalCalendario_fetch.php?start=${startOfWeek}&turno=${turno}${prof?`&profesor=${encodeURIComponent(prof)}`:''}`;
+      const url = `../../app/api/HistorialGlobalCalendario_fetch.php?start=${startOfWeek}&turno=${turno}${prof?`&profesor=${encodeURIComponent(prof)}`:''}`;
       const resp = await fetch(url);
       if(!resp.ok){ const t=await resp.text(); throw new Error(`HTTP ${resp.status} – ${t.slice(0,200)}`); }
       const ct = resp.headers.get('content-type')||'';
@@ -63,7 +77,7 @@
       renderCalendarios(data, turno);
     }catch(e){
       console.error('Error al cargar calendario global', e);
-      calendarios.innerHTML = '<div class="text-danger">No se pudo cargar el calendario.</div>';
+      calendarios.innerHTML = '<div class="text-danger">No se pudo cargar el calendario. Error: ' + e.message + '</div>';
     }
   }
 

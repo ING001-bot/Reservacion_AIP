@@ -45,6 +45,19 @@ class TipoEquipoModel {
         return $stmt->execute([$nombre]);
     }
 
+    public function obtenerPorNombre($nombre) {
+        $stmt = $this->db->prepare("SELECT id_tipo, nombre FROM tipos_equipo WHERE LOWER(nombre) = LOWER(?)");
+        $stmt->execute([$nombre]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function actualizar($id_tipo, $nombre) {
+        if (!$nombre || !$id_tipo) return false;
+        $nombre = strtoupper(trim($nombre));
+        $stmt = $this->db->prepare("UPDATE tipos_equipo SET nombre = ? WHERE id_tipo = ?");
+        return $stmt->execute([$nombre, $id_tipo]);
+    }
+
     public function eliminar($id_tipo) {
         // Nota: prevenimos eliminar si hay equipos con ese tipo
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM equipos WHERE tipo_equipo = (SELECT nombre FROM tipos_equipo WHERE id_tipo = ?)");
