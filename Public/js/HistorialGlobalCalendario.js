@@ -74,6 +74,13 @@
       const ct = resp.headers.get('content-type')||'';
       if(!ct.includes('application/json')){ const t=await resp.text(); throw new Error(`No JSON – ${t.slice(0,200)}`); }
       const data = await resp.json();
+      // Alinear rango visual con el lunes calculado por el servidor
+      if (data && data.monday){
+        startOfWeek = data.monday;
+        startInput.value = startOfWeek;
+        if (pdfStart) pdfStart.value = startOfWeek;
+        updateWeekRangeDisplay(startOfWeek);
+      }
       renderCalendarios(data, turno);
     }catch(e){
       console.error('Error al cargar calendario global', e);
@@ -109,7 +116,12 @@
     return times;
   }
 
-  function isBetween(t, a, b){ const tt=t.length===5?t+':00':t; if(a.length===5) a+':00'; if(b.length===5) b+':00'; return (tt>=a && tt<=b); }
+  function isBetween(t, a, b){
+    const tt = t.length===5 ? t+':00' : t;
+    if (a.length===5) a += ':00';
+    if (b.length===5) b += ':00';
+    return (tt>=a && tt<=b);
+  }
 
   function buildTable(aipData, cancelData, turno){
     const table=document.createElement('table'); table.className='calendario-table';

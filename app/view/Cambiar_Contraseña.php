@@ -1,4 +1,5 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 // Incluir el controlador
 require_once __DIR__ . '/../controllers/CambiarContraseñaController.php';
 ?>
@@ -104,6 +105,61 @@ require_once __DIR__ . '/../controllers/CambiarContraseñaController.php';
 </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function(){
+  let otpOk = false;
+  <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
+  (async function(){
+    try{
+      let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method:'POST' });
+      let data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        const msg = data.msg || ('HTTP '+resp.status);
+        if (/verificar tu teléfono/i.test(msg)) {
+          let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
+          let d2 = await r2.json();
+          if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
+          const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{ maxlength:6, autocapitalize:'off', autocorrect:'off' }, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
+          const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
+          let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
+          let j2 = await v2.json();
+          if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
+          await Swal.fire({ icon:'success', title:'Teléfono verificado' });
+          resp = await fetch('../api/otp_send.php?purpose=prestamo', { method:'POST' });
+          data = await resp.json();
+          if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
+        } else {
+          throw new Error(msg);
+        }
+      }
+      const askCode = await Swal.fire({ title:'Verificación 2FA', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{ maxlength:6, autocapitalize:'off', autocorrect:'off' }, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
+      const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
+      const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
+      const vj = await vr.json();
+      if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
+      otpOk = true;
+      Swal.fire({ icon:'success', title:'Verificado', text:'Tienes 10 minutos para completar el cambio de contraseña.' });
+    }catch(err){
+      Swal.fire({ icon:'error', title:'No se pudo verificar', text: String(err.message||err) });
+    }
+  })();
+  <?php endif; ?>
+  // Bloquear envío sin OTP si es profesor
+  const form = document.getElementById('formCambiarContraseña');
+  if (form) {
+    form.addEventListener('submit', function(e){
+      <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
+      if (!otpOk) {
+        e.preventDefault();
+        Swal.fire({ icon:'info', title:'Verificación requerida', text:'Primero valida el código enviado a tu teléfono.' });
+        return false;
+      }
+      <?php endif; ?>
+    });
+  }
+})();
+</script>
 <script src="../../Public/js/cambiar_contraseña.js"></script>
 </body>
 </html>

@@ -64,6 +64,10 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 <input type="email" name="correo" class="form-control" required>
             </div>
             <div class="col-12 col-sm-6 col-lg-4">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" name="telefono" class="form-control" placeholder="+519XXXXXXXX">
+            </div>
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Contraseña</label>
                 <div class="password-field">
                     <input type="password" name="contraseña" id="admin-pass" class="form-control" required minlength="6">
@@ -100,6 +104,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                         <th>Nombre</th>
                         <th>Correo</th>
                         <th>Tipo</th>
+                        <th>Teléfono</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -110,12 +115,14 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                         <td><?= htmlspecialchars($user['nombre']) ?></td>
                         <td><?= htmlspecialchars($user['correo']) ?></td>
                         <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
+                        <td><?= htmlspecialchars($user['telefono'] ?? '') ?></td>
                         <td class="text-center table-action-cell text-nowrap">
                             <button type="button" class="btn btn-sm btn-outline-primary btn-editar-usuario"
                                 data-id="<?= $user['id_usuario'] ?>"
                                 data-nombre="<?= htmlspecialchars($user['nombre']) ?>"
                                 data-correo="<?= htmlspecialchars($user['correo']) ?>"
-                                data-tipo="<?= htmlspecialchars($user['tipo_usuario']) ?>">
+                                data-tipo="<?= htmlspecialchars($user['tipo_usuario']) ?>"
+                                data-telefono="<?= htmlspecialchars($user['telefono'] ?? '') ?>">
                                 ✏️ Editar
                             </button>
                             <form method="post" class="d-inline form-eliminar-usuario">
@@ -151,6 +158,10 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                         <input type="email" class="form-control" id="edit_correo" name="correo" required>
                     </div>
                     <div class="mb-3">
+                        <label for="edit_telefono" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="edit_telefono" name="telefono" placeholder="+519XXXXXXXX">
+                    </div>
+                    <div class="mb-3">
                         <label for="edit_tipo" class="form-label">Tipo de Usuario</label>
                         <select class="form-select" id="edit_tipo" name="tipo" required>
                             <option value="Profesor">Profesor</option>
@@ -181,6 +192,10 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
             <div class="col-md-6">
                 <label class="form-label">Correo</label>
                 <input type="email" name="correo" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" name="telefono" class="form-control" placeholder="+519XXXXXXXX">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Contraseña</label>

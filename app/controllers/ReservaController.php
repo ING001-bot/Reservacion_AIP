@@ -16,6 +16,15 @@ class ReservaController {
     }
 
     public function reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario) {
+        // Requerir OTP si es Profesor
+        if (($_SESSION['tipo'] ?? '') === 'Profesor') {
+            $until = (int)($_SESSION['otp_verified_until'] ?? 0);
+            if ($until < time()) {
+                $this->mensaje = 'Debes verificar tu identidad con el código SMS antes de confirmar la reserva.';
+                $this->tipo = 'danger';
+                return false;
+            }
+        }
         // Validar campos obligatorios
         if (empty($id_aula) || empty($fecha) || empty($hora_inicio) || empty($hora_fin)) {
             $this->mensaje = "⚠️ Debes completar todos los campos de la reserva.";

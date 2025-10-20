@@ -5,7 +5,6 @@ class PrestamoModel {
 
     public function __construct($conexion) {
         $this->db = $conexion;
-        $this->normalizarTiposEquipo();
     }
     
     /** Permite a controladores ejecutar consultas personalizadas cuando el modelo no tiene un método específico */
@@ -13,15 +12,6 @@ class PrestamoModel {
         return $this->db;
     }
     
-    /** Normalizar tipos de equipo para asegurar compatibilidad */
-    private function normalizarTiposEquipo() {
-        try {
-            // Normalizar todos los tipos: MAYÚSCULAS y sin espacios extras
-            $this->db->exec("UPDATE equipos SET tipo_equipo = UPPER(TRIM(tipo_equipo)) WHERE tipo_equipo != UPPER(TRIM(tipo_equipo))");
-        } catch (\Throwable $e) { 
-            error_log("Error al normalizar tipos de equipo en préstamos: " . $e->getMessage());
-        }
-    }
 
     public function guardarPrestamosMultiple($id_usuario, $equipos, $fecha_prestamo, $hora_inicio, $id_aula, $hora_fin = null) {
         if (!$id_usuario || empty($equipos) || !$id_aula) {
@@ -107,7 +97,7 @@ class PrestamoModel {
     }
 
     public function obtenerTodosPrestamos() {
-        $stmt = $this->db->prepare("\n            SELECT p.id_prestamo, e.nombre_equipo, e.tipo_equipo, u.nombre, \n                   a.nombre_aula, a.tipo,\n                   p.fecha_prestamo, p.hora_inicio, p.hora_fin, \n                   p.fecha_devolucion, p.estado\n            FROM prestamos p\n            LEFT JOIN equipos e ON p.id_equipo = e.id_equipo\n            JOIN usuarios u ON p.id_usuario = u.id_usuario\n            JOIN aulas a ON p.id_aula = a.id_aula\n            ORDER BY p.fecha_prestamo DESC\n        ");
+        $stmt = $this->db->prepare("\n            SELECT p.id_prestamo, p.id_usuario, e.nombre_equipo, e.tipo_equipo, u.nombre, \n                   a.nombre_aula, a.tipo,\n                   p.fecha_prestamo, p.hora_inicio, p.hora_fin, \n                   p.fecha_devolucion, p.estado\n            FROM prestamos p\n            LEFT JOIN equipos e ON p.id_equipo = e.id_equipo\n            JOIN usuarios u ON p.id_usuario = u.id_usuario\n            JOIN aulas a ON p.id_aula = a.id_aula\n            ORDER BY p.fecha_prestamo DESC\n        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

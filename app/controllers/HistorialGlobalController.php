@@ -62,6 +62,15 @@ class HistorialGlobalController {
         if (!$tipo || strtolower($tipo) === 'prestamo' || strtolower($tipo) === 'préstamo') {
             $prestamos = $this->consultarPrestamos($desde, $hasta, $prof);
             foreach ($prestamos as $p) {
+                // Construir chips/badges para los equipos agrupados
+                $chips = '';
+                $lista = isset($p['equipos_concat']) ? explode('||', (string)$p['equipos_concat']) : [];
+                foreach ($lista as $eq) {
+                    $eqSafe = htmlspecialchars(trim($eq), ENT_QUOTES, 'UTF-8');
+                    if ($eqSafe !== '') {
+                        $chips .= "<span class=\"badge rounded-pill text-bg-info me-1\">{$eqSafe}</span>";
+                    }
+                }
                 $result[] = [
                     'id'           => $p['id_prestamo'],
                     'fecha'        => $p['fecha_prestamo'],
@@ -72,7 +81,7 @@ class HistorialGlobalController {
                     'estado'       => $p['estado'] ?? '',
                     'aula'         => $p['nombre_aula'] ?? '',
                     'observacion'  => $p['comentario_devolucion'] ?? '',
-                    'equipo'       => $p['nombre_equipo'] ?? '',
+                    'equipo'       => $chips !== '' ? $chips : ($p['nombre_equipo'] ?? ''),
                 ];
             }
         }
@@ -133,9 +142,18 @@ class HistorialGlobalController {
     }
 
     private function consultarPrestamos(?string $desde, ?string $hasta, ?string $prof): array {
-        $sql = "SELECT p.id_prestamo, p.fecha_prestamo, p.hora_inicio, p.hora_fin, p.estado,
-                       p.comentario_devolucion,
-                       u.nombre, a.nombre_aula, e.nombre_equipo
+        // Agrupar múltiples equipos del mismo préstamo (misma solicitud) en un solo registro
+        $sql = "SELECT
+                    MIN(p.id_prestamo) AS id_prestamo,
+                    p.fecha_prestamo,
+                    p.hora_inicio,
+                    p.hora_fin,
+                    p.estado,
+                    p.comentario_devolucion,
+                    u.nombre,
+                    a.nombre_aula,
+                    GROUP_CONCAT(DISTINCT e.nombre_equipo ORDER BY e.nombre_equipo SEPARATOR '||') AS equipos_concat,
+                    MAX(e.nombre_equipo) AS nombre_equipo
                 FROM prestamos p
                 JOIN usuarios u ON p.id_usuario = u.id_usuario
                 JOIN aulas a ON p.id_aula = a.id_aula
@@ -145,6 +163,7 @@ class HistorialGlobalController {
         if ($desde) { $sql .= " AND p.fecha_prestamo >= :desde"; $params[':desde'] = $desde; }
         if ($hasta) { $sql .= " AND p.fecha_prestamo <= :hasta"; $params[':hasta'] = $hasta; }
         if ($prof)  { $sql .= " AND u.nombre LIKE :prof"; $params[':prof'] = "%$prof%"; }
+        $sql .= " GROUP BY p.fecha_prestamo, p.hora_inicio, p.hora_fin, p.estado, p.comentario_devolucion, u.nombre, a.nombre_aula";
         $sql .= " ORDER BY p.fecha_prestamo DESC, p.hora_inicio DESC";
 
         $stmt = $this->prestamoModel->getDb()->prepare($sql);

@@ -17,6 +17,13 @@ $exito = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // Exigir OTP verificado si es Profesor
+        if (($_SESSION['tipo'] ?? '') === 'Profesor') {
+            $until = (int)($_SESSION['otp_verified_until'] ?? 0);
+            if ($until < time()) {
+                throw new Exception('Debes verificar tu identidad con el código SMS antes de cambiar la contraseña.');
+            }
+        }
         $actual = trim($_POST['actual'] ?? '');
         $nueva = trim($_POST['nueva'] ?? '');
         $confirmar = trim($_POST['confirmar'] ?? '');

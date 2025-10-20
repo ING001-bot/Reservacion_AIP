@@ -12,6 +12,17 @@ document.addEventListener('DOMContentLoaded', function(){
 
     let turno = 'manana';
     let startOfWeek = startInput.value || new Date().toISOString().substr(0,10);
+
+    function getMonday(dateStr){
+        const d = new Date(dateStr+'T00:00:00');
+        const day = d.getDay(); // 0=Sun,1=Mon,...6=Sat
+        const diff = (day === 0 ? -6 : 1 - day);
+        d.setDate(d.getDate()+diff);
+        const yyyy=d.getFullYear();
+        const mm=String(d.getMonth()+1).padStart(2,'0');
+        const dd=String(d.getDate()).padStart(2,'0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
     
     function updateWeekRangeDisplay(monday){
         if(!weekRangeDisplay) return;
@@ -61,8 +72,12 @@ document.addEventListener('DOMContentLoaded', function(){
             }
             const data = await resp.json();
             console.log('Historial_fetch data:', data);
-            // Usar el monday del servidor para asegurar consistencia
-            const monday = data.monday || startOfWeek;
+            // Usar el monday del servidor para asegurar consistencia y actualizar rango mostrado
+            const monday = data.monday || getMonday(startOfWeek);
+            startOfWeek = monday;
+            startInput.value = startOfWeek;
+            if (pdfStart) pdfStart.value = startOfWeek;
+            updateWeekRangeDisplay(startOfWeek);
             renderCalendarios(data, turno, monday);
             loadPrestamos();
         } catch (e) {
@@ -276,6 +291,10 @@ document.addEventListener('DOMContentLoaded', function(){
         container.innerHTML = html;
     }
 
+    // Normalizar inicio a lunes antes de primera carga
+    startOfWeek = getMonday(startOfWeek);
+    startInput.value = startOfWeek;
+    if (pdfStart) pdfStart.value = startOfWeek;
     updateWeekRangeDisplay(startOfWeek);
     loadAll();
 });

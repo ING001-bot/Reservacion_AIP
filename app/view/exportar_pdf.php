@@ -20,6 +20,7 @@ $tipo_usuario = $_SESSION['tipo'] ?? '';
 $profesor_nombre = $_SESSION['usuario'] ?? '';
 $start_week = $_POST['start_week'] ?? date('Y-m-d');
 $turno = $_POST['turno'] ?? 'manana';
+$prof_like = isset($_POST['profesor']) && $_POST['profesor'] !== '' ? $_POST['profesor'] : null;
 
 $controller = new HistorialController($conexion);
 $monday = $controller->getMondayOfWeek($start_week);
@@ -34,11 +35,20 @@ foreach ($aulas as $a) {
 }
 while (count($aip_ids) < 2) { $aip_ids[] = null; $aip_names[] = ''; }
 
-// Solo las reservas del profesor logueado
-$aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAula($aip_ids[0], $monday, $id_usuario)
-                    : array_fill_keys($controller->getWeekDates($monday), []);
-$aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAula($aip_ids[1], $monday, $id_usuario)
-                    : array_fill_keys($controller->getWeekDates($monday), []);
+// Reservas de la semana por aula según rol
+if ($tipo_usuario === 'Administrador' || $tipo_usuario === 'Encargado') {
+    // Admin/Encargado: ver todos, opcionalmente filtrar por profesor
+    $aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAulaTodos($aip_ids[0], $monday, $prof_like)
+                        : array_fill_keys($controller->getWeekDates($monday), []);
+    $aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAulaTodos($aip_ids[1], $monday, $prof_like)
+                        : array_fill_keys($controller->getWeekDates($monday), []);
+} else {
+    // Profesor: solo las suyas
+    $aip1 = $aip_ids[0] ? $controller->obtenerReservasSemanaPorAula($aip_ids[0], $monday, $id_usuario)
+                        : array_fill_keys($controller->getWeekDates($monday), []);
+    $aip2 = $aip_ids[1] ? $controller->obtenerReservasSemanaPorAula($aip_ids[1], $monday, $id_usuario)
+                        : array_fill_keys($controller->getWeekDates($monday), []);
+}
 
 $prestamos_completos = $controller->obtenerPrestamos();
 if ($tipo_usuario === 'Administrador' || $tipo_usuario === 'Encargado') {
@@ -107,6 +117,90 @@ ob_start();
       </div>
     </div>
   </header>
+
+  <!-- Calendarios AIP -->
+  <table style="width:100%; margin-bottom: 10px; border:0;">
+    <tr>
+      <td style="width:50%; vertical-align:top; padding-right:6px;">
+        <h2 style="font-size:14px; margin: 8px 0;">AIP 1 <?= $aip_names[0] ? '(' . htmlspecialchars($aip_names[0]) . ')' : '' ?></h2>
+        <?php $fechas = $controller->getWeekDates($monday); ?>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Reservas</th>
+              <th>Cancelaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($fechas as $f): ?>
+            <?php $resv = $aip1[$f] ?? []; $canc = $cancel1[$f] ?? []; ?>
+            <tr>
+              <td class="nowrap"><?= htmlspecialchars($f) ?></td>
+              <td>
+                <?php if (!empty($resv)): ?>
+                  <?php foreach ($resv as $r): ?>
+                    <div><?= htmlspecialchars(($r['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($r['hora_fin'] ?? '')) ?><?= isset($r['profesor']) && $r['profesor'] !== '' ? (' · ' . htmlspecialchars($r['profesor'])) : '' ?></div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <span class="small">—</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if (!empty($canc)): ?>
+                  <?php foreach ($canc as $c): ?>
+                    <div><?= htmlspecialchars(($c['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($c['hora_fin'] ?? '')) ?> · <?= htmlspecialchars(($c['motivo'] ?? '')) ?></div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <span class="small">—</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </td>
+      <td style="width:50%; vertical-align:top; padding-left:6px;">
+        <h2 style="font-size:14px; margin: 8px 0;">AIP 2 <?= $aip_names[1] ? '(' . htmlspecialchars($aip_names[1]) . ')' : '' ?></h2>
+        <?php $fechas = $controller->getWeekDates($monday); ?>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Reservas</th>
+              <th>Cancelaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($fechas as $f): ?>
+            <?php $resv = $aip2[$f] ?? []; $canc = $cancel2[$f] ?? []; ?>
+            <tr>
+              <td class="nowrap"><?= htmlspecialchars($f) ?></td>
+              <td>
+                <?php if (!empty($resv)): ?>
+                  <?php foreach ($resv as $r): ?>
+                    <div><?= htmlspecialchars(($r['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($r['hora_fin'] ?? '')) ?><?= isset($r['profesor']) && $r['profesor'] !== '' ? (' · ' . htmlspecialchars($r['profesor'])) : '' ?></div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <span class="small">—</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if (!empty($canc)): ?>
+                  <?php foreach ($canc as $c): ?>
+                    <div><?= htmlspecialchars(($c['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($c['hora_fin'] ?? '')) ?> · <?= htmlspecialchars(($c['motivo'] ?? '')) ?></div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <span class="small">—</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </table>
 
   <?php if (!empty($prestamos)): ?>
     <table>
