@@ -29,6 +29,54 @@
 
 .table-responsive{ border:1px solid var(--hg-border); border-radius:12px; overflow:hidden; }
 
+/* Ajustes para la tabla de Reportes/Filtros */
+#tabla-historial td{ vertical-align: middle; padding: .6rem .5rem; }
+#tabla-historial thead th{ white-space: nowrap; }
+/* Anchos y alineaciones para una tabla pareja */
+#tabla-historial td:nth-child(1),
+#tabla-historial th:nth-child(1){ min-width: 110px; }
+#tabla-historial td:nth-child(2),
+#tabla-historial th:nth-child(2),
+#tabla-historial td:nth-child(3),
+#tabla-historial th:nth-child(3){ min-width: 74px; text-align:center; }
+#tabla-historial td:nth-child(4),
+#tabla-historial th:nth-child(4){ min-width: 220px; }
+#tabla-historial td:nth-child(6),
+#tabla-historial th:nth-child(6),
+#tabla-historial td:nth-child(7),
+#tabla-historial th:nth-child(7){ min-width: 110px; text-align:center; }
+#tabla-historial td:nth-child(8),
+#tabla-historial th:nth-child(8){ min-width: 180px; }
+/* Columna Aula/Equipo: chips parejos con flex wrap y gap */
+#tabla-historial td:nth-child(5){
+  white-space: normal;
+  line-height: 1.2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+#tabla-historial td:nth-child(5) .badge{
+  display: inline-block;
+  margin: 0; /* usamos gap del contenedor */
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+/* Fallback por si el tema no define .text-bg-info de Bootstrap */
+.text-bg-info{
+  background-color: #12cfee !important;
+  color: #fff !important;
+}
+
+/* Responsive: permitir que los anchos se reduzcan en móviles */
+@media (max-width: 768px){
+  #tabla-historial td:nth-child(4),
+  #tabla-historial th:nth-child(4){ min-width: 160px; }
+  #tabla-historial td:nth-child(8),
+  #tabla-historial th:nth-child(8){ min-width: 140px; }
+}
+
 /* Responsive */
 @media (max-width: 768px){
   #panel-filtros .row > [class^="col-"]{ flex: 0 0 50%; max-width: 50%; }

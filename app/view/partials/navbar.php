@@ -106,7 +106,7 @@ $badge = count($no_leidas);
       <!-- Notificaciones (solo Admin y Encargado) -->
       <?php if ($es_admin || $es_encargado): ?>
       <div class="dropdown me-3">
-        <button type="button" class="btn btn-link nav-link position-relative text-white p-2 border-0" id="notifDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+        <button type="button" class="btn btn-link nav-link position-relative text-white p-2 border-0" id="notifDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-display="static" aria-expanded="false">
           <i class="fas fa-bell fa-lg"></i>
           <?php if ($badge > 0): ?>
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
@@ -140,9 +140,9 @@ $badge = count($no_leidas);
       </div>
       <?php endif; ?>
       
-      <!-- Perfil de usuario (solo escritorio) -->
-      <div class="dropdown d-none d-lg-block">
-        <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
+      <!-- Perfil de usuario (todas las pantallas) -->
+      <div class="dropdown">
+        <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-display="static" aria-expanded="false">
           <i class="fas fa-user-circle me-2"></i>
           <span><?= $nombre ?></span>
         </button>
@@ -370,7 +370,8 @@ body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); b
         // Crear nueva instancia FORZADA
         var dropdown = new bootstrap.Dropdown(trigger, {
           autoClose: true,
-          popperConfig: null
+          popperConfig: { strategy: 'fixed', modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport' } }] },
+          container: 'body' // sacar el menú fuera de contenedores con overflow
         });
         
         // Forzar que el click funcione

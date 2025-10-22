@@ -12,6 +12,7 @@ class UsuarioModel {
             global $conexion; // Usar la conexión global si no se proporciona una
         }
         $this->db = $conexion;
+        $this->ensureSchema();
     }
 
     public function existeCorreo($correo) {
@@ -48,11 +49,12 @@ class UsuarioModel {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function registrar($nombre, $correo, $contraseña, $tipo_usuario) {
+    public function registrar($nombre, $correo, $contraseña, $tipo_usuario, ?string $telefono = null) {
         $nombre = ucwords(strtolower(trim($nombre)));
         $correo = strtolower(trim($correo));
-        $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario) VALUES (?, ?, ?, ?)");
-        return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario]);
+        $telefono = $this->normalizePhone($telefono);
+        $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario, telefono) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario, $telefono]);
     }
 
     // Registrar con verificación por correo (verificado=0 y token)
@@ -64,11 +66,12 @@ class UsuarioModel {
     }
 
     // Registrar con verificado=1 (para cuentas creadas por administrador)
-    public function registrarVerificado($nombre, $correo, $contraseña, $tipo_usuario) {
+    public function registrarVerificado($nombre, $correo, $contraseña, $tipo_usuario, ?string $telefono = null) {
         $nombre = ucwords(strtolower(trim($nombre)));
         $correo = strtolower(trim($correo));
-        $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario, verificado, verification_token, token_expira) VALUES (?, ?, ?, ?, 1, NULL, NULL)");
-        return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario]);
+        $telefono = $this->normalizePhone($telefono);
+        $stmt = $this->db->prepare("INSERT INTO usuarios (nombre, correo, contraseña, tipo_usuario, telefono, verificado, verification_token, token_expira) VALUES (?, ?, ?, ?, ?, 1, NULL, NULL)");
+        return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario, $telefono]);
     }
 
     // Reactivar (reusar fila existente por UNIQUE correo) para admin
@@ -80,7 +83,11 @@ class UsuarioModel {
     }
 
     public function obtenerUsuarios() {
+<<<<<<< HEAD
         $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono FROM usuarios WHERE activo = 1");
+=======
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono, telefono_verificado FROM usuarios WHERE activo = 1");
+>>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -97,11 +104,13 @@ class UsuarioModel {
         return $stmt->execute([$correo]);
     }
 
-    public function actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario) {
+    public function actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, ?string $telefono = null) {
         $nombre = ucwords(strtolower(trim($nombre)));
         $correo = strtolower(trim($correo));
-        $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ? WHERE id_usuario = ?");
-        return $stmt->execute([$nombre, $correo, $tipo_usuario, $id_usuario]);
+        $telefono = $this->normalizePhone($telefono);
+        // Si cambia el teléfono, reiniciar verificación
+        $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ?, telefono = ?, telefono_verificado = IF(telefono <> ?, 0, telefono_verificado), telefono_verificado_at = IF(telefono <> ?, NULL, telefono_verificado_at) WHERE id_usuario = ?");
+        return $stmt->execute([$nombre, $correo, $tipo_usuario, $telefono, $telefono, $telefono, $id_usuario]);
     }
 
     // Actualiza el teléfono por correo (útil inmediatamente después de crear)
@@ -125,7 +134,7 @@ class UsuarioModel {
 
     public function obtenerPorCorreo($correo) {
         $correo = strtolower(trim($correo));
-        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, contraseña, tipo_usuario, verificado, activo FROM usuarios WHERE correo = ?");
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, telefono, telefono_verificado, contraseña, tipo_usuario, verificado, activo FROM usuarios WHERE correo = ?");
         $stmt->execute([$correo]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -197,6 +206,46 @@ class UsuarioModel {
         $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET login_token = NULL, login_expira = NULL WHERE correo = ?");
         return $stmt->execute([$correo]);
+    }
+
+    private function ensureSchema(): void {
+        try {
+            // agregar columna telefono si no existe
+            $this->db->exec("CREATE TABLE IF NOT EXISTS otp_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_usuario INT NOT NULL,
+                purpose VARCHAR(32) NOT NULL,
+                code_hash VARCHAR(255) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                attempts TINYINT NOT NULL DEFAULT 0,
+                sent_at DATETIME NOT NULL,
+                INDEX idx_user_purpose (id_usuario, purpose),
+                FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            // add column telefono if missing
+            $stmt = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'telefono'");
+            if ($stmt->rowCount() === 0) {
+                $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(32) NULL AFTER correo");
+            }
+            // add telefono_verificado columns if missing
+            $stmt = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'telefono_verificado'");
+            if ($stmt->rowCount() === 0) {
+                $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono_verificado TINYINT(1) NOT NULL DEFAULT 0 AFTER telefono");
+            }
+            $stmt = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'telefono_verificado_at'");
+            if ($stmt->rowCount() === 0) {
+                $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono_verificado_at DATETIME NULL AFTER telefono_verificado");
+            }
+        } catch (\Throwable $e) {
+            error_log('ensureSchema UsuarioModel: '.$e->getMessage());
+        }
+    }
+
+    private function normalizePhone(?string $telefono): ?string {
+        if (!$telefono) return null;
+        $t = trim($telefono);
+        $t = preg_replace('/[^+0-9]/','', $t);
+        return $t ?: null;
     }
 }
 ?>

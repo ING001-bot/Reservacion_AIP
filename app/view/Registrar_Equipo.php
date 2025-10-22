@@ -97,11 +97,18 @@ $tipos = $tipoModel->listar();
                             <td><?= htmlspecialchars($eq['tipo_equipo']) ?></td>
                             <td><?= htmlspecialchars($eq['stock']) ?></td>
                             <td><?= $eq['activo'] ? "✅" : "❌" ?></td>
-                            <td>
+                            <td class="text-nowrap">
                                 <?php if ($eq['activo']): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-editar" 
+                                        data-id="<?= $eq['id_equipo'] ?>"
+                                        data-nombre="<?= htmlspecialchars($eq['nombre_equipo']) ?>"
+                                        data-tipo="<?= htmlspecialchars($eq['tipo_equipo']) ?>"
+                                        data-stock="<?= $eq['stock'] ?>">
+                                        ✏️ Editar
+                                    </button>
                                     <form method="post" class="d-inline form-baja">
                                         <input type="hidden" name="id_equipo" value="<?= $eq['id_equipo'] ?>">
-                                        <button type="submit" name="dar_baja_equipo" class="btn btn-sm btn-outline-warning">⬇ Dar de Baja</button>
+                                        <button type="submit" name="dar_baja_equipo" class="btn btn-sm btn-outline-warning">⬇ Baja</button>
                                     </form>
                                 <?php else: ?>
                                     <form method="post" class="d-inline form-restaurar">
@@ -118,6 +125,43 @@ $tipos = $tipoModel->listar();
                     <?php $i++; endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Equipo -->
+    <div class="modal fade" id="editarEquipoModal" tabindex="-1" aria-labelledby="editarEquipoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-brand text-white">
+                    <h5 class="modal-title" id="editarEquipoModalLabel">✏️ Editar Equipo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formEditarEquipo" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="id_equipo" id="edit_id_equipo">
+                        <div class="mb-3">
+                            <label for="edit_nombre_equipo" class="form-label">Nombre del Equipo</label>
+                            <input type="text" class="form-control" id="edit_nombre_equipo" name="nombre_equipo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_tipo_equipo" class="form-label">Tipo de Equipo</label>
+                            <select class="form-select" id="edit_tipo_equipo" name="tipo_equipo" required>
+                                <?php foreach ($tipos as $t): ?>
+                                    <option value="<?= htmlspecialchars($t['nombre']) ?>"><?= htmlspecialchars($t['nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_stock" class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="edit_stock" name="stock" min="0" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" name="editar_equipo" class="btn btn-brand">Guardar Cambios</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

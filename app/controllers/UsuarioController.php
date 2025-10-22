@@ -15,7 +15,11 @@ class UsuarioController {
     }
 
     /** Registrar usuario (incluye Admin) con verificación obligatoria por correo */
+<<<<<<< HEAD
     public function registrarUsuario($nombre, $correo, $contraseña, $tipo_usuario, $telefono = null) {
+=======
+    public function registrarUsuario($nombre, $correo, $contraseña, $tipo_usuario, ?string $telefono = null) {
+>>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
         $nombre = trim($nombre);
         // Solo letras (incluye acentos) y espacios
         if (!preg_match('/^[\p{L}\s]+$/u', $nombre)) {
@@ -36,8 +40,9 @@ class UsuarioController {
             if ($reactivado) {
                 // Confirmar existencia del buzón por SMTP
                 $subject = 'Se reactivó tu cuenta - Aulas de Innovación';
+                $rol = htmlspecialchars($tipo_usuario);
                 $html = '<p>Hola ' . htmlspecialchars($nombre) . ',</p>' .
-                        '<p>Tu cuenta de administrador ha sido reactivada.</p>';
+                        '<p>Tu cuenta de ' . $rol . ' ha sido reactivada.</p>';
                 $sent = $this->mailer->send($correo, $subject, $html);
                 if (!$sent) {
                     // Si no se pudo notificar (correo inexistente), volvemos a inactivar para no dejar cuentas inválidas
@@ -58,7 +63,17 @@ class UsuarioController {
         // Registro con verificación obligatoria (verificado = 0)
         $token = bin2hex(random_bytes(32));
         $expira = date('Y-m-d H:i:s', time() + 24*60*60);
+        // Guardar telefono si existe cuando el admin registra verificado directamente
         $ok = $this->usuarioModel->registrarConVerificacion($nombre, $correo, $hash, $tipo_usuario, $token, $expira);
+        if ($ok && $telefono) {
+            // actualizar telefono luego del insert (por simplicidad y compatibilidad)
+            try {
+                $u = $this->usuarioModel->obtenerPorCorreo($correo);
+                if ($u && !empty($u['id_usuario'])) {
+                    $this->usuarioModel->actualizarUsuario((int)$u['id_usuario'], $nombre, $correo, $tipo_usuario, $telefono);
+                }
+            } catch (\Throwable $e) { /* noop */ }
+        }
         if ($ok) {
             $link = $this->buildVerificationLink($correo, $token);
             // Enviar el correo DESPUÉS de terminar la respuesta para no bloquear la UI
@@ -77,7 +92,7 @@ class UsuarioController {
     }
 
     /** Registrar profesor público */
-    public function registrarProfesorPublico($nombre, $correo, $contraseña) {
+    public function registrarProfesorPublico($nombre, $correo, $contraseña, ?string $telefono = null) {
         $nombre = trim($nombre);
         if (!preg_match('/^[\p{L}\s]+$/u', $nombre)) {
             return ['error' => true, 'mensaje' => '⚠️ El nombre solo puede contener letras y espacios.'];
@@ -113,6 +128,14 @@ class UsuarioController {
         $token = bin2hex(random_bytes(32));
         $expira = date('Y-m-d H:i:s', time() + 24*60*60);
         $ok = $this->usuarioModel->registrarConVerificacion($nombre, $correo, $hash, 'Profesor', $token, $expira);
+        if ($ok && $telefono) {
+            try {
+                $u = $this->usuarioModel->obtenerPorCorreo($correo);
+                if ($u && !empty($u['id_usuario'])) {
+                    $this->usuarioModel->actualizarUsuario((int)$u['id_usuario'], $nombre, $correo, 'Profesor', $telefono);
+                }
+            } catch (\Throwable $e) { /* noop */ }
+        }
         if ($ok) {
             $link = $this->buildVerificationLink($correo, $token);
             $mailer = $this->mailer;
@@ -140,7 +163,11 @@ class UsuarioController {
     }
 
     /** Editar usuario */
+<<<<<<< HEAD
     public function editarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, $telefono = null) {
+=======
+    public function editarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, ?string $telefono = null) {
+>>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
         if (!$nombre || !$correo || !$tipo_usuario) {
             return ['error' => true, 'mensaje' => '⚠️ Todos los campos son obligatorios.'];
         }
@@ -169,10 +196,14 @@ class UsuarioController {
             return ['error' => true, 'mensaje' => '⚠️ El correo ya está en uso por otro usuario.'];
         }
 
+<<<<<<< HEAD
         $ok = $this->usuarioModel->actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario);
         if ($ok && $telefono !== null) {
             try { $this->usuarioModel->actualizarTelefonoPorId((int)$id_usuario, $telefono); } catch (\Throwable $e) { /* ignore */ }
         }
+=======
+        $ok = $this->usuarioModel->actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, $telefono);
+>>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
         return [
             'error' => !$ok,
             'mensaje' => $ok ? '✅ Usuario actualizado correctamente.' : '❌ Error al actualizar.'
@@ -200,7 +231,8 @@ class UsuarioController {
             }
 
             if (isset($_POST['registrar_profesor_publico'])) {
-                $res = $this->registrarProfesorPublico($_POST['nombre'], $_POST['correo'], $_POST['contraseña']);
+                $telefono = $_POST['telefono'] ?? null;
+                $res = $this->registrarProfesorPublico($_POST['nombre'], $_POST['correo'], $_POST['contraseña'], $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
             }

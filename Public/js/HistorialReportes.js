@@ -101,7 +101,7 @@
 
   async function loadData(){
     try{
-      const url = `/Sistema_reserva_AIP/app/api/HistorialGlobal_fetch.php${buildQuery()}`;
+      const url = `../../app/api/HistorialGlobal_fetch.php${buildQuery()}`;
       const resp = await fetch(url);
       if (!resp.ok){ const t = await resp.text(); throw new Error(`HTTP ${resp.status}. ${t.slice(0,200)}`); }
       const ct = resp.headers.get('content-type')||'';
@@ -134,7 +134,15 @@
   formFiltros?.addEventListener('submit', (e)=>{ e.preventDefault(); loadData(); });
   btnReset?.addEventListener('click', ()=>{ formFiltros?.reset(); loadData(); });
   btnCsv?.addEventListener('click', exportCSV);
-  btnPdf?.addEventListener('click', ()=>{ alert('Exportación PDF se implementará en la siguiente iteración.'); });
+  btnPdf?.addEventListener('click', ()=>{
+    const fd = new FormData(formFiltros);
+    const params = new URLSearchParams();
+    for (const [k,v] of fd.entries()){
+      if (String(v).trim() !== '') params.append(k, String(v));
+    }
+    const url = `../../app/api/HistorialReportes_pdf.php${params.toString() ? ('?' + params.toString()) : ''}`;
+    window.open(url, '_blank');
+  });
 
   // inicial
   loadData();

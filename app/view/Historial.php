@@ -28,10 +28,20 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
   <main class="container py-3">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
       <div>
-        <h1 class="text-brand h3 mb-0">📜 Historial de Aulas</h1>
+        <h1 class="text-brand h3 mb-0">📜 Historial</h1>
         <small class="text-muted">Semana de lunes a sábado</small>
       </div>
       <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="btn-group" role="group" aria-label="Tabs historial">
+          <button id="tab-reservas" class="btn btn-brand btn-sm">Historial/Reserva</button>
+          <button id="tab-equipos" class="btn btn-outline-brand btn-sm">Historial/Equipos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reservas (Aulas) -->
+    <section id="section-reservas">
+      <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
         <div class="btn-group" role="group">
           <button id="btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
           <button id="btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
@@ -44,27 +54,50 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
           </button>
         </form>
       </div>
-    </div>
-
-    <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
-      <button id="prev-week" class="btn btn-outline-brand btn-sm">
-        <i class="bi bi-chevron-left"></i> Semana anterior
-      </button>
-      <input type="hidden" id="start-of-week" value="<?php echo $startOfWeek; ?>">
-      <span id="week-range-display" class="badge bg-primary-subtle text-primary-emphasis px-3 py-2"></span>
-      <button id="next-week" class="btn btn-outline-brand btn-sm">
-        Semana siguiente <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
-
-    <section id="calendarios" class="calendarios-grid">
-      <!-- Calendarios (AIP1 y AIP2) se inyectarán aquí -->
+      <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
+        <button id="prev-week" class="btn btn-outline-brand btn-sm">
+          <i class="bi bi-chevron-left"></i> Semana anterior
+        </button>
+        <input type="hidden" id="start-of-week" value="<?php echo $startOfWeek; ?>">
+        <span id="week-range-display" class="badge bg-primary-subtle text-primary-emphasis px-3 py-2"></span>
+        <button id="next-week" class="btn btn-outline-brand btn-sm">
+          Semana siguiente <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      <section id="calendarios" class="calendarios-grid">
+        <!-- Calendarios (AIP1 y AIP2) se inyectarán aquí -->
+      </section>
     </section>
 
-    <section class="prestamos">
-      <h2>Préstamos realizados</h2>
-      <div id="tabla-prestamos"></div>
+    <!-- Equipos (Préstamos como calendario) -->
+    <section id="section-equipos" style="display:none">
+      <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+        <div class="btn-group" role="group">
+          <button id="eq-btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
+          <button id="eq-btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
+        </div>
+      </div>
+      <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
+        <button id="eq-prev-week" class="btn btn-outline-brand btn-sm">
+          <i class="bi bi-chevron-left"></i> Semana anterior
+        </button>
+        <input type="hidden" id="eq-start-of-week" value="<?php echo $startOfWeek; ?>">
+        <span id="eq-week-range-display" class="badge bg-primary-subtle text-primary-emphasis px-3 py-2"></span>
+        <button id="eq-next-week" class="btn btn-outline-brand btn-sm">
+          Semana siguiente <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      <section id="calendarios-equipos" class="calendarios-grid">
+        <!-- Calendarios por tipo (LAPTOP / PROYECTOR) se inyectarán aquí -->
+      </section>
+      <section class="card mt-3 p-2">
+        <div class="fw-semibold mb-2">Préstamos de la semana</div>
+        <div id="eq-table-container"></div>
+      </section>
     </section>
+
+    <!-- Placeholder oculto para compatibilidad con Public/js/Historial.js -->
+    <div id="tabla-prestamos" style="display:none"></div>
 
     <!-- Barra inferior móvil para PDF (no se sale del sistema) -->
     <div class="mobile-bottom-bar">
@@ -80,9 +113,36 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
 
   <?php $v = time(); ?>
   <script src="../../Public/js/Historial.js?v=<?= $v ?>" defer></script>
+  <script src="../../Public/js/HistorialEquiposCalendario.js?v=<?= $v ?>" defer></script>
   <script>
-  // Mantener sincronizados los campos del PDF de la barra inferior
   document.addEventListener('DOMContentLoaded', function(){
+    // Toggle tabs
+    const tabRes = document.getElementById('tab-reservas');
+    const tabEq  = document.getElementById('tab-equipos');
+    const secRes = document.getElementById('section-reservas');
+    const secEq  = document.getElementById('section-equipos');
+    function showRes(){
+      secRes.style.display='';
+      secEq.style.display='none';
+      tabRes.classList.remove('btn-outline-brand');
+      tabRes.classList.add('btn-brand');
+      tabEq.classList.remove('btn-brand');
+      tabEq.classList.add('btn-outline-brand');
+    }
+    function showEq(){
+      secRes.style.display='none';
+      secEq.style.display='';
+      tabEq.classList.remove('btn-outline-brand');
+      tabEq.classList.add('btn-brand');
+      tabRes.classList.remove('btn-brand');
+      tabRes.classList.add('btn-outline-brand');
+    }
+    tabRes.addEventListener('click', showRes);
+    tabEq.addEventListener('click', showEq);
+    // default
+    showRes();
+
+    // Mantener sincronizados los campos del PDF de la barra inferior
     const topStart = document.getElementById('pdf-start-week');
     const topTurno = document.getElementById('pdf-turno');
     const botStart = document.getElementById('pdf-start-week-bottom');

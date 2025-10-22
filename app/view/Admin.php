@@ -142,7 +142,10 @@ $vista = $_GET['view'] ?? 'inicio';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<?php if ($vista === 'aulas'): ?>
+<?php if ($vista === 'usuarios'): ?>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../../Public/js/usuarios.js?v=<?= time() ?>"></script>
+<?php elseif ($vista === 'aulas'): ?>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../../Public/js/aulas.js?v=<?= time() ?>"></script>
 <?php elseif ($vista === 'equipos'): ?>
@@ -151,6 +154,14 @@ $vista = $_GET['view'] ?? 'inicio';
 <?php elseif ($vista === 'tipos_equipo'): ?>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../../Public/js/tipos_equipo.js?v=<?= time() ?>"></script>
+<?php elseif ($vista === 'reportes'): ?>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="../../Public/js/HistorialReportes.js?v=<?= time() ?>"></script>
+  <script src="../../Public/js/HistorialEstadisticas.js?v=<?= time() ?>"></script>
+<?php elseif ($vista === 'historial_global'): ?>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="../../Public/js/HistorialGlobal.js?v=<?= time() ?>"></script>
+  <script src="../../Public/js/HistorialGlobalCalendario.js?v=<?= time() ?>"></script>
 <?php endif; ?>
 <script src="../../Public/js/theme.js"></script>
 </body>

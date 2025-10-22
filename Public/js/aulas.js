@@ -1,5 +1,46 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Confirmación al eliminar aula (mismo estilo que equipos)
+  // Manejar clic en botón editar aula
+  document.querySelectorAll('.btn-editar-aula').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const modal = new bootstrap.Modal(document.getElementById('editarAulaModal'));
+      document.getElementById('edit_id_aula').value = this.dataset.id;
+      document.getElementById('edit_nombre_aula').value = this.dataset.nombre;
+      document.getElementById('edit_capacidad').value = this.dataset.capacidad;
+      document.getElementById('edit_tipo').value = this.dataset.tipo;
+      modal.show();
+    });
+  });
+
+  // Confirmación al editar aula
+  const formEditarAula = document.getElementById('formEditarAula');
+  if (formEditarAula) {
+    formEditarAula.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = this;
+      Swal.fire({
+        title: '¿Guardar cambios?',
+        text: '¿Estás seguro de que deseas actualizar la información de esta aula?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, guardar cambios',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          console.log('✅ Enviando formulario de edición de aula...');
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = 'editar_aula';
+          hiddenInput.value = '1';
+          form.appendChild(hiddenInput);
+          form.submit();
+        }
+      });
+    });
+  }
+
+  // Confirmación al eliminar aula
   document.querySelectorAll('.form-eliminar-aula').forEach((form) => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -15,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButtonText: 'Cancelar'
       }).then((result) => {
         if (result.isConfirmed) {
-          // Asegurar que el backend detecte la acción por name del botón
           if (btn && btn.name) {
             const hidden = document.createElement('input');
             hidden.type = 'hidden';

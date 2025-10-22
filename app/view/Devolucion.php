@@ -52,14 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Filtros simples - Optimización: Por defecto solo mostrar préstamos pendientes de últimos 30 días
-$estado = $_GET['estado'] ?? 'Prestado';
+// Filtros simples - Por defecto mostrar todos los estados (así, al confirmar, la fila sigue visible)
+$estado = $_GET['estado'] ?? '';
 $desde = $_GET['desde'] ?? '';
 $hasta = $_GET['hasta'] ?? '';
 $q     = $_GET['q'] ?? '';
 
-// Si no hay filtro de fecha, limitar a últimos 30 días para mejor rendimiento
-if (empty($desde) && $estado === 'Prestado') {
+// Si no hay filtros de fecha, limitar a últimos 30 días para mejor rendimiento
+if (empty($desde) && empty($hasta)) {
     $desde = date('Y-m-d', strtotime('-30 days'));
 }
 
@@ -223,7 +223,9 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
           if (!empty($prestamos)) {
             $grupos = [];
             foreach ($prestamos as $r) {
-              $key = $r['nombre'].'|'.$r['fecha_prestamo'].'|'.$r['hora_inicio'].'|'.$r['id_aula'];
+              // Algunos selects no incluyen id_aula; usar nombre_aula como parte de la clave de agrupación
+              $aulaKey = $r['nombre_aula'] ?? '';
+              $key = $r['nombre'].'|'.$r['fecha_prestamo'].'|'.$r['hora_inicio'].'|'.$aulaKey;
               
               if (!isset($grupos[$key])) {
                 $grupos[$key] = [

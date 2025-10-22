@@ -92,37 +92,24 @@ $id_editar = $_GET['editar'] ?? null;
                 <tbody>
                     <?php if(!empty($aulas)): ?>
                         <?php foreach($aulas as $aula): ?>
-                            <?php if($id_editar == $aula['id_aula']): ?>
-                                <form method="post">
-                                    <tr>
-                                        <td><input type="text" name="nombre_aula" value="<?= htmlspecialchars($aula['nombre_aula']) ?>" class="form-control" required></td>
-                                        <td><input type="number" name="capacidad" value="<?= htmlspecialchars($aula['capacidad']) ?>" class="form-control" min="1" required></td>
-                                        <td>
-                                            <select name="tipo" class="form-select" required>
-                                                <option value="AIP" <?= $aula['tipo']=='AIP'?'selected':'' ?>>AIP</option>
-                                                <option value="Regular" <?= $aula['tipo']=='Regular'?'selected':'' ?>>Regular</option>
-                                            </select>
-                                        </td>
-                                        <td class="text-center">
-                                            <input type="hidden" name="id_aula" value="<?= $aula['id_aula'] ?>">
-                                            <button type="submit" name="editar_aula" class="btn btn-sm btn-success">💾 Guardar</button>
-                                            <a href="Registrar_Aula.php" class="btn btn-sm btn-secondary">❌ Cancelar</a>
-                                        </td>
-                                    </tr>
-                                </form>
-                            <?php else: ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($aula['nombre_aula']) ?></td>
-                                    <td><?= htmlspecialchars($aula['capacidad']) ?></td>
-                                    <td><?= htmlspecialchars($aula['tipo']) ?></td>
-                                    <td class="text-center">
-                                        <form method="post" class="d-inline form-eliminar-aula">
-                                            <input type="hidden" name="id_aula" value="<?= $aula['id_aula'] ?>">
-                                            <button type="submit" name="eliminar_aula" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
+                            <tr>
+                                <td><?= htmlspecialchars($aula['nombre_aula']) ?></td>
+                                <td><?= htmlspecialchars($aula['capacidad']) ?></td>
+                                <td><?= htmlspecialchars($aula['tipo']) ?></td>
+                                <td class="text-center text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-editar-aula"
+                                        data-id="<?= $aula['id_aula'] ?>"
+                                        data-nombre="<?= htmlspecialchars($aula['nombre_aula']) ?>"
+                                        data-capacidad="<?= $aula['capacidad'] ?>"
+                                        data-tipo="<?= htmlspecialchars($aula['tipo']) ?>">
+                                        ✏️ Editar
+                                    </button>
+                                    <form method="post" class="d-inline form-eliminar-aula">
+                                        <input type="hidden" name="id_aula" value="<?= $aula['id_aula'] ?>">
+                                        <button type="submit" name="eliminar_aula" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
@@ -131,6 +118,42 @@ $id_editar = $_GET['editar'] ?? null;
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Aula -->
+<div class="modal fade" id="editarAulaModal" tabindex="-1" aria-labelledby="editarAulaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brand text-white">
+                <h5 class="modal-title" id="editarAulaModalLabel">✏️ Editar Aula</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formEditarAula" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="id_aula" id="edit_id_aula">
+                    <div class="mb-3">
+                        <label for="edit_nombre_aula" class="form-label">Nombre del Aula</label>
+                        <input type="text" class="form-control" id="edit_nombre_aula" name="nombre_aula" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_capacidad" class="form-label">Capacidad</label>
+                        <input type="number" class="form-control" id="edit_capacidad" name="capacidad" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_tipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="edit_tipo" name="tipo" required>
+                            <option value="AIP">AIP</option>
+                            <option value="Regular">Regular</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="editar_aula" class="btn btn-brand">Guardar Cambios</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -1,5 +1,73 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Confirmación al eliminar usuario (mismo estilo que equipos)
+  // Obtener el modal una sola vez
+  const modalElement = document.getElementById('editarUsuarioModal');
+  let modalInstance = null;
+  
+  if (modalElement) {
+    // Crear la instancia del modal una sola vez
+    modalInstance = new bootstrap.Modal(modalElement);
+    
+    // Limpiar backdrop al cerrar el modal
+    modalElement.addEventListener('hidden.bs.modal', function () {
+      // Remover cualquier backdrop residual
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(backdrop => backdrop.remove());
+      // Restaurar scroll del body
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    });
+  }
+  
+  // Manejar clic en botón editar usuario
+  document.querySelectorAll('.btn-editar-usuario').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (!modalInstance) {
+        alert('Error: No se pudo inicializar el modal');
+        return;
+      }
+      
+      // Llenar los datos del formulario
+      document.getElementById('edit_id_usuario').value = this.dataset.id;
+      document.getElementById('edit_nombre').value = this.dataset.nombre;
+      document.getElementById('edit_correo').value = this.dataset.correo;
+      document.getElementById('edit_tipo').value = this.dataset.tipo;
+      
+      // Mostrar el modal
+      modalInstance.show();
+    });
+  });
+
+  // Confirmación al editar usuario
+  const formEditarUsuario = document.getElementById('formEditarUsuario');
+  if (formEditarUsuario) {
+    formEditarUsuario.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = this;
+      Swal.fire({
+        title: '¿Guardar cambios?',
+        text: '¿Estás seguro de que deseas actualizar la información de este usuario?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, guardar cambios',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          console.log('✅ Enviando formulario de edición de usuario...');
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = 'editar_usuario';
+          hiddenInput.value = '1';
+          form.appendChild(hiddenInput);
+          form.submit();
+        }
+      });
+    });
+  }
+
+  // Confirmación al eliminar usuario
   document.querySelectorAll('.form-eliminar-usuario').forEach((form) => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -15,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButtonText: 'Cancelar'
       }).then((result) => {
         if (result.isConfirmed) {
-          // Asegurar que el nombre del botón llegue al backend
           if (btn && btn.name) {
             const hidden = document.createElement('input');
             hidden.type = 'hidden';

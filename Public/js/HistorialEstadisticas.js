@@ -1,7 +1,12 @@
 // Public/js/HistorialEstadisticas.js
 (function(){
   const root = document.getElementById('historial-reportes');
-  if (!root) return;
+  console.log('🔍 Buscando elemento historial-reportes:', root);
+  if (!root) {
+    console.error('❌ No se encontró el elemento #historial-reportes. El script no se ejecutará.');
+    return;
+  }
+  console.log('✅ Elemento encontrado, iniciando script de estadísticas');
 
   const formFiltros = document.getElementById('form-filtros');
   const btnReset = document.getElementById('btn-reset');
@@ -41,43 +46,91 @@
   }
 
   function renderChart(seriesObj){
-    if (!chartCanvas) return;
+    console.log('📊 Renderizando gráfico...');
+    console.log('Canvas encontrado:', !!chartCanvas);
+    console.log('Chart.js disponible:', typeof Chart !== 'undefined');
+    console.log('Datos del gráfico:', seriesObj);
+    
+    if (!chartCanvas) {
+      console.error('❌ No se encontró el canvas del gráfico');
+      return;
+    }
+    
+    if (typeof Chart === 'undefined') {
+      console.error('❌ Chart.js no está cargado');
+      return;
+    }
+    
     const labels = Object.keys(seriesObj || {}).sort();
     const data = labels.map(k => seriesObj[k]);
+    
+    console.log('Labels:', labels);
+    console.log('Data:', data);
 
-    if (chartInstance){ chartInstance.destroy(); }
-    chartInstance = new Chart(chartCanvas, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Reservas',
-          data,
-          borderColor: '#1e6bd6',
-          backgroundColor: 'rgba(30,107,214,0.12)',
-          tension: 0.3,
-          fill: true,
-          pointRadius: 3,
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { maxRotation: 0, autoSkip: true }, grid: { display: false } },
-          y: { beginAtZero: true, grid: { color: '#eef2f7' } }
+    if (chartInstance){ 
+      console.log('Destruyendo gráfico anterior');
+      chartInstance.destroy(); 
+    }
+    
+    try {
+      chartInstance = new Chart(chartCanvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Reservas',
+            data,
+            borderColor: '#1e6bd6',
+            backgroundColor: 'rgba(30,107,214,0.12)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 3,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { maxRotation: 0, autoSkip: true }, grid: { display: false } },
+            y: { beginAtZero: true, grid: { color: '#eef2f7' } }
+          }
         }
-      }
-    });
+      });
+      console.log('✅ Gráfico creado exitosamente');
+    } catch(e) {
+      console.error('❌ Error al crear gráfico:', e);
+    }
   }
 
   async function loadStats(){
+    console.log('🔄 Cargando estadísticas...');
+    console.log('Root element:', root);
+    console.log('Form filtros:', formFiltros);
+    
     try{
-      const url = `/Sistema_reserva_AIP/app/api/HistorialEstadisticas_fetch.php${buildQuery()}`;
+      const url = `../../app/api/HistorialEstadisticas_fetch.php${buildQuery()}`;
+      console.log('📡 URL:', url);
+      
       const resp = await fetch(url);
-      if (!resp.ok){ const t = await resp.text(); throw new Error(`HTTP ${resp.status}. ${t.slice(0,200)}`); }
+      console.log('📥 Respuesta recibida:', resp.status);
+      
+      if (!resp.ok){ 
+        const t = await resp.text(); 
+        console.error('❌ Error HTTP:', resp.status, t);
+        throw new Error(`HTTP ${resp.status}. ${t.slice(0,200)}`); 
+      }
+      
       const ct = resp.headers.get('content-type')||'';
-      if (!ct.includes('application/json')){ const t=await resp.text(); throw new Error(`No JSON. CT: ${ct}. Body: ${t.slice(0,200)}`); }
+      console.log('Content-Type:', ct);
+      
+      if (!ct.includes('application/json')){ 
+        const t=await resp.text(); 
+        console.error('❌ No es JSON:', t.slice(0,200));
+        throw new Error(`No JSON. CT: ${ct}. Body: ${t.slice(0,200)}`); 
+      }
+      
       const json = await resp.json();
+      console.log('✅ Datos recibidos:', json);
+      
       const res = json || {};
       const resumen = res.resumen || {};
 
@@ -90,8 +143,11 @@
       renderList(listTopProfPrest, res.top_profesores_prestamos || [], 'profesor', 'cantidad');
       renderList(listTopAulas, res.top_aulas_reservas || [], 'aula', 'cantidad');
       renderChart(res.reservas_por_dia || {});
+      
+      console.log('✅ Estadísticas cargadas exitosamente');
     }catch(e){
-      console.error('Error al cargar estadísticas', e);
+      console.error('❌ Error al cargar estadísticas:', e);
+      alert('Error al cargar estadísticas: ' + e.message);
       setCard(statReservas, 0); setCard(statCancel, 0); setCard(statPrestamos, 0); setCard(statHoras, 0);
       if (listTopProfRes) listTopProfRes.innerHTML = '<li class="text-danger">Error al cargar</li>';
       if (listTopProfPrest) listTopProfPrest.innerHTML = '<li class="text-danger">Error al cargar</li>';
