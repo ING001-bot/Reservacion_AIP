@@ -27,37 +27,42 @@ class PrestamoModel {
         $checkAula = $this->db->prepare("SELECT id_aula FROM aulas WHERE id_aula = ? AND activo = 1");
         $checkAula->execute([$id_aula]);
         if (!$checkAula->fetch()) {
-            return ['mensaje'=>'❌ El aula seleccionada no existe o está inactiva. Por favor, selecciona otra aula.','tipo'=>'error'];
+            return ['mensaje'=>' El aula seleccionada no existe o está inactiva. Por favor, selecciona otra aula.','tipo'=>'error'];
         }
         
         $this->db->beginTransaction();
         try {
-            $stmt = $this->db->prepare("
-                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)
-                VALUES (?, ?, ?, ?, 'Prestado', ?, ?)
-            ");
+            // Preparar consultas
+            $stmtInsert = $this->db->prepare("\n                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)\n                VALUES (?, ?, ?, ?, 'Prestado', ?, ?)\n            ");
+            $stmtSelStock = $this->db->prepare("SELECT stock FROM equipos WHERE id_equipo = ? AND activo = 1 FOR UPDATE");
+            $stmtDecStock = $this->db->prepare("UPDATE equipos SET stock = stock - 1 WHERE id_equipo = ? AND stock > 0");
+
             foreach ($equipos as $val) {
-                if ($val) $stmt->execute([$id_usuario, $val, $id_aula, $fecha_prestamo, $hora_inicio, $hora_fin ?? null]);
+                if (!$val) { continue; }
+                // Validar stock disponible del equipo seleccionado
+                $stmtSelStock->execute([$val]);
+                $row = $stmtSelStock->fetch(\PDO::FETCH_ASSOC);
+                $stk = isset($row['stock']) ? (int)$row['stock'] : 0;
+                if ($stk <= 0) {
+                    $this->db->rollBack();
+                    return ['mensaje' => ' El equipo seleccionado (ID '.(int)$val.') no tiene stock disponible.', 'tipo' => 'error'];
+                }
+                // Registrar préstamo individual
+                $stmtInsert->execute([$id_usuario, $val, $id_aula, $fecha_prestamo, $hora_inicio, $hora_fin ?? null]);
+                // Descontar stock
+                $stmtDecStock->execute([$val]);
             }
             $this->db->commit();
-            return ['mensaje'=>'✅ Préstamos registrados correctamente.','tipo'=>'success'];
-        } catch (PDOException $e) {
+            return ['mensaje'=>' Préstamos registrados correctamente.','tipo'=>'success'];
+        } catch (\PDOException $e) {
             $this->db->rollBack();
-            return ['mensaje'=>'❌ Error al registrar préstamos: '.$e->getMessage(),'tipo'=>'error'];
+            return ['mensaje'=>' Error al registrar préstamos: '.$e->getMessage(),'tipo'=>'error'];
         }
     }
 
     public function listarEquiposPorTipo($tipo) {
         $tipo = strtoupper(trim($tipo)); // Normalizar a mayúsculas
-        $stmt = $this->db->prepare("
-            SELECT id_equipo, nombre_equipo, tipo_equipo
-            FROM equipos
-            WHERE UPPER(tipo_equipo) = ?
-            AND activo = 1
-            AND id_equipo NOT IN (
-                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()
-            )
-        ");
+        $stmt = $this->db->prepare("\n            SELECT id_equipo, nombre_equipo, tipo_equipo\n            FROM equipos\n            WHERE UPPER(tipo_equipo) = ?\n            AND activo = 1\n            AND stock > 0\n            AND id_equipo NOT IN (\n                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()\n            )\n        ");
         $stmt->execute([$tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -93,10 +98,33 @@ class PrestamoModel {
     }
 
     public function devolverEquipo($id_prestamo, ?string $comentario = null) {
-        $stmt = $this->db->prepare("\n            UPDATE prestamos \n            SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :comentario \n            WHERE id_prestamo=:id\n        ");
-        $stmt->bindValue(':comentario', $comentario, PDO::PARAM_STR);
-        $stmt->bindValue(':id', $id_prestamo, PDO::PARAM_INT);
-        return $stmt->execute();
+        // Obtener el id_equipo del préstamo
+        $stmtGet = $this->db->prepare("SELECT id_equipo FROM prestamos WHERE id_prestamo = :id");
+        $stmtGet->bindValue(':id', $id_prestamo, PDO::PARAM_INT);
+        $stmtGet->execute();
+        $row = $stmtGet->fetch(PDO::FETCH_ASSOC);
+        $id_equipo = $row ? (int)$row['id_equipo'] : null;
+
+        $this->db->beginTransaction();
+        try {
+            // Marcar devolución
+            $stmt = $this->db->prepare("\n                UPDATE prestamos \n                SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :comentario \n                WHERE id_prestamo=:id\n            ");
+            $stmt->bindValue(':comentario', $comentario, PDO::PARAM_STR);
+            $stmt->bindValue(':id', $id_prestamo, PDO::PARAM_INT);
+            $stmt->execute();
+
+            // Incrementar stock si aplica
+            if ($id_equipo) {
+                $stmtInc = $this->db->prepare("UPDATE equipos SET stock = stock + 1 WHERE id_equipo = ?");
+                $stmtInc->execute([$id_equipo]);
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (\PDOException $e) {
+            $this->db->rollBack();
+            return false;
+        }
     }
 
     // ================= Notifications helpers =================
@@ -311,7 +339,8 @@ class PrestamoModel {
      * Así, cualquier alta/baja desde Admin se refleja inmediatamente sin depender de stock_equipos.
      */
     private function obtenerStockPorTipo(): array {
-        $sql = "SELECT UPPER(tipo_equipo) AS tipo_equipo, COUNT(*) AS stock_total FROM equipos WHERE activo = 1 GROUP BY UPPER(tipo_equipo)";
+        // Usar SUM(stock) para respetar cantidades configuradas en inventario
+        $sql = "SELECT UPPER(tipo_equipo) AS tipo_equipo, COALESCE(SUM(stock),0) AS stock_total FROM equipos WHERE activo = 1 GROUP BY UPPER(tipo_equipo)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

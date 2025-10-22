@@ -4,8 +4,13 @@ require_once __DIR__ . '/../config/conexion.php';
 class UsuarioModel {
     private $db;
 
-    public function __construct() {
-        global $conexion;
+    /**
+     * @param PDO|null $conexion Conexión a la base de datos. Si es null, se usará la conexión global.
+     */
+    public function __construct($conexion = null) {
+        if ($conexion === null) {
+            global $conexion; // Usar la conexión global si no se proporciona una
+        }
         $this->db = $conexion;
     }
 
@@ -30,6 +35,17 @@ class UsuarioModel {
         $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND activo = 0");
         $stmt->execute([$correo]);
         return $stmt->rowCount() > 0;
+    }
+    
+    /**
+     * Obtiene un usuario por su ID
+     * @param int $id ID del usuario
+     * @return array|false Datos del usuario o false si no se encuentra
+     */
+    public function obtenerPorId($id) {
+        $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE id_usuario = ? AND activo = 1");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function registrar($nombre, $correo, $contraseña, $tipo_usuario) {
@@ -64,7 +80,7 @@ class UsuarioModel {
     }
 
     public function obtenerUsuarios() {
-        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario FROM usuarios WHERE activo = 1");
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono FROM usuarios WHERE activo = 1");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -86,6 +102,25 @@ class UsuarioModel {
         $correo = strtolower(trim($correo));
         $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ? WHERE id_usuario = ?");
         return $stmt->execute([$nombre, $correo, $tipo_usuario, $id_usuario]);
+    }
+
+    // Actualiza el teléfono por correo (útil inmediatamente después de crear)
+    public function actualizarTelefonoPorCorreo(string $correo, ?string $telefono): bool {
+        $correo = strtolower(trim($correo));
+        $tel = $telefono !== null ? trim($telefono) : null;
+        $stmt = $this->db->prepare("UPDATE usuarios SET telefono = :t WHERE correo = :c");
+        $stmt->bindValue(':t', $tel, $tel === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+        $stmt->bindValue(':c', $correo, \PDO::PARAM_STR);
+        return $stmt->execute();
+    }
+
+    // Actualiza el teléfono por ID (para edición)
+    public function actualizarTelefonoPorId(int $id_usuario, ?string $telefono): bool {
+        $tel = $telefono !== null ? trim($telefono) : null;
+        $stmt = $this->db->prepare("UPDATE usuarios SET telefono = :t WHERE id_usuario = :id");
+        $stmt->bindValue(':t', $tel, $tel === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+        $stmt->bindValue(':id', $id_usuario, \PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function obtenerPorCorreo($correo) {

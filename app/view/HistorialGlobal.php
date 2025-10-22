@@ -26,18 +26,22 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
       <div>
         <h1 class="m-0 text-brand">Historial General</h1>
-        <div class="text-muted small">Vista de calendarios de reservas y cancelaciones de las aulas AIP</div>
+        <div class="text-muted small">Semana de lunes a sábado</div>
       </div>
       <div class="d-flex gap-2">
         <?php if ($rol === 'Administrador'): ?>
           <a class="btn btn-outline-brand" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
         <?php endif; ?>
-        <!-- Botón Volver se gestiona desde el navbar -->
       </div>
     </div>
 
-    <!-- Calendario Global (parte superior) -->
-    <section class="card shadow-sm mb-3 p-3">
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+      <button id="tab-reserva" class="btn btn-brand btn-sm">Historial / Reserva</button>
+      <button id="tab-equipos" class="btn btn-outline-brand btn-sm">Historial / Equipos</button>
+    </div>
+
+    <!-- Vista: Reserva (se mantiene igual) -->
+    <section id="vista-reserva" class="card shadow-sm mb-3 p-3">
       <div class="mb-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
@@ -50,6 +54,7 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
             <button id="btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
             <button id="btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
           </div>
+          <?php if (in_array($rol, ['Administrador','Encargado'])): ?>
           <form id="form-pdf-global" action="../view/exportar_pdf.php" method="POST" target="_blank" class="m-0 w-100 w-md-auto">
             <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo date('Y-m-d'); ?>">
             <input type="hidden" name="turno" id="pdf-turno" value="manana">
@@ -58,6 +63,7 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
               <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
             </button>
           </form>
+          <?php endif; ?>
         </div>
       </div>
       <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
@@ -73,7 +79,82 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
       <input type="hidden" id="calendar-prof-filter" value="">
       <div id="calendarios" class="calendarios-grid mt-3"></div>
     </section>
+
+    <!-- Vista: Equipos -->
+    <section id="vista-equipos" class="card shadow-sm mb-3 p-3" style="display:none;">
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="btn-group" role="group">
+              <button id="eq-btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
+              <button id="eq-btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
+            </div>
+            <?php if (in_array($rol, ['Administrador','Encargado'])): ?>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input id="eq-search" type="text" class="form-control" placeholder="Buscar por profesor, equipo, aula o fecha">
+            </div>
+            <?php endif; ?>
+          </div>
+          <?php if (in_array($rol, ['Administrador','Encargado'])): ?>
+          <form id="form-pdf-equipos" action="../view/exportar_pdf_equipos.php" method="POST" target="_blank" class="m-0 w-100 w-md-auto">
+            <input type="hidden" name="start_week" id="eq-pdf-start-week" value="<?php echo date('Y-m-d'); ?>">
+            <input type="hidden" name="turno" id="eq-pdf-turno" value="manana">
+            <input type="hidden" name="q" id="eq-pdf-q" value="">
+            <button type="submit" class="btn btn-success btn-sm w-100">
+              <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+            </button>
+          </form>
+          <?php endif; ?>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center justify-content-center mb-2">
+          <button id="eq-prev-week" class="btn btn-outline-brand btn-sm">
+            <i class="bi bi-chevron-left"></i> Semana anterior
+          </button>
+          <input type="hidden" id="eq-start-of-week" value="<?php echo date('Y-m-d'); ?>">
+          <span id="eq-week-range-display" class="badge bg-primary-subtle text-primary-emphasis px-3 py-2"></span>
+          <button id="eq-next-week" class="btn btn-outline-brand btn-sm">
+            Semana siguiente <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+        <div id="calendarios-equipos" class="calendarios-grid mt-2"></div>
+
+        <div class="mt-3">
+          <h5 class="text-brand">Préstamos de equipos</h5>
+          <div id="tabla-equipos" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
   <script src="../../Public/js/HistorialGlobalCalendario.js?v=<?php echo time(); ?>"></script>
+  <script src="../../Public/js/HistorialEquipos.js?v=<?php echo time(); ?>"></script>
+  <script>
+  // Toggle de vistas
+  (function(){
+    const tabReserva = document.getElementById('tab-reserva');
+    const tabEquipos = document.getElementById('tab-equipos');
+    const vistaReserva = document.getElementById('vista-reserva');
+    const vistaEquipos = document.getElementById('vista-equipos');
+    if (!tabReserva || !tabEquipos || !vistaReserva || !vistaEquipos) return;
+    tabReserva.addEventListener('click', function(){
+      tabReserva.classList.add('btn-brand'); tabReserva.classList.remove('btn-outline-brand');
+      tabEquipos.classList.remove('btn-brand'); tabEquipos.classList.add('btn-outline-brand');
+      vistaReserva.style.display='block';
+      vistaEquipos.style.display='none';
+    });
+    tabEquipos.addEventListener('click', function(){
+      tabEquipos.classList.add('btn-brand'); tabEquipos.classList.remove('btn-outline-brand');
+      tabReserva.classList.remove('btn-brand'); tabReserva.classList.add('btn-outline-brand');
+      vistaReserva.style.display='none';
+      vistaEquipos.style.display='block';
+      // Disparar carga inicial si no se ha hecho
+      if (window.HistorialEquipos && typeof window.HistorialEquipos.init === 'function') {
+        window.HistorialEquipos.init();
+      }
+    });
+  })();
+  </script>
 <?php if (!defined('EMBEDDED_VIEW')): ?>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

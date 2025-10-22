@@ -15,7 +15,7 @@ class UsuarioController {
     }
 
     /** Registrar usuario (incluye Admin) con verificación obligatoria por correo */
-    public function registrarUsuario($nombre, $correo, $contraseña, $tipo_usuario) {
+    public function registrarUsuario($nombre, $correo, $contraseña, $tipo_usuario, $telefono = null) {
         $nombre = trim($nombre);
         // Solo letras (incluye acentos) y espacios
         if (!preg_match('/^[\p{L}\s]+$/u', $nombre)) {
@@ -44,6 +44,10 @@ class UsuarioController {
                     $this->usuarioModel->eliminarUsuario($this->usuarioModel->obtenerPorCorreo($correo)['id_usuario'] ?? 0);
                     return ['error' => true, 'mensaje' => '❌ Ese correo no existe o no acepta mensajes. Solo se permiten correos existentes (verificados por envío).'];
                 }
+                // Actualizar teléfono si fue proporcionado
+                if ($telefono !== null && $telefono !== '') {
+                    try { $this->usuarioModel->actualizarTelefonoPorCorreo($correo, $telefono); } catch (\Throwable $e) { /* ignore */ }
+                }
                 return ['error' => false, 'mensaje' => '✅ Usuario reactivado y notificado por correo.'];
             }
         }
@@ -64,6 +68,10 @@ class UsuarioController {
                     '<p>Hola '.htmlspecialchars($nombre).',</p><p>Verifica tu cuenta: <a href="'.htmlspecialchars($link).'">'.htmlspecialchars($link).'</a></p>'); }
                 catch (\Throwable $e) { /* log si es necesario */ }
             });
+            // Actualizar teléfono si fue proporcionado
+            if ($telefono !== null && $telefono !== '') {
+                try { $this->usuarioModel->actualizarTelefonoPorCorreo($correo, $telefono); } catch (\Throwable $e) { /* ignore */ }
+            }
         }
         return ['error' => !$ok, 'mensaje' => $ok ? '✅ Usuario creado. Debe verificar su correo para activar la cuenta.' : '❌ Error al registrar'];
     }
@@ -132,7 +140,7 @@ class UsuarioController {
     }
 
     /** Editar usuario */
-    public function editarUsuario($id_usuario, $nombre, $correo, $tipo_usuario) {
+    public function editarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, $telefono = null) {
         if (!$nombre || !$correo || !$tipo_usuario) {
             return ['error' => true, 'mensaje' => '⚠️ Todos los campos son obligatorios.'];
         }
@@ -162,6 +170,9 @@ class UsuarioController {
         }
 
         $ok = $this->usuarioModel->actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario);
+        if ($ok && $telefono !== null) {
+            try { $this->usuarioModel->actualizarTelefonoPorId((int)$id_usuario, $telefono); } catch (\Throwable $e) { /* ignore */ }
+        }
         return [
             'error' => !$ok,
             'mensaje' => $ok ? '✅ Usuario actualizado correctamente.' : '❌ Error al actualizar.'
@@ -182,7 +193,8 @@ class UsuarioController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['registrar_usuario_admin'])) {
-                $res = $this->registrarUsuario($_POST['nombre'], $_POST['correo'], $_POST['contraseña'], $_POST['tipo']);
+                $telefono = $_POST['telefono'] ?? null;
+                $res = $this->registrarUsuario($_POST['nombre'], $_POST['correo'], $_POST['contraseña'], $_POST['tipo'], $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
             }
@@ -200,7 +212,8 @@ class UsuarioController {
             }
 
             if (isset($_POST['editar_usuario'])) {
-                $res = $this->editarUsuario($_POST['id_usuario'], $_POST['nombre'], $_POST['correo'], $_POST['tipo']);
+                $telefono = $_POST['telefono'] ?? null;
+                $res = $this->editarUsuario($_POST['id_usuario'], $_POST['nombre'], $_POST['correo'], $_POST['tipo'], $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
                 if (!$res['error']) {

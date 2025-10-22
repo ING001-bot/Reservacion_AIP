@@ -5,10 +5,10 @@ USE aula_innovacion;
 -- Tabla: usuarios
 CREATE TABLE usuarios (
   id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(100),
-  correo VARCHAR(100) UNIQUE,
-  contraseña VARCHAR(255),
-  tipo_usuario ENUM('Administrador', 'Profesor', 'Encargado') NOT NULL,
+  nombre VARCHAR(100) NOT NULL,
+  correo VARCHAR(100) NOT NULL UNIQUE,
+  contraseña VARCHAR(255) NOT NULL,
+  tipo_usuario ENUM('Administrador', 'Profesor', 'Encargado') NOT NULL DEFAULT 'Profesor',
   verificado TINYINT(1) NOT NULL DEFAULT 0,
   verification_token VARCHAR(255) NULL,
   token_expira DATETIME NULL,
@@ -16,7 +16,8 @@ CREATE TABLE usuarios (
   reset_expira DATETIME NULL,
   activo TINYINT(1) NOT NULL DEFAULT 1,
   login_token VARCHAR(255) NULL,
-  login_expira DATETIME NULL
+  login_expira DATETIME NULL,
+  telefono VARCHAR(20) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabla: aulas
@@ -31,14 +32,12 @@ CREATE TABLE aulas (
 -- Tabla: equipos
 CREATE TABLE equipos (
   id_equipo INT AUTO_INCREMENT PRIMARY KEY,
-  nombre_equipo VARCHAR(100),
-  tipo_equipo VARCHAR(50),
-  estado ENUM('Disponible', 'Prestado') DEFAULT 'Disponible',
+  nombre_equipo VARCHAR(100) NOT NULL,
+  tipo_equipo VARCHAR(50) NOT NULL,
   stock INT NOT NULL DEFAULT 0,
   activo TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Tabla: reservas
 CREATE TABLE reservas (
   id_reserva INT AUTO_INCREMENT PRIMARY KEY,
   id_usuario INT,
@@ -50,7 +49,6 @@ CREATE TABLE reservas (
   CONSTRAINT fk_reservas_aula FOREIGN KEY (id_aula) REFERENCES aulas(id_aula) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Tabla: prestamos
 CREATE TABLE prestamos (
   id_prestamo INT AUTO_INCREMENT PRIMARY KEY,
   id_usuario INT,
@@ -69,7 +67,6 @@ CREATE TABLE prestamos (
   CONSTRAINT fk_prestamos_aulas FOREIGN KEY (id_aula) REFERENCES aulas(id_aula) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Tabla: reservas_canceladas
 CREATE TABLE reservas_canceladas (
   id_cancelacion INT AUTO_INCREMENT PRIMARY KEY,
   id_reserva INT NULL,
@@ -83,12 +80,6 @@ CREATE TABLE reservas_canceladas (
   CONSTRAINT fk_cancel_reserva FOREIGN KEY (id_reserva) REFERENCES reservas(id_reserva) ON DELETE SET NULL,
   CONSTRAINT fk_cancel_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
   CONSTRAINT fk_cancel_aula FOREIGN KEY (id_aula) REFERENCES aulas(id_aula) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Tabla: stock_equipos
-CREATE TABLE stock_equipos (
-  tipo_equipo VARCHAR(50) PRIMARY KEY,
-  stock_total INT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabla: prestamos_pack
@@ -118,13 +109,6 @@ CREATE TABLE prestamos_pack_items (
   INDEX idx_tipo (tipo_equipo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO stock_equipos (tipo_equipo, stock_total)
-SELECT e.tipo_equipo, COUNT(*) AS stock_total
-FROM equipos e
-WHERE e.activo = 1
-GROUP BY e.tipo_equipo
-ON DUPLICATE KEY UPDATE stock_total = VALUES(stock_total);
-
 -- Tabla: app_config
 CREATE TABLE app_config (
   cfg_key VARCHAR(100) PRIMARY KEY,
@@ -151,8 +135,24 @@ CREATE TABLE IF NOT EXISTS notificaciones (
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Tabla: tipos_equipo
-CREATE TABLE IF NOT EXISTS tipos_equipo (
+-- Tabla: verification_codes (SMS)
+CREATE TABLE IF NOT EXISTS verification_codes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  code VARCHAR(6) NOT NULL,
+  action_type ENUM('reserva','prestamo','cambio_clave') NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES usuarios(id_usuario) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX idx_vc_user ON verification_codes (user_id);
+CREATE INDEX idx_vc_action ON verification_codes (action_type);
+CREATE INDEX idx_vc_expires ON verification_codes (expires_at);
+CREATE INDEX idx_vc_used ON verification_codes (used);
+
+CREATE TABLE tipos_equipo (
     id_tipo INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

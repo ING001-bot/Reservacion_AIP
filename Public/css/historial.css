@@ -66,8 +66,14 @@ body{ font-family: Arial, sans-serif; background: var(--brand-light, #eaf3ff); c
 .controls .pdf{ width:100%; justify-content:flex-end; }
 
 /* Bordes limpios última columna para evitar recortes feos */
+
+/* Bordes limpios última columna para evitar recortes feos */
 .calendario-table tr > th:last-child,
 .calendario-table tr > td:last-child{ border-right:1px solid var(--border-soft, #d9e2f3); }
+
+/* Ancho completo solo para el calendario de Historial / Equipos */
+#calendarios-equipos.calendarios-grid{ grid-template-columns: 1fr; }
+#vista-equipos .calendario-box{ width: 100%; }
 
 /* Botón flotante PDF en móvil */
 .fab-pdf{

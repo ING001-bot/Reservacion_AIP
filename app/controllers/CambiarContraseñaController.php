@@ -4,6 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../models/UsuarioModel.php';
+require_once __DIR__ . '/../middleware/VerifyMiddleware.php';
+require_once __DIR__ . '/../lib/VerificationService.php';
 
 // Verificar si el usuario está autenticado
 if (!isset($_SESSION['correo'])) {
@@ -11,11 +13,52 @@ if (!isset($_SESSION['correo'])) {
     exit();
 }
 
+// Verificar si ya está verificado para cambio de clave
+$necesitaVerificacion = !isset($_SESSION['verified_cambio_clave']) || $_SESSION['verified_cambio_clave'] !== true;
+
+// Si necesita verificación y no es una petición de verificación, enviar código
+if ($necesitaVerificacion && !isset($_POST['verificar_codigo']) && !isset($_GET['reenviar'])) {
+    $usuarioModel = new UsuarioModel($conexion);
+    $usuario = $usuarioModel->obtenerPorId($_SESSION['id_usuario']);
+    
+    if ($usuario && !empty($usuario['telefono'])) {
+        $verificationService = new \App\Lib\VerificationService($conexion);
+        $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'cambio_clave');
+    }
+}
+
+// Reenviar código si se solicita
+if (isset($_GET['reenviar']) && $necesitaVerificacion) {
+    $usuarioModel = new UsuarioModel($conexion);
+    $usuario = $usuarioModel->obtenerPorId($_SESSION['id_usuario']);
+    
+    if ($usuario && !empty($usuario['telefono'])) {
+        $verificationService = new \App\Lib\VerificationService($conexion);
+        $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'cambio_clave');
+        header('Location: Cambiar_Contraseña.php');
+        exit;
+    }
+}
+
+// Procesar verificación de código
+if (isset($_POST['verificar_codigo'])) {
+    $codigo = $_POST['codigo_verificacion'] ?? '';
+    $verificationService = new \App\Lib\VerificationService($conexion);
+    
+    if ($verificationService->verifyCode($_SESSION['id_usuario'], $codigo, 'cambio_clave')) {
+        $_SESSION['verified_cambio_clave'] = true;
+        $necesitaVerificacion = false;
+        $mensajeVerificacion = '✅ Código verificado correctamente. Ahora puedes cambiar tu contraseña.';
+    } else {
+        $errorVerificacion = '❌ Código incorrecto o expirado. Intenta nuevamente.';
+    }
+}
+
 // Inicializar variables
 $error = '';
 $exito = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actual']) && !$necesitaVerificacion) {
     try {
         $actual = trim($_POST['actual'] ?? '');
         $nueva = trim($_POST['nueva'] ?? '');

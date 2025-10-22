@@ -3,8 +3,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 require '../models/ReservaModel.php';
-require_once __DIR__ . '/../lib/Mailer.php';
-use App\Lib\Mailer;
+require_once __DIR__ . '/../lib/NotificationService.php';
+use App\Lib\NotificationService;
 
 class ReservaController {
     private $model;
@@ -83,52 +83,72 @@ class ReservaController {
                     }
                 } catch (\Throwable $e) { /* log suave */ }
                 
-                // Enviar notificación por correo al profesor (async)
-                $to = $_SESSION['correo'] ?? '';
-                if ($to) {
-                    $usuario = $_SESSION['usuario'] ?? 'Usuario';
-                    register_shutdown_function(function() use ($to, $aulaNombre, $usuario, $fecha_reserva_str, $hora_inicio, $hora_fin) {
+                // Enviar notificación al profesor (email y SMS)
+                $userEmail = $_SESSION['correo'] ?? '';
+                $userPhone = $_SESSION['telefono'] ?? ''; // Asegúrate de que el teléfono esté en la sesión
+                $userName = $_SESSION['usuario'] ?? 'Usuario';
+                
+                if ($userEmail) {
+                    register_shutdown_function(function() use ($userEmail, $userPhone, $userName, $aulaNombre, $fecha_reserva_str, $hora_inicio, $hora_fin) {
                         try {
-                            $mailer = new Mailer();
-                            $subject = 'Confirmación de reserva - ' . $aulaNombre;
-                            $html = '<p>Hola ' . htmlspecialchars($usuario) . ',</p>' .
-                                    '<p>Has realizado una reserva con estos detalles:</p>' .
-                                    '<ul>' .
-                                    '<li><strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '</li>' .
-                                    '<li><strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '</li>' .
-                                    '<li><strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '</li>' .
-                                    '<li><strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin) . '</li>' .
-                                    '</ul>' .
-                                    '<p>Si no fuiste tú, por favor contacta al administrador.</p>';
-                            $mailer->send($to, $subject, $html);
+                            $notificationService = new NotificationService();
+                            $reservationDetails = "Aula: $aulaNombre, Fecha: $fecha_reserva_str, Hora: $hora_inicio - $hora_fin";
+                            
+                            $notificationService->sendNotification(
+                                ['email' => $userEmail, 'phone' => $userPhone],
+                                'Confirmación de reserva - ' . $aulaNombre,
+                                'Has realizado una reserva con estos detalles:<br><br>' .
+                                '<strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '<br>' .
+                                '<strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '<br>' .
+                                '<strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '<br>' .
+                                '<strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin) . '<br>' .
+                                'Si no fuiste tú, por favor contacta al administrador.',
+                                [
+                                    'userName' => $userName,
+                                    'type' => 'success',
+                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/index.php?view=mis_reservas',
+                                    'sendSms' => !empty($userPhone)
+                                ]
+                            );
                         } catch (\Throwable $e) {
-                            error_log('Email reserva profesor fallo: ' . $e->getMessage());
+                            error_log('Error al enviar notificación de reserva: ' . $e->getMessage());
                         }
                     });
                 }
                 
-                // Notificar por correo a Admin y Encargado (async)
+                // Notificar a Admin y Encargado (async)
                 $usuario = $_SESSION['usuario'] ?? 'Docente';
                 $correo = $_SESSION['correo'] ?? '';
+                
                 register_shutdown_function(function() use ($usuarios, $aulaNombre, $usuario, $correo, $fecha_reserva_str, $hora_inicio, $hora_fin) {
                     try {
-                        $mailer = new Mailer();
-                        $subject = 'Nueva reserva de aula - ' . $usuario;
-                        $html = '<p>Se ha registrado una nueva reserva de aula:</p>' .
-                                '<ul>' .
-                                '<li><strong>Docente:</strong> ' . htmlspecialchars($usuario) . ' (' . htmlspecialchars($correo) . ')</li>' .
-                                '<li><strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '</li>' .
-                                '<li><strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '</li>' .
-                                '<li><strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '</li>' .
-                                '<li><strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin) . '</li>' .
-                                '</ul>';
+                        $notificationService = new NotificationService();
+                        $subject = 'Nueva reserva de aula - ' . $aulaNombre;
+                        $message = 'Se ha realizado una nueva reserva con estos detalles:<br><br>' .
+                                  '<strong>Usuario:</strong> ' . htmlspecialchars($usuario) . ' (' . htmlspecialchars($correo) . ')<br>' .
+                                  '<strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '<br>' .
+                                  '<strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '<br>' .
+                                  '<strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '<br>' .
+                                  '<strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin);
+
+                        // Enviar a cada admin/encargado
                         foreach ($usuarios as $u) {
                             if (!empty($u['correo'])) {
-                                $mailer->send($u['correo'], $subject, $html);
+                                $notificationService->sendNotification(
+                                    ['email' => $u['correo']],
+                                    $subject,
+                                    $message,
+                                    [
+                                        'userName' => $u['nombre'] ?? 'Administrador',
+                                        'type' => 'info',
+                                        'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global',
+                                        'sendSms' => false
+                                    ]
+                                );
                             }
                         }
                     } catch (\Throwable $e) {
-                        error_log('Email notif admin/encargado reserva fallo: ' . $e->getMessage());
+                        error_log('Error al notificar a administradores: ' . $e->getMessage());
                     }
                 });
                 return true;
@@ -179,26 +199,38 @@ class ReservaController {
         if ($ok) {
             $this->mensaje = "✅ Reserva cancelada correctamente.";
             $this->tipo = "success";
+            
             // Notificar al colegio por correo
             try {
                 // Usar from_email del config como destino institucional
                 $cfg = require __DIR__ . '/../config/mail.php';
                 $toColegio = $cfg['from_email'] ?? '';
+                
                 if ($toColegio) {
-                    $mailer = new Mailer();
+                    $notificationService = new NotificationService();
                     $subject = 'Cancelación de reserva por ' . ($_SESSION['usuario'] ?? 'Docente');
-                    $html = '<p>Se ha cancelado una reserva.</p>' .
-                            '<ul>' .
-                            '<li><strong>Docente:</strong> ' . htmlspecialchars($_SESSION['usuario'] ?? '') . ' (' . htmlspecialchars($_SESSION['correo'] ?? '') . ')</li>' .
-                            '<li><strong>Fecha de cancelación:</strong> ' . date('Y-m-d H:i:s') . '</li>' .
-                            '<li><strong>Motivo:</strong> ' . nl2br(htmlspecialchars($motivo)) . '</li>' .
-                            '<li><em>Nota:</em> Datos de aula/horario no se incluyen porque la reserva fue eliminada del sistema al cancelar.</li>' .
-                            '</ul>';
-                    $mailer->send($toColegio, $subject, $html);
+                    $message = 'Se ha cancelado una reserva.<br><br>' .
+                              '<strong>Docente:</strong> ' . ($_SESSION['usuario'] ?? '') . ' (' . ($_SESSION['correo'] ?? '') . ')<br>' .
+                              '<strong>Fecha de cancelación:</strong> ' . date('Y-m-d H:i:s') . '<br>' .
+                              '<strong>Motivo:</strong> ' . nl2br(htmlspecialchars($motivo)) . '<br><br>' .
+                              '<em>Nota:</em> Datos de aula/horario no se incluyen porque la reserva fue eliminada del sistema al cancelar.';
+                    
+                    $notificationService->sendNotification(
+                        ['email' => $toColegio],
+                        $subject,
+                        $message,
+                        [
+                            'userName' => 'Administrador',
+                            'type' => 'warning',
+                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global',
+                            'sendSms' => false
+                        ]
+                    );
                 }
             } catch (\Throwable $e) {
-                error_log('Email cancelacion reserva fallo: ' . $e->getMessage());
+                error_log('Error al notificar cancelación de reserva: ' . $e->getMessage());
             }
+            
             return true;
         } else {
             $this->mensaje = "⚠️ No se pudo cancelar la reserva (verifica que te pertenezca).";

@@ -19,7 +19,35 @@ class EquipoController {
         if (!$tipoModel->existeNombre($tipo_equipo)) {
             return ['error' => true, 'mensaje' => '⚠ Debes crear primero el tipo de equipo "'.htmlspecialchars($tipo_equipo).'" en ⚙ Tipos de Equipo.'];
         }
-        $ok = $this->equipoModel->registrarEquipo($nombre_equipo, $tipo_equipo, $stock);
+        // Normalizaciones
+        $nombreNorm = ucwords(strtolower(trim($nombre_equipo)));
+        $tipoNorm = strtoupper(trim($tipo_equipo));
+
+        // 1) Evitar duplicado por nombre (independiente del tipo)
+        if ($this->equipoModel->existeNombre($nombreNorm)) {
+            return ['error' => true, 'mensaje' => '❌ Ya existe un equipo con el nombre "'.htmlspecialchars($nombreNorm).'" en el inventario.'];
+        }
+
+        // 2) Validar consistencia nombre vs tipo seleccionado
+        $map = [
+            'LAPTOP' => ['laptop','notebook'],
+            'PROYECTOR' => ['proyector','proyec','proy'],
+            'MOUSE' => ['mouse','raton','ratón'],
+            'EXTENSIÓN' => ['extension','extensión','cable','alargador'],
+            'PARLANTE' => ['parlante','parlan','bafle','altavoz','speaker']
+        ];
+        $lowerName = mb_strtolower($nombre_equipo, 'UTF-8');
+        foreach ($map as $tipo => $palabras) {
+            foreach ($palabras as $p) {
+                if (mb_strpos($lowerName, $p, 0, 'UTF-8') !== false) {
+                    if ($tipoNorm !== $tipo) {
+                        return ['error' => true, 'mensaje' => '❌ El nombre parece corresponder a "'.$tipo.'", pero seleccionaste "'.htmlspecialchars($tipoNorm).'". Corrige el tipo.'];
+                    }
+                    break 2; // ya matcheó un tipo
+                }
+            }
+        }
+        $ok = $this->equipoModel->registrarEquipo($nombreNorm, $tipoNorm, (int)$stock);
         return [
             'error' => !$ok,
             'mensaje' => $ok ? "✅ Equipo '$nombre_equipo' registrado correctamente." : "❌ Error al registrar el equipo."

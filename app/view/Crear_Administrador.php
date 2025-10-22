@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_usuario_adm
     $nombre = $_POST['nombre'] ?? '';
     $correo = $_POST['correo'] ?? '';
     $pass   = $_POST['contraseña'] ?? '';
+    $telefono = $_POST['telefono'] ?? null;
 
     if (!$hayAdmin) {
         // Bootstrap inicial: SOLO crear si el correo es válido y EXISTENTE (envío SMTP exitoso)
@@ -70,6 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_usuario_adm
                     $hash = password_hash($pass, PASSWORD_BCRYPT);
                     $ok = $usuarioModel->registrarVerificado($nombre, $correo, $hash, 'Administrador');
                     if ($ok) {
+                        // Guardar teléfono si fue proporcionado
+                        try { $usuarioModel->actualizarTelefonoPorCorreo($correo, $telefono); } catch (\Throwable $e) { /* ignore */ }
                         // Marcar instalación completada
                         try {
                             $conexion->exec("CREATE TABLE IF NOT EXISTS app_config (cfg_key VARCHAR(64) PRIMARY KEY, cfg_value VARCHAR(255) NULL)");
@@ -156,6 +159,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_usuario_adm
         <div>
           <div class="label">Correo</div>
           <input type="email" name="correo" class="input" required>
+        </div>
+        <div>
+          <div class="label">Teléfono (con código de país)</div>
+          <input type="tel" name="telefono" class="input" placeholder="+51987654321">
         </div>
         <div class="col-span-2">
           <div class="label">Contraseña</div>

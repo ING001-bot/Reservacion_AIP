@@ -64,6 +64,10 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 <input type="email" name="correo" class="form-control" required>
             </div>
             <div class="col-12 col-sm-6 col-lg-4">
+                <label class="form-label">Teléfono (con código de país)</label>
+                <input type="tel" name="telefono" class="form-control" placeholder="+51987654321">
+            </div>
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Contraseña</label>
                 <div class="password-field">
                     <input type="password" name="contraseña" id="admin-pass" class="form-control" required minlength="6">
@@ -99,6 +103,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                         <th class="col-num">N°</th>
                         <th>Nombre</th>
                         <th>Correo</th>
+                        <th>Teléfono</th>
                         <th>Tipo</th>
                         <th>Acciones</th>
                     </tr>
@@ -111,6 +116,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                             <td class="col-num"><?= $i ?></td>
                             <td><input type="text" name="nombre" value="<?= htmlspecialchars($user['nombre']) ?>" class="form-control" required></td>
                             <td><input type="email" name="correo" value="<?= htmlspecialchars($user['correo']) ?>" class="form-control" required></td>
+                            <td><input type="tel" name="telefono" value="<?= htmlspecialchars($user['telefono'] ?? '') ?>" class="form-control" placeholder="+51987654321"></td>
                             <td>
                                 <select name="tipo" class="form-select" required>
                                     <option value="Profesor" <?= $user['tipo_usuario']=='Profesor'?'selected':'' ?>>Profesor</option>
@@ -130,6 +136,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                             <td class="col-num"><?= $i ?></td>
                             <td><?= htmlspecialchars($user['nombre']) ?></td>
                             <td><?= htmlspecialchars($user['correo']) ?></td>
+                            <td><?= htmlspecialchars($user['telefono'] ?? '') ?></td>
                             <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
                             <td class="text-center table-action-cell">
                                 <a href="Admin.php?view=usuarios&editar=<?= $user['id_usuario'] ?>" class="btn btn-sm btn-outline-primary">✏️ Editar</a>

@@ -25,6 +25,20 @@ class EquipoModel {
         return $stmt->execute([$nombre_equipo, $tipo_equipo, $stock]);
     }
 
+    /** Verifica si existe un equipo con el mismo nombre (insensible a mayúsculas) */
+    public function existeNombre(string $nombre): bool {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM equipos WHERE LOWER(nombre_equipo) = LOWER(?)");
+        $stmt->execute([trim($nombre)]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /** Verifica si existe un equipo con el mismo nombre y tipo */
+    public function existeNombreYTipo(string $nombre, string $tipo): bool {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM equipos WHERE LOWER(nombre_equipo) = LOWER(?) AND UPPER(tipo_equipo) = UPPER(?)");
+        $stmt->execute([trim($nombre), trim($tipo)]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     /** Listar todos los equipos (solo admin) */
     public function obtenerEquipos() {
         $stmt = $this->db->prepare("SELECT * FROM equipos");
