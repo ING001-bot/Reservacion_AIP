@@ -1,1 +1,10 @@
 /vendor
+.env
+.env.*
+app/config/*.local.php
+app/config/*secrets*.php
+*.log
+*.cache
+/.idea
+/.vscode
+node_modules/
