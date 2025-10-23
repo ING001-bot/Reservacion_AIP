@@ -301,6 +301,13 @@ setTimeout(() => {
                             <?= htmlspecialchars($fecha_default) ?>
                         </span>
                     </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="btn-group" role="group" aria-label="Turnos">
+                            <button type="button" class="btn btn-outline-primary btn-sm active" id="btn-turno-manana">Turno Mañana</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-turno-tarde">Turno Tarde</button>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-limpiar-seleccion">Limpiar selección</button>
+                    </div>
                     <div id="cuadro-horas" class="d-flex flex-wrap gap-2">
                         <?php
                         if (!empty($fecha_default) && !empty($id_aula_selected)) {
@@ -331,6 +338,9 @@ setTimeout(() => {
                     <div class="mt-3">
                         <span class="badge bg-success">Disponible</span>
                         <span class="badge bg-danger ms-2">Ocupada</span>
+                    </div>
+                    <div class="mt-2 small" id="texto-rango">
+                        Hora de inicio: <strong id="txt-inicio">—</strong> · Hora de fin: <strong id="txt-fin">—</strong>
                     </div>
                 </div>
             </div>
