@@ -83,11 +83,8 @@ class UsuarioModel {
     }
 
     public function obtenerUsuarios() {
-<<<<<<< HEAD
         $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono FROM usuarios WHERE activo = 1");
-=======
         $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono, telefono_verificado FROM usuarios WHERE activo = 1");
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

@@ -154,7 +154,6 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
     </style>
 </head>
 <body class="bg-light">
-<<<<<<< HEAD
 
 <?php if ($necesitaVerificacion): ?>
 <!-- Modal de Verificación -->
@@ -227,20 +226,6 @@ setTimeout(() => {
 
 <div class="container py-4" <?= $necesitaVerificacion ? 'class="content-blocked"' : '' ?>>
     <h1 class="text-center text-brand mb-4">📅 Reservar Aula</h1>
-=======
-<div class="container py-4">
-    <h1 class="text-center text-brand mb-2">📅 Reservar Aula</h1>
-    <div class="alert alert-info shadow-sm mb-4">
-        <strong>Importante:</strong> Las reservas deben hacerse con <strong>1 día de anticipación</strong>. No se permite reservar para el mismo día.
-    </div>
-    <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-    <div id="otp-fab" class="position-fixed" style="right:16px; bottom:16px; z-index:1050; display:block;">
-      <button type="button" class="btn btn-warning shadow">Colocar código</button>
-      <div class="small text-muted text-center mt-1" style="font-size:12px;">2FA requerido</div>
-      <style>#otp-fab .btn{border-radius:999px;padding:.6rem 1rem}</style>
-    </div>
-    <?php endif; ?>
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
 
     <!-- Aviso de anticipación -->
     <div class="alert alert-info d-flex align-items-center shadow-sm mb-4" role="alert">

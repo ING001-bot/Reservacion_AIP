@@ -64,13 +64,8 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 <input type="email" name="correo" class="form-control" required>
             </div>
             <div class="col-12 col-sm-6 col-lg-4">
-<<<<<<< HEAD
                 <label class="form-label">Teléfono (con código de país)</label>
                 <input type="tel" name="telefono" class="form-control" placeholder="+51987654321">
-=======
-                <label class="form-label">Teléfono</label>
-                <input type="tel" name="telefono" class="form-control" placeholder="+519XXXXXXXX">
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
             </div>
             <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Contraseña</label>
@@ -116,7 +111,6 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 </thead>
                 <tbody>
                 <?php $i = 1; foreach ($usuarios as $user): ?>
-<<<<<<< HEAD
                     <?php if ($id_editar == $user['id_usuario']): ?>
                         <form method="post">
                         <tr>
@@ -154,29 +148,6 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                             </td>
                         </tr>
                     <?php endif; ?>
-=======
-                    <tr>
-                        <td class="col-num"><?= $i ?></td>
-                        <td><?= htmlspecialchars($user['nombre']) ?></td>
-                        <td><?= htmlspecialchars($user['correo']) ?></td>
-                        <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
-                        <td><?= htmlspecialchars($user['telefono'] ?? '') ?></td>
-                        <td class="text-center table-action-cell text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-editar-usuario"
-                                data-id="<?= $user['id_usuario'] ?>"
-                                data-nombre="<?= htmlspecialchars($user['nombre']) ?>"
-                                data-correo="<?= htmlspecialchars($user['correo']) ?>"
-                                data-tipo="<?= htmlspecialchars($user['tipo_usuario']) ?>"
-                                data-telefono="<?= htmlspecialchars($user['telefono'] ?? '') ?>">
-                                ✏️ Editar
-                            </button>
-                            <form method="post" class="d-inline form-eliminar-usuario">
-                                <input type="hidden" name="id_usuario" value="<?= $user['id_usuario'] ?>">
-                                <button type="submit" name="eliminar_usuario" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
                 <?php $i++; endforeach; ?>
                 </tbody>
             </table>

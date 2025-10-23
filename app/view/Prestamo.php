@@ -213,7 +213,6 @@ $fecha_default = $fecha_min;
 <body class="bg-light">
 <?php require __DIR__ . '/partials/navbar.php'; ?>
 
-<<<<<<< HEAD
 <?php if ($necesitaVerificacion): ?>
 <!-- Modal de Verificación -->
 <div class="verification-overlay" id="verificationOverlay">
@@ -285,21 +284,6 @@ setTimeout(() => {
 
 <div class="container py-4" <?= $necesitaVerificacion ? 'style="filter: blur(5px); pointer-events: none;"' : '' ?>>
     <h1 class="text-center text-brand mb-4">💻 Préstamo de Equipos</h1>
-=======
-<div class="container py-4">
-    <h1 class="text-center text-brand mb-2">💻 Préstamo de Equipos</h1>
-    <div class="alert alert-info shadow-sm mb-4">
-        <strong>Importante:</strong> Las reservas y préstamos deben hacerse con <strong>1 día de anticipación</strong>. No se permite solicitar para el mismo día.
-    </div>
-
-<?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-<div id="otp-fab" class="position-fixed" style="right:16px; bottom:16px; z-index:1050; display:block;">
-  <button type="button" class="btn btn-warning shadow">Colocar código</button>
-  <div class="small text-muted text-center mt-1" style="font-size:12px;">2FA requerido</div>
-  <style>#otp-fab .btn{border-radius:999px;padding:.6rem 1rem}</style>
-</div>
-<?php endif; ?>
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
 
     <!-- Aviso de anticipación -->
     <div class="alert alert-info d-flex align-items-center shadow-sm mb-4" role="alert">
@@ -325,7 +309,6 @@ setTimeout(() => {
     <!-- Verificar stock y aulas -->
     <?php $noEquipos = empty($laptops) && empty($proyectores) && empty($mouses) && empty($extensiones) && empty($parlantes); ?>
     <?php if (empty($aulas)): ?>
-<<<<<<< HEAD
         <?php if (in_array($rol, ['Administrador','Encargado'], true)): ?>
             <div class="alert alert-danger">
                 <strong>❌ No hay aulas REGULAR disponibles.</strong>
@@ -338,12 +321,6 @@ setTimeout(() => {
                 <p class="mb-0">Por favor, contacta al Encargado o al Administrador para habilitar aulas REGULAR.</p>
             </div>
         <?php endif; ?>
-=======
-        <div class="alert alert-danger">
-            <strong>❌ No hay aulas REGULAR disponibles.</strong> 
-            <p class="mb-0">Contacta con el administrador para que cree al menos un aula de tipo REGULAR.</p>
-        </div>
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
     <?php endif; ?>
 
     <?php if ($noEquipos): ?>
@@ -487,7 +464,6 @@ setTimeout(() => {
                             <option value="<?= (int)$a['id_aula'] ?>"><?= htmlspecialchars($a['nombre_aula']) ?></option>
                         <?php endforeach; ?>
                     </select>
-<<<<<<< HEAD
                     <?php if (empty($aulas)): ?>
                         <?php if (in_array($rol, ['Administrador','Encargado'], true)): ?>
                             <div class="form-text text-danger">No hay aulas REGULAR registradas. <a href="Admin.php?view=aulas" class="fw-bold">Crear aula REGULAR</a></div>
@@ -495,8 +471,6 @@ setTimeout(() => {
                             <div class="form-text text-muted">No hay aulas REGULAR disponibles por ahora. Contacta al Encargado o Administrador.</div>
                         <?php endif; ?>
                     <?php endif; ?>
-=======
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
                 </div>
 
                 <div class="col-md-3">
@@ -637,7 +611,7 @@ setTimeout(() => {
         
         let otpOk = false;
         if (form && fechaInput) {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', async function(e) {
                 const fechaSeleccionada = fechaInput.value;
                 if (!fechaSeleccionada) return;
                 
@@ -699,7 +673,7 @@ setTimeout(() => {
                         if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
                         otpOk = true;
                         form.submit();
-                    } catch(err) {
+                    } catch(err){
                         Swal.fire({ icon:'error', title:'No se pudo verificar', text: String(err.message||err) });
                     }
                     return false;

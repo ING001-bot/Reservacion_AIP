@@ -73,9 +73,7 @@ class PrestamoModel {
 
     public function listarEquiposPorTipo($tipo) {
         $tipo = strtoupper(trim($tipo)); // Normalizar a mayúsculas
-<<<<<<< HEAD
         $stmt = $this->db->prepare("\n            SELECT id_equipo, nombre_equipo, tipo_equipo\n            FROM equipos\n            WHERE UPPER(tipo_equipo) = ?\n            AND activo = 1\n            AND stock > 0\n            AND id_equipo NOT IN (\n                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()\n            )\n        ");
-=======
         $stmt = $this->db->prepare("
             SELECT id_equipo, nombre_equipo, tipo_equipo
             FROM equipos
@@ -85,7 +83,6 @@ class PrestamoModel {
                 SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()
             )
         ");
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
         $stmt->execute([$tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

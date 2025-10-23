@@ -40,7 +40,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
       </div>
     </div>
 
-<<<<<<< HEAD
     <div class="mb-3 d-flex gap-2 flex-wrap">
       <button id="tab-reserva" class="btn btn-brand btn-sm">Historial / Reserva</button>
       <button id="tab-equipos" class="btn btn-outline-brand btn-sm">Historial / Equipos</button>
@@ -48,10 +47,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
 
     <!-- Vista: Reserva (se mantiene igual) -->
     <section id="vista-reserva" class="card shadow-sm mb-3 p-3">
-=======
-    <!-- Calendario Global (Reservas) -->
-    <section id="section-reservas" class="card shadow-sm mb-3 p-3">
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
       <div class="mb-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
@@ -89,8 +84,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
       <input type="hidden" id="calendar-prof-filter" value="">
       <div id="calendarios" class="calendarios-grid mt-3"></div>
     </section>
-<<<<<<< HEAD
-
     <!-- Vista: Equipos -->
     <section id="vista-equipos" class="card shadow-sm mb-3 p-3" style="display:none;">
       <div class="d-flex flex-column gap-2">
@@ -165,71 +158,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
       }
     });
   })();
-=======
-    
-    <!-- Calendario de Equipos (Global por tipo) -->
-    <section id="section-equipos" class="card shadow-sm mb-3 p-3" style="display:none">
-      <div class="mb-3">
-        <div class="fw-semibold text-brand fs-5">Calendario de Préstamos de Equipos (Global)</div>
-        <small class="text-muted">Semana de lunes a sábado</small>
-      </div>
-      <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
-        <button id="eq-prev-week" class="btn btn-outline-brand btn-sm">
-          <i class="bi bi-chevron-left"></i> Semana anterior
-        </button>
-        <input type="hidden" id="eq-start-of-week" value="<?php echo date('Y-m-d'); ?>">
-        <span id="eq-week-range-display" class="badge bg-primary-subtle text-primary-emphasis px-3 py-2"></span>
-        <button id="eq-next-week" class="btn btn-outline-brand btn-sm">
-          Semana siguiente <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-      <div class="d-flex align-items-center gap-2 flex-wrap justify-content-between mb-2">
-        <div class="btn-group" role="group">
-          <button id="eq-btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
-          <button id="eq-btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
-        </div>
-        <div class="ms-auto" style="min-width:260px">
-          <input id="eq-search" type="search" class="form-control form-control-sm" placeholder="Buscar por profesor, equipo o aula...">
-        </div>
-      </div>
-      <div id="calendarios-equipos" class="calendarios-grid mt-3"></div>
-      <section class="card mt-3 p-2">
-        <div class="fw-semibold mb-2">Préstamos de la semana</div>
-        <div id="eq-table-container"></div>
-      </section>
-    </section>
-
-  <script src="../../Public/js/HistorialGlobalCalendario.js?v=<?php echo time(); ?>"></script>
-  <script src="../../Public/js/HistorialEquiposCalendario.js?v=<?php echo time(); ?>"></script>
-  <script>
-    (function(){
-      const tabRes = document.getElementById('tab-reservas');
-      const tabEq  = document.getElementById('tab-equipos');
-      const secRes = document.getElementById('section-reservas');
-      const secEq  = document.getElementById('section-equipos');
-      function showRes(){
-        secRes.style.display='';
-        secEq.style.display='none';
-        tabRes.classList.remove('btn-outline-brand');
-        tabRes.classList.add('btn-brand');
-        tabEq.classList.remove('btn-brand');
-        tabEq.classList.add('btn-outline-brand');
-      }
-      function showEq(){
-        secRes.style.display='none';
-        secEq.style.display='';
-        tabEq.classList.remove('btn-outline-brand');
-        tabEq.classList.add('btn-brand');
-        tabRes.classList.remove('btn-brand');
-        tabRes.classList.add('btn-outline-brand');
-      }
-      if (tabRes && tabEq){
-        tabRes.addEventListener('click', showRes);
-        tabEq.addEventListener('click', showEq);
-        showRes();
-      }
-    })();
->>>>>>> 37d623eb911e485d34ce66af60d357b7fdb58415
   </script>
 <?php if (!defined('EMBEDDED_VIEW')): ?>
   </main>
