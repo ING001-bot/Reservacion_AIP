@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../controllers/HistorialGlobalController.php';
 require_once __DIR__ . '/../controllers/HistorialController.php';
+require_once __DIR__ . '/../lib/Mailer.php';
+use App\Lib\Mailer;
 
 // DomPDF
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -122,5 +124,23 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'landscape');
 $dompdf->render();
 $filename = 'historial_equipos_' . $monday . '.pdf';
+$pdfData = $dompdf->output();
+
+// Enviar por correo al usuario logueado
+$toEmail = $_SESSION['correo'] ?? '';
+if ($toEmail) {
+    $mailer = new Mailer();
+    $subject = 'Tu PDF de préstamos de equipos - ' . ($monday ?? 'Semana');
+    $body = '<p>Hola,</p>' .
+            '<p>Adjuntamos el PDF que acabas de generar.</p>' .
+            '<p>Fecha de descarga: ' . htmlspecialchars(date('Y-m-d H:i:s')) . '</p>' .
+            '<p>Saludos,</p><p>Aulas de Innovación</p>';
+    $mailer->send($toEmail, $subject, $body, [
+        ['data' => $pdfData, 'name' => $filename, 'isString' => true]
+    ]);
+}
+
+// Descargar en el navegador
 $dompdf->stream($filename, ['Attachment' => 1]);
+
 exit;

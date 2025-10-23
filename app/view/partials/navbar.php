@@ -103,8 +103,8 @@ $badge = count($no_leidas);
     </a>
     
     <div class="d-flex align-items-center ms-auto">
-      <!-- Notificaciones (solo Admin y Encargado) -->
-      <?php if ($es_admin || $es_encargado): ?>
+      <!-- Notificaciones (Admin, Encargado y Profesor) -->
+      <?php if ($id_usuario > 0): ?>
       <div class="dropdown me-3">
         <button type="button" class="btn btn-link nav-link position-relative text-white p-2 border-0" id="notifDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-display="static" aria-expanded="false">
           <i class="fas fa-bell fa-lg"></i>

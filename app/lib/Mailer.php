@@ -25,7 +25,8 @@ class Mailer
         if (($this->config['driver'] ?? 'smtp') === 'smtp') {
             if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
                 error_log('Mailer: PHPMailer not found. Ensure composer dependencies are installed.');
-                return false; // No fallback if driver is smtp
+                // Fallback a mail() si no existe PHPMailer
+                return $this->sendViaMailFunction($toEmail = $toEmail ?? '', $fromEmail, $fromName, $subject, $htmlBody);
             }
             try {
                 $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
@@ -102,7 +103,8 @@ class Mailer
                 return $mail->send();
             } catch (\Throwable $e) {
                 error_log('Mailer SMTP error: ' . $e->getMessage());
-                return false; // Do NOT fallback to mail() when driver is smtp
+                // Fallback a mail() cuando SMTP falle
+                return $this->sendViaMailFunction($toEmail, $fromEmail, $fromName, $subject, $htmlBody);
             }
         }
 
@@ -111,5 +113,22 @@ class Mailer
                    "Content-type:text/html;charset=UTF-8\r\n" .
                    'From: ' . $fromName . ' <' . $fromEmail . ">\r\n";
         return mail($toEmail, $subject, $htmlBody, $headers);
+    }
+
+    private function sendViaMailFunction(string $toEmail, string $fromEmail, string $fromName, string $subject, string $htmlBody): bool
+    {
+        if (empty($toEmail)) {
+            error_log('Mailer fallback: destinatario vacío.');
+            return false;
+        }
+        $headers = "MIME-Version: 1.0\r\n" .
+                   "Content-type:text/html;charset=UTF-8\r\n" .
+                   'From: ' . $fromName . ' <' . $fromEmail . ">\r\n" .
+                   'Reply-To: ' . $fromEmail . "\r\n";
+        $ok = @mail($toEmail, $subject, $htmlBody, $headers);
+        if (!$ok) {
+            error_log('Mailer fallback mail(): envío fallido (revisa configuración de mail del sistema).');
+        }
+        return $ok;
     }
 }

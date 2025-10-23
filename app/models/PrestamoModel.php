@@ -88,25 +88,23 @@ class PrestamoModel {
     }
     
     public function listarEquiposPorTipoConStock($tipo, $fecha) {
+        // Nota: el stock en la tabla `equipos` se maneja como stock disponible actual.
+        // Al prestar se decrementa y al devolver se incrementa. No debemos volver a restar
+        // los préstamos del día aquí para evitar doble descuento.
         $tipo = strtoupper(trim($tipo));
-        $stmt = $this->db->prepare("
+        $stmt = $this->db->prepare('
             SELECT 
-                e.id_equipo, 
-                e.nombre_equipo, 
+                e.id_equipo,
+                e.nombre_equipo,
                 e.tipo_equipo,
-                e.stock,
-                (e.stock - COALESCE(
-                    (SELECT COUNT(*) FROM prestamos p 
-                     WHERE p.id_equipo = e.id_equipo 
-                     AND p.fecha_prestamo = ? 
-                     AND p.estado = 'Prestado'), 0
-                )) AS disponible
+                e.stock AS disponible
             FROM equipos e
             WHERE UPPER(TRIM(e.tipo_equipo)) = ?
-            AND e.activo = 1
-            HAVING disponible > 0
-        ");
-        $stmt->execute([$fecha, $tipo]);
+              AND e.activo = 1
+              AND e.stock > 0
+            ORDER BY e.nombre_equipo ASC
+        ');
+        $stmt->execute([$tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -292,7 +290,7 @@ class PrestamoModel {
             return ['tipo' => 'error', 'mensaje' => '❌ Stock insuficiente para: ' . implode(', ', $msgs)];
         }
 
-        // Insertar pack e items
+        // Insertar pack e items y ajustar stock por tipo
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("INSERT INTO prestamos_pack (id_usuario, id_aula, fecha_prestamo, hora_inicio, hora_fin, estado) VALUES (?, ?, ?, ?, ?, 'Prestado')");
@@ -302,6 +300,31 @@ class PrestamoModel {
             $stmtItem = $this->db->prepare("INSERT INTO prestamos_pack_items (id_pack, tipo_equipo, es_complemento, cantidad) VALUES (?, ?, ?, ?)");
             foreach ($norm as $it) {
                 $stmtItem->execute([$id_pack, $it['tipo'], $it['es_complemento'], $it['cantidad']]);
+            }
+
+            // Decrementar stock por tipo, distribuyendo entre equipos del mismo tipo
+            $selEquiposTipo = $this->db->prepare("SELECT id_equipo, stock FROM equipos WHERE UPPER(TRIM(tipo_equipo)) = ? AND activo = 1 AND stock > 0 ORDER BY stock DESC, id_equipo ASC FOR UPDATE");
+            $decStock = $this->db->prepare("UPDATE equipos SET stock = stock - :dec WHERE id_equipo = :id AND stock >= :dec");
+            foreach ($norm as $it) {
+                $tipo = $it['tipo'];
+                $rest = (int)$it['cantidad'];
+                if ($rest <= 0) continue;
+                $selEquiposTipo->execute([$tipo]);
+                $rows = $selEquiposTipo->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as $row) {
+                    if ($rest <= 0) break;
+                    $disp = (int)$row['stock'];
+                    if ($disp <= 0) continue;
+                    $dec = min($disp, $rest);
+                    $decStock->bindValue(':dec', $dec, PDO::PARAM_INT);
+                    $decStock->bindValue(':id', (int)$row['id_equipo'], PDO::PARAM_INT);
+                    $decStock->execute();
+                    $rest -= $dec;
+                }
+                if ($rest > 0) {
+                    // No debería pasar por la validación previa; por seguridad revertimos
+                    throw new \PDOException('Stock insuficiente al consolidar decremento de tipo ' . $tipo);
+                }
             }
 
             $this->db->commit();
@@ -360,10 +383,46 @@ class PrestamoModel {
 
     /** Marcar pack como devuelto con comentario opcional */
     public function devolverPack(int $id_pack, ?string $comentario = null): bool {
-        $stmt = $this->db->prepare("UPDATE prestamos_pack SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :c WHERE id_pack = :id");
-        $stmt->bindValue(':c', $comentario, PDO::PARAM_STR);
-        $stmt->bindValue(':id', $id_pack, PDO::PARAM_INT);
-        return $stmt->execute();
+        // Restaurar stock por tipo según items del pack
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare("UPDATE prestamos_pack SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :c WHERE id_pack = :id");
+            $stmt->bindValue(':c', $comentario, PDO::PARAM_STR);
+            $stmt->bindValue(':id', $id_pack, PDO::PARAM_INT);
+            $stmt->execute();
+
+            // Obtener items del pack
+            $stmtItems = $this->db->prepare("SELECT tipo_equipo, cantidad FROM prestamos_pack_items WHERE id_pack = ?");
+            $stmtItems->execute([$id_pack]);
+            $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+
+            // Incrementar stock distribuido por tipo
+            $selEquiposTipo = $this->db->prepare("SELECT id_equipo FROM equipos WHERE UPPER(TRIM(tipo_equipo)) = ? AND activo = 1 ORDER BY stock ASC, id_equipo ASC FOR UPDATE");
+            $incStock = $this->db->prepare("UPDATE equipos SET stock = stock + :inc WHERE id_equipo = :id");
+            foreach ($items as $it) {
+                $tipo = strtoupper(trim((string)($it['tipo_equipo'] ?? '')));
+                $rest = (int)($it['cantidad'] ?? 0);
+                if ($tipo === '' || $rest <= 0) continue;
+                $selEquiposTipo->execute([$tipo]);
+                $rows = $selEquiposTipo->fetchAll(PDO::FETCH_ASSOC);
+                if (empty($rows)) continue;
+                foreach ($rows as $row) {
+                    if ($rest <= 0) break;
+                    // Incrementar en bloques (aquí simple: agregar todo al primero y continuar)
+                    $inc = $rest; // subir todo en esta fila y salir
+                    $incStock->bindValue(':inc', $inc, PDO::PARAM_INT);
+                    $incStock->bindValue(':id', (int)$row['id_equipo'], PDO::PARAM_INT);
+                    $incStock->execute();
+                    $rest = 0;
+                }
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (\PDOException $e) {
+            $this->db->rollBack();
+            return false;
+        }
     }
 
     /** Suma lo prestado por tipo en una fecha (packs activos) */

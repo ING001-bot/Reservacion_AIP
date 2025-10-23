@@ -16,10 +16,9 @@ class ReservaController {
     }
 
     public function reservarAula($id_aula, $fecha, $hora_inicio, $hora_fin, $id_usuario) {
-        // Requerir OTP si es Profesor
+        // Requerir OTP si es Profesor: válida por toda la sesión
         if (($_SESSION['tipo'] ?? '') === 'Profesor') {
-            $until = (int)($_SESSION['otp_verified_until'] ?? 0);
-            if ($until < time()) {
+            if (empty($_SESSION['otp_verified'])) {
                 $this->mensaje = 'Debes verificar tu identidad con el código SMS antes de confirmar la reserva.';
                 $this->tipo = 'danger';
                 return false;
@@ -82,12 +81,12 @@ class ReservaController {
                 // Obtener datos una sola vez
                 $aula = $this->model->obtenerAulaPorId($id_aula);
                 $aulaNombre = $aula['nombre_aula'] ?? ('Aula #' . $id_aula);
-                $usuarios = $this->model->listarUsuariosPorRol(['Administrador','Encargado']);
+                $encargados = $this->model->listarUsuariosPorRol(['Encargado']);
                 
-                // Notificar a Admin y Encargado (sistema)
+                // Notificar al Encargado (sistema)
                 try {
                     $msg = 'Nueva reserva de aula por '.($_SESSION['usuario'] ?? 'Usuario').'. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
-                    foreach ($usuarios as $u) {
+                    foreach ($encargados as $u) {
                         $this->model->crearNotificacion((int)$u['id_usuario'], 'Nueva reserva de aula', $msg, 'Admin.php?view=historial_global');
                     }
                 } catch (\Throwable $e) { /* log suave */ }
@@ -124,42 +123,6 @@ class ReservaController {
                         }
                     });
                 }
-                
-                // Notificar a Admin y Encargado (async)
-                $usuario = $_SESSION['usuario'] ?? 'Docente';
-                $correo = $_SESSION['correo'] ?? '';
-                
-                register_shutdown_function(function() use ($usuarios, $aulaNombre, $usuario, $correo, $fecha_reserva_str, $hora_inicio, $hora_fin) {
-                    try {
-                        $notificationService = new NotificationService();
-                        $subject = 'Nueva reserva de aula - ' . $aulaNombre;
-                        $message = 'Se ha realizado una nueva reserva con estos detalles:<br><br>' .
-                                  '<strong>Usuario:</strong> ' . htmlspecialchars($usuario) . ' (' . htmlspecialchars($correo) . ')<br>' .
-                                  '<strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '<br>' .
-                                  '<strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '<br>' .
-                                  '<strong>Hora inicio:</strong> ' . htmlspecialchars($hora_inicio) . '<br>' .
-                                  '<strong>Hora fin:</strong> ' . htmlspecialchars($hora_fin);
-
-                        // Enviar a cada admin/encargado
-                        foreach ($usuarios as $u) {
-                            if (!empty($u['correo'])) {
-                                $notificationService->sendNotification(
-                                    ['email' => $u['correo']],
-                                    $subject,
-                                    $message,
-                                    [
-                                        'userName' => $u['nombre'] ?? 'Administrador',
-                                        'type' => 'info',
-                                        'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global',
-                                        'sendSms' => false
-                                    ]
-                                );
-                            }
-                        }
-                    } catch (\Throwable $e) {
-                        error_log('Error al notificar a administradores: ' . $e->getMessage());
-                    }
-                });
                 return true;
             } else {
                 $this->mensaje = "❌ Error al realizar la reserva.";
@@ -209,32 +172,45 @@ class ReservaController {
             $this->mensaje = "✅ Reserva cancelada correctamente.";
             $this->tipo = "success";
             
-            // Notificar al colegio por correo
+            // Notificaciones por cancelación:
             try {
-                // Usar from_email del config como destino institucional
-                $cfg = require __DIR__ . '/../config/mail.php';
-                $toColegio = $cfg['from_email'] ?? '';
-                
-                if ($toColegio) {
-                    $notificationService = new NotificationService();
-                    $subject = 'Cancelación de reserva por ' . ($_SESSION['usuario'] ?? 'Docente');
-                    $message = 'Se ha cancelado una reserva.<br><br>' .
-                              '<strong>Docente:</strong> ' . ($_SESSION['usuario'] ?? '') . ' (' . ($_SESSION['correo'] ?? '') . ')<br>' .
-                              '<strong>Fecha de cancelación:</strong> ' . date('Y-m-d H:i:s') . '<br>' .
-                              '<strong>Motivo:</strong> ' . nl2br(htmlspecialchars($motivo)) . '<br><br>' .
-                              '<em>Nota:</em> Datos de aula/horario no se incluyen porque la reserva fue eliminada del sistema al cancelar.';
-                    
+                $notificationService = new NotificationService();
+                $docente = $_SESSION['usuario'] ?? 'Docente';
+                $correoDoc = $_SESSION['correo'] ?? '';
+                // Al docente (correo)
+                if ($correoDoc) {
+                    $subjectD = 'Has cancelado una reserva';
+                    $messageD = 'Se canceló tu reserva el ' . date('Y-m-d H:i:s') . '.<br>' .
+                                '<strong>Motivo:</strong> ' . nl2br(htmlspecialchars($motivo));
                     $notificationService->sendNotification(
-                        ['email' => $toColegio],
-                        $subject,
-                        $message,
-                        [
-                            'userName' => 'Administrador',
-                            'type' => 'warning',
-                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global',
-                            'sendSms' => false
-                        ]
+                        ['email' => $correoDoc],
+                        $subjectD,
+                        $messageD,
+                        [ 'userName' => $docente, 'type' => 'warning', 'sendSms' => false ]
                     );
+                }
+                // A Encargado y Administrador: correo + campanita
+                $destinatarios = $this->model->listarUsuariosPorRol(['Encargado','Administrador']);
+                $subjectEA = 'Cancelación de reserva por ' . $docente;
+                $messageEA = 'Un docente canceló una reserva:<br><br>' .
+                             '<strong>Docente:</strong> ' . htmlspecialchars($docente) . ' (' . htmlspecialchars($correoDoc) . ')<br>' .
+                             '<strong>Fecha de cancelación:</strong> ' . date('Y-m-d H:i:s') . '<br>' .
+                             '<strong>Motivo:</strong> ' . nl2br(htmlspecialchars($motivo));
+                foreach ($destinatarios as $u) {
+                    // correo
+                    if (!empty($u['correo'])) {
+                        $notificationService->sendNotification(
+                            ['email' => $u['correo']],
+                            $subjectEA,
+                            $messageEA,
+                            [ 'userName' => ($u['nombre'] ?? 'Usuario'), 'type' => 'warning', 'sendSms' => false,
+                              'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global' ]
+                        );
+                    }
+                    // campanita
+                    try {
+                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Cancelación de reserva', strip_tags($messageEA), 'Admin.php?view=historial_global');
+                    } catch (\Throwable $e) { /*noop*/ }
                 }
             } catch (\Throwable $e) {
                 error_log('Error al notificar cancelación de reserva: ' . $e->getMessage());

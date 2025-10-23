@@ -42,6 +42,8 @@ if (isset($_POST['verificar_codigo'])) {
         $_SESSION['verified_reserva'] = true;
         // Ventana de validez de 10 minutos para controladores
         $_SESSION['otp_verified_until'] = time() + 10*60;
+        // Flag de sesión (válido hasta cerrar sesión)
+        $_SESSION['otp_verified'] = true;
         $necesitaVerificacion = false;
         $mensajeVerificacion = '✅ Código verificado correctamente. Ahora puedes realizar reservas.';
     } else {

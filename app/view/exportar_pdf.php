@@ -19,7 +19,8 @@ $id_usuario = $_SESSION['id_usuario'];
 $tipo_usuario = $_SESSION['tipo'] ?? '';
 $profesor_nombre = $_SESSION['usuario'] ?? '';
 $start_week = $_POST['start_week'] ?? date('Y-m-d');
-$turno = $_POST['turno'] ?? 'manana';
+// Forzar ambos turnos en el PDF (Mañana y Tarde)
+$turno = 'todos';
 $prof_like = isset($_POST['profesor']) && $_POST['profesor'] !== '' ? $_POST['profesor'] : null;
 
 $controller = new HistorialController($conexion);
@@ -80,9 +81,21 @@ foreach ($canceladas_semana as $c) {
     }
 }
 
-// Datos
+// Zona horaria Perú y datos comunes
+date_default_timezone_set('America/Lima');
 $colegio = "Colegio Juan Tomis Stack";
 $logoFile = realpath(__DIR__ . '/../../Public/img/logo_colegio.png') ?: '../../Public/img/logo_colegio.png';
+// Preparar data URI para evitar problemas de file:// y chroot
+$logoDataUri = null;
+$logoAbs = realpath(__DIR__ . '/../../Public/img/logo_colegio.png');
+if ($logoAbs && is_file($logoAbs)) {
+    // Asumimos PNG; si cambias el formato, ajusta el mime
+    $mime = 'image/png';
+    $data = @file_get_contents($logoAbs);
+    if ($data !== false) { $logoDataUri = 'data:' . $mime . ';base64,' . base64_encode($data); }
+}
+// Fallback por URL absoluta si data URI fallara
+$logoUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/Sistema_reserva_AIP/Public/img/logo_colegio.png';
 $fecha_descarga = date('Y-m-d H:i:s');
 // Generar HTML
 ob_start();
@@ -92,27 +105,41 @@ ob_start();
 <head>
   <meta charset="utf-8" />
   <style>
-    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; }
-    header { display:flex; align-items:center; gap:12px; margin-bottom: 12px; }
-    header img { height: 40px; }
-    h1 { font-size: 18px; margin: 0; }
-    .meta { font-size: 11px; color: #555; margin-bottom: 10px; }
+    /* Paleta institucional */
+    /* Azul primario */
+    .brand-bg { background:#1E6BD6; color:#fff; }
+    .brand-text { color:#1E6BD6; }
+    .brand-light { background:#EAF2FF; }
+    .brand-border { border-color:#C7DAFF !important; }
+
+    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color:#222; }
+    header { display:flex; align-items:center; gap:12px; margin-bottom: 12px; padding:10px; border:1px solid #C7DAFF; background:#F7FAFF; border-radius:6px; }
+    header img { height: 42px; }
+    h1 { font-size: 18px; margin: 0; color:#0F3E91; }
+    .meta { font-size: 11px; color: #445; margin-top: 4px; }
+
     table { width:100%; border-collapse: collapse; }
-    th, td { border: 1px solid #999; padding: 6px 8px; }
-    th { background:#f0f0f0; }
-    .small { color:#777; font-size: 11px; }
+    th, td { border: 1px solid #C7DAFF; padding: 6px 8px; }
+    th { background:#EAF2FF; color:#0F3E91; font-weight:700; }
+    tbody tr:nth-child(odd) { background:#FCFDFF; }
+
+    h2 { color:#0F3E91; }
+    .small { color:#4a5568; font-size: 11px; }
+    .small strong { background:#EAF2FF; color:#0F3E91; padding:2px 6px; border-radius:10px; display:inline-block; }
   </style>
   <title>Historial de Préstamos AIP</title>
   </head>
 <body>
   <header>
-    <?php if (is_file($logoFile)): ?>
-      <img src="<?= 'file:///' . str_replace('\\', '/', htmlspecialchars($logoFile)) ?>" alt="Logo" />
+    <?php if (!empty($logoDataUri)): ?>
+      <img src="<?= htmlspecialchars($logoDataUri) ?>" alt="Logo" style="height:60px; width:auto;" />
+    <?php else: ?>
+      <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" style="height:60px; width:auto;" />
     <?php endif; ?>
     <div>
       <h1><?= htmlspecialchars($colegio) ?></h1>
       <div class="meta">
-        <?= $tipo_usuario === 'Administrador' || $tipo_usuario === 'Encargado' ? 'Rol: ' . htmlspecialchars($tipo_usuario) : 'Profesor: ' . htmlspecialchars($profesor_nombre) ?> · Semana que inicia: <?= htmlspecialchars($monday) ?> · Turno: <?= htmlspecialchars($turno) ?><br/>
+        <?= $tipo_usuario === 'Administrador' || $tipo_usuario === 'Encargado' ? 'Rol: ' . htmlspecialchars($tipo_usuario) : 'Profesor: ' . htmlspecialchars($profesor_nombre) ?> · Semana que inicia: <?= htmlspecialchars($monday) ?> · Turnos: <?= ($turno==='manana'?'Mañana':($turno==='tarde'?'Tarde':'Mañana y Tarde')) ?><br/>
         Generado: <?= htmlspecialchars($fecha_descarga) ?>
       </div>
     </div>
@@ -122,7 +149,7 @@ ob_start();
   <table style="width:100%; margin-bottom: 10px; border:0;">
     <tr>
       <td style="width:50%; vertical-align:top; padding-right:6px;">
-        <h2 style="font-size:14px; margin: 8px 0;">AIP 1 <?= $aip_names[0] ? '(' . htmlspecialchars($aip_names[0]) . ')' : '' ?></h2>
+        <h2 style="font-size:14px; margin: 8px 0;">AIP 1 <?= $aip_names[0] ? '(' . htmlspecialchars($aip_names[0]) . ')' : '' ?> · Turnos: <?= ($turno==='manana'?'Mañana':($turno==='tarde'?'Tarde':'Mañana y Tarde')) ?></h2>
         <?php $fechas = $controller->getWeekDates($monday); ?>
         <table>
           <thead>
@@ -138,20 +165,50 @@ ob_start();
             <tr>
               <td class="nowrap"><?= htmlspecialchars($f) ?></td>
               <td>
-                <?php if (!empty($resv)): ?>
-                  <?php foreach ($resv as $r): ?>
+                <?php 
+                  $resvM = []; $resvT = [];
+                  foreach (($resv ?? []) as $r) {
+                    $hi = substr($r['hora_inicio'] ?? '', 0, 8);
+                    if ($hi !== '' && $hi < '13:00:00') { $resvM[] = $r; } else { $resvT[] = $r; }
+                  }
+                ?>
+                <?php if (!empty($resvM)): ?>
+                  <div class="small"><strong>Mañana:</strong></div>
+                  <?php foreach ($resvM as $r): ?>
                     <div><?= htmlspecialchars(($r['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($r['hora_fin'] ?? '')) ?><?= isset($r['profesor']) && $r['profesor'] !== '' ? (' · ' . htmlspecialchars($r['profesor'])) : '' ?></div>
                   <?php endforeach; ?>
-                <?php else: ?>
+                <?php endif; ?>
+                <?php if (!empty($resvT)): ?>
+                  <div class="small" style="margin-top:4px;"><strong>Tarde:</strong></div>
+                  <?php foreach ($resvT as $r): ?>
+                    <div><?= htmlspecialchars(($r['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($r['hora_fin'] ?? '')) ?><?= isset($r['profesor']) && $r['profesor'] !== '' ? (' · ' . htmlspecialchars($r['profesor'])) : '' ?></div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (empty($resvM) && empty($resvT)): ?>
                   <span class="small">—</span>
                 <?php endif; ?>
               </td>
               <td>
-                <?php if (!empty($canc)): ?>
-                  <?php foreach ($canc as $c): ?>
+                <?php 
+                  $cancM = []; $cancT = [];
+                  foreach (($canc ?? []) as $c) {
+                    $hi = substr($c['hora_inicio'] ?? '', 0, 8);
+                    if ($hi !== '' && $hi < '13:00:00') { $cancM[] = $c; } else { $cancT[] = $c; }
+                  }
+                ?>
+                <?php if (!empty($cancM)): ?>
+                  <div class="small"><strong>Mañana:</strong></div>
+                  <?php foreach ($cancM as $c): ?>
                     <div><?= htmlspecialchars(($c['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($c['hora_fin'] ?? '')) ?> · <?= htmlspecialchars(($c['motivo'] ?? '')) ?></div>
                   <?php endforeach; ?>
-                <?php else: ?>
+                <?php endif; ?>
+                <?php if (!empty($cancT)): ?>
+                  <div class="small" style="margin-top:4px;"><strong>Tarde:</strong></div>
+                  <?php foreach ($cancT as $c): ?>
+                    <div><?= htmlspecialchars(($c['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($c['hora_fin'] ?? '')) ?> · <?= htmlspecialchars(($c['motivo'] ?? '')) ?></div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (empty($cancM) && empty($cancT)): ?>
                   <span class="small">—</span>
                 <?php endif; ?>
               </td>
@@ -161,7 +218,7 @@ ob_start();
         </table>
       </td>
       <td style="width:50%; vertical-align:top; padding-left:6px;">
-        <h2 style="font-size:14px; margin: 8px 0;">AIP 2 <?= $aip_names[1] ? '(' . htmlspecialchars($aip_names[1]) . ')' : '' ?></h2>
+        <h2 style="font-size:14px; margin: 8px 0;">AIP 2 <?= $aip_names[1] ? '(' . htmlspecialchars($aip_names[1]) . ')' : '' ?> · Turnos: <?= ($turno==='manana'?'Mañana':($turno==='tarde'?'Tarde':'Mañana y Tarde')) ?></h2>
         <?php $fechas = $controller->getWeekDates($monday); ?>
         <table>
           <thead>
@@ -177,20 +234,50 @@ ob_start();
             <tr>
               <td class="nowrap"><?= htmlspecialchars($f) ?></td>
               <td>
-                <?php if (!empty($resv)): ?>
-                  <?php foreach ($resv as $r): ?>
+                <?php 
+                  $resvM = []; $resvT = [];
+                  foreach (($resv ?? []) as $r) {
+                    $hi = substr($r['hora_inicio'] ?? '', 0, 8);
+                    if ($hi !== '' && $hi < '13:00:00') { $resvM[] = $r; } else { $resvT[] = $r; }
+                  }
+                ?>
+                <?php if (!empty($resvM)): ?>
+                  <div class="small"><strong>Mañana:</strong></div>
+                  <?php foreach ($resvM as $r): ?>
                     <div><?= htmlspecialchars(($r['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($r['hora_fin'] ?? '')) ?><?= isset($r['profesor']) && $r['profesor'] !== '' ? (' · ' . htmlspecialchars($r['profesor'])) : '' ?></div>
                   <?php endforeach; ?>
-                <?php else: ?>
+                <?php endif; ?>
+                <?php if (!empty($resvT)): ?>
+                  <div class="small" style="margin-top:4px;"><strong>Tarde:</strong></div>
+                  <?php foreach ($resvT as $r): ?>
+                    <div><?= htmlspecialchars(($r['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($r['hora_fin'] ?? '')) ?><?= isset($r['profesor']) && $r['profesor'] !== '' ? (' · ' . htmlspecialchars($r['profesor'])) : '' ?></div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (empty($resvM) && empty($resvT)): ?>
                   <span class="small">—</span>
                 <?php endif; ?>
               </td>
               <td>
-                <?php if (!empty($canc)): ?>
-                  <?php foreach ($canc as $c): ?>
+                <?php 
+                  $cancM = []; $cancT = [];
+                  foreach (($canc ?? []) as $c) {
+                    $hi = substr($c['hora_inicio'] ?? '', 0, 8);
+                    if ($hi !== '' && $hi < '13:00:00') { $cancM[] = $c; } else { $cancT[] = $c; }
+                  }
+                ?>
+                <?php if (!empty($cancM)): ?>
+                  <div class="small"><strong>Mañana:</strong></div>
+                  <?php foreach ($cancM as $c): ?>
                     <div><?= htmlspecialchars(($c['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($c['hora_fin'] ?? '')) ?> · <?= htmlspecialchars(($c['motivo'] ?? '')) ?></div>
                   <?php endforeach; ?>
-                <?php else: ?>
+                <?php endif; ?>
+                <?php if (!empty($cancT)): ?>
+                  <div class="small" style="margin-top:4px;"><strong>Tarde:</strong></div>
+                  <?php foreach ($cancT as $c): ?>
+                    <div><?= htmlspecialchars(($c['hora_inicio'] ?? '')) ?> - <?= htmlspecialchars(($c['hora_fin'] ?? '')) ?> · <?= htmlspecialchars(($c['motivo'] ?? '')) ?></div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (empty($cancM) && empty($cancT)): ?>
                   <span class="small">—</span>
                 <?php endif; ?>
               </td>
@@ -202,13 +289,37 @@ ob_start();
     </tr>
   </table>
 
-  <?php if (!empty($prestamos)): ?>
+  <?php
+    // Agrupar préstamos por sesión (fecha+hora_inicio+hora_fin+aula+usuario)
+    $agrupados = [];
+    foreach ($prestamos as $p) {
+        $key = ($p['fecha_prestamo'] ?? '') . '|' . ($p['hora_inicio'] ?? '') . '|' . ($p['hora_fin'] ?? '') . '|' . ($p['nombre_aula'] ?? '') . '|' . ($p['nombre'] ?? $profesor_nombre);
+        if (!isset($agrupados[$key])) {
+            $agrupados[$key] = [
+                'profesor' => $p['nombre'] ?? $profesor_nombre,
+                'aula' => $p['nombre_aula'] ?? '',
+                'fecha' => $p['fecha_prestamo'] ?? '',
+                'hora_inicio' => $p['hora_inicio'] ?? '',
+                'hora_fin' => $p['hora_fin'] ?? '',
+                'estado' => $p['estado'] ?? '',
+                'equipos' => []
+            ];
+        }
+        $nombreEq = trim((string)($p['nombre_equipo'] ?? 'Equipo'));
+        if ($nombreEq !== '') $agrupados[$key]['equipos'][] = $nombreEq;
+        // Consolidar estado: si alguno está Prestado, queda Prestado; si todos Devuelto, Devuelto
+        if (($p['estado'] ?? '') === 'Prestado') {
+            $agrupados[$key]['estado'] = 'Prestado';
+        }
+    }
+  ?>
+  <?php if (!empty($agrupados)): ?>
+    <h2 style="font-size:14px; margin: 12px 0 6px;">Préstamos de la semana</h2>
     <table>
       <thead>
         <tr>
-          <th>ID</th>
           <th>Profesor</th>
-          <th>Equipo</th>
+          <th>Equipos</th>
           <th>Aula</th>
           <th>Fecha</th>
           <th>Hora inicio</th>
@@ -217,18 +328,17 @@ ob_start();
         </tr>
       </thead>
       <tbody>
-      <?php foreach ($prestamos as $p): ?>
+        <?php foreach ($agrupados as $g): ?>
         <tr>
-          <td><?= htmlspecialchars($p['id_prestamo']) ?></td>
-          <td><?= htmlspecialchars($p['nombre'] ?? $profesor_nombre) ?></td>
-          <td><?= htmlspecialchars($p['nombre_equipo'] ?? '') ?></td>
-          <td><?= htmlspecialchars($p['nombre_aula'] ?? '') ?></td>
-          <td><?= htmlspecialchars($p['fecha_prestamo'] ?? '') ?></td>
-          <td><?= htmlspecialchars($p['hora_inicio'] ?? '') ?></td>
-          <td><?= htmlspecialchars($p['hora_fin'] ?? '') ?></td>
-          <td><?= htmlspecialchars($p['estado'] ?? '') ?></td>
+          <td><?= htmlspecialchars($g['profesor']) ?></td>
+          <td><?= htmlspecialchars(implode(', ', array_unique($g['equipos']))) ?></td>
+          <td><?= htmlspecialchars($g['aula']) ?></td>
+          <td><?= htmlspecialchars($g['fecha']) ?></td>
+          <td><?= htmlspecialchars($g['hora_inicio']) ?></td>
+          <td><?= htmlspecialchars($g['hora_fin']) ?></td>
+          <td><?= htmlspecialchars($g['estado']) ?></td>
         </tr>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
       </tbody>
     </table>
   <?php else: ?>
