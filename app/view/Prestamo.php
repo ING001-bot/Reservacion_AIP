@@ -49,6 +49,8 @@ if (isset($_POST['verificar_codigo'])) {
     
     if ($verificationService->verifyCode($_SESSION['id_usuario'], $codigo, 'prestamo')) {
         $_SESSION['verified_prestamo'] = true;
+        // Ventana de validez de 10 minutos para controladores
+        $_SESSION['otp_verified_until'] = time() + 10*60;
         $necesitaVerificacion = false;
         $mensajeVerificacion = '✅ Código verificado correctamente. Ahora puedes solicitar préstamos.';
     } else {
@@ -537,15 +539,36 @@ setTimeout(() => {
                             'fecha_devolucion' => $p['fecha_devolucion'] ?? '-'
                         ];
                     }
-                    $prestamosAgrupados[$key]['equipos'][] = $p['nombre_equipo'] ?? 'Equipo';
+                    $prestamosAgrupados[$key]['equipos'][] = strip_tags($p['nombre_equipo'] ?? 'Equipo');
                 }
                 
                 foreach ($prestamosAgrupados as $grupo): ?>
                     <tr>
                         <td>
-                            <?php foreach ($grupo['equipos'] as $eq): ?>
-                                <span class="badge bg-info me-1"><?= htmlspecialchars($eq) ?></span>
-                            <?php endforeach; ?>
+                            <?php 
+                            // Ordenar por prioridad visible: Laptop, Proyector, Extensión, Mouse, Parlante
+                            $prioridad = function(string $nombre): int {
+                                $n = mb_strtolower($nombre, 'UTF-8');
+                                if (strpos($n, 'laptop') !== false) return 1;
+                                if (strpos($n, 'proyector') !== false) return 2;
+                                if (strpos($n, 'extension') !== false || strpos($n, 'extensión') !== false) return 3;
+                                if (strpos($n, 'mouse') !== false) return 4;
+                                if (strpos($n, 'parlante') !== false) return 5;
+                                return 99;
+                            };
+                            $equipos = $grupo['equipos'];
+                            usort($equipos, function($a, $b) use ($prioridad) {
+                                $pa = $prioridad($a); $pb = $prioridad($b);
+                                if ($pa === $pb) return strcasecmp($a, $b);
+                                return $pa <=> $pb;
+                            });
+                            // Sanear y normalizar: quitar etiquetas HTML y 'Extension' -> 'Extensión'
+                            $equipos = array_map(function($e){
+                                $trim = trim((string)strip_tags($e));
+                                return preg_replace('/^(?i)extension$/u', 'Extensión', $trim);
+                            }, $equipos);
+                            echo htmlspecialchars(implode(' · ', $equipos));
+                            ?>
                         </td>
                         <td><?= htmlspecialchars($grupo['aula']) ?></td>
                         <td><?= htmlspecialchars($grupo['fecha']) ?></td>
@@ -568,11 +591,43 @@ setTimeout(() => {
                     <tr>
                         <td>
                             <?php if ($items): ?>
-                                <?php foreach ($items as $it): ?>
-                                    <span class="badge bg-secondary me-1">
-                                        <?= htmlspecialchars($it['tipo_equipo']) ?> x<?= (int)$it['cantidad'] ?><?= $it['es_complemento'] ? ' (C)' : '' ?>
-                                    </span>
-                                <?php endforeach; ?>
+                                <?php 
+                                // Normalizar etiqueta de tipo y ordenar por prioridad
+                                $mapLabel = function(string $tipo): string {
+                                    $t = strtoupper($tipo);
+                                    if ($t === 'LAPTOP') return 'Laptop';
+                                    if ($t === 'PROYECTOR') return 'Proyector';
+                                    if ($t === 'EXTENSION' || $t === 'EXTENSIÓN') return 'Extensión';
+                                    if ($t === 'MOUSE') return 'Mouse';
+                                    if ($t === 'PARLANTE') return 'Parlante';
+                                    return ucwords(strtolower($tipo));
+                                };
+                                $prioTipo = function(string $tipo): int {
+                                    $t = strtoupper($tipo);
+                                    if ($t === 'LAPTOP') return 1;
+                                    if ($t === 'PROYECTOR') return 2;
+                                    if ($t === 'EXTENSION' || $t === 'EXTENSIÓN') return 3;
+                                    if ($t === 'MOUSE') return 4;
+                                    if ($t === 'PARLANTE') return 5;
+                                    return 99;
+                                };
+                                usort($items, function($a, $b) use ($prioTipo) {
+                                    $pa = $prioTipo($a['tipo_equipo'] ?? '');
+                                    $pb = $prioTipo($b['tipo_equipo'] ?? '');
+                                    if ($pa === $pb) return strcasecmp($a['tipo_equipo'] ?? '', $b['tipo_equipo'] ?? '');
+                                    return $pa <=> $pb;
+                                });
+                                $labels = [];
+                                foreach ($items as $it) {
+                                    $tipo = strip_tags($it['tipo_equipo'] ?? '');
+                                    $label = $mapLabel($tipo);
+                                    if (!empty($it['cantidad']) && (int)$it['cantidad'] > 1) {
+                                        $label .= ' x' . (int)$it['cantidad'];
+                                    }
+                                    $labels[] = $label;
+                                }
+                                echo htmlspecialchars(implode(' · ', $labels));
+                                ?>
                             <?php else: ?>
                                 -
                             <?php endif; ?>
@@ -632,141 +687,10 @@ setTimeout(() => {
                     });
                     return false;
                 }
-                // Requerir OTP verificado para profesores
-                <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-                if (!otpOk) {
-                    e.preventDefault();
-                    try {
-                        // Intentar enviar OTP de préstamo
-                        let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-                        let data = await resp.json();
-                        if (!resp.ok || !data.ok) {
-                            const msg = data.msg || ('HTTP '+resp.status);
-                            // Si teléfono no verificado, ofrecer verificar ahora
-                            if (/verificar tu teléfono/i.test(msg)) {
-                                const go = await Swal.fire({ icon:'info', title:'Verificar teléfono', text: 'Tu teléfono no está verificado. ¿Deseas verificarlo ahora?', showCancelButton:true, confirmButtonText:'Sí, verificar' });
-                                if (go.isConfirmed) {
-                                    let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
-                                    let d2 = await r2.json();
-                                    if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
-                                    const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, showCancelButton:true, confirmButtonText:'Verificar' });
-                                    if (!ask.value) return false;
-                                    const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
-                                    let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
-                                    let j2 = await v2.json();
-                                    if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
-                                    await Swal.fire({ icon:'success', title:'Teléfono verificado' });
-                                    // Reintentar envío OTP de préstamo
-                                    resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-                                    data = await resp.json();
-                                    if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
-                                } else { return false; }
-                            } else {
-                                throw new Error(msg);
-                            }
-                        }
-                        const askCode = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', showCancelButton:true });
-                        if (!askCode.value || !/^\d{6}$/.test(String(askCode.value))) { Swal.fire({icon:'error', title:'Código inválido', text:'Debe tener 6 dígitos.'}); return false; }
-                        const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
-                        const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
-                        const vj = await vr.json();
-                        if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
-                        otpOk = true;
-                        form.submit();
-                    } catch(err){
-                        Swal.fire({ icon:'error', title:'No se pudo verificar', text: String(err.message||err) });
-                    }
-                    return false;
-                }
-                <?php endif; ?>
+                // La verificación OTP se gestiona con el modal del servidor; no duplicar en frontend.
             });
         }
-        // OTP automático al cargar para Profesor
-        <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-        (async function(){
-            if (otpOk) return;
-            try{
-                let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-                let data = await resp.json();
-                if (!resp.ok || !data.ok) {
-                    const msg = data.msg || ('HTTP '+resp.status);
-                    if (/verificar tu teléfono/i.test(msg)) {
-                        const go = await Swal.fire({ icon:'info', title:'Verificar teléfono', text: 'Tu teléfono no está verificado. Vamos a verificarlo ahora.', confirmButtonText:'Ok' });
-                        let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
-                        let d2 = await r2.json();
-                        if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
-                        const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, showCancelButton:false, confirmButtonText:'Verificar' });
-                        const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
-                        let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
-                        let j2 = await v2.json();
-                        if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
-                        await Swal.fire({ icon:'success', title:'Teléfono verificado' });
-                        resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-                        data = await resp.json();
-                        if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
-                    } else {
-                        throw new Error(msg);
-                    }
-                }
-                const askCode = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-                if (!askCode.value || !/^\d{6}$/.test(String(askCode.value))) { Swal.fire({icon:'error', title:'Código inválido', text:'Debe tener 6 dígitos.'}); return; }
-                const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
-                const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
-                const vj = await vr.json();
-                if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
-                otpOk = true;
-                Swal.fire({ icon:'success', title:'Código verificado', text:'Tienes 10 minutos para confirmar el préstamo.' });
-                const fab = document.getElementById('otp-fab'); if (fab) fab.style.display='none';
-            }catch(err){
-                Swal.fire({ icon:'error', title:'No se pudo iniciar la verificación', text: String(err.message||err) });
-                const fab = document.getElementById('otp-fab'); if (fab) fab.style.display='block';
-            }
-        })();
-        <?php endif; ?>
-        // Botón flotante para reintentar OTP
-        <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-        (function(){
-          const fab = document.getElementById('otp-fab');
-          const btn = fab ? fab.querySelector('button') : null;
-          if (!btn) return;
-          btn.addEventListener('click', async function(){
-            try{
-              let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method:'POST' });
-              let data = await resp.json();
-              if (!resp.ok || !data.ok) {
-                const msg = data.msg || ('HTTP '+resp.status);
-                if (/verificar tu teléfono/i.test(msg)) {
-                  let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
-                  let d2 = await r2.json();
-                  if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
-                  const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-                  if (!ask.value || !/^\d{6}$/.test(String(ask.value))) throw new Error('Código inválido.');
-                  const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
-                  let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
-                  let j2 = await v2.json();
-                  if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
-                  await Swal.fire({ icon:'success', title:'Teléfono verificado' });
-                  resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-                  data = await resp.json();
-                  if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
-                } else {
-                  throw new Error(msg);
-                }
-              }
-              const askCode = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-              if (!askCode.value || !/^\d{6}$/.test(String(askCode.value))) throw new Error('Código inválido.');
-              const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
-              const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
-              const vj = await vr.json();
-              if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
-              otpOk = true; fab.style.display='none';
-              Swal.fire({ icon:'success', title:'Código verificado' });
-            }catch(err){
-              Swal.fire({ icon:'error', title:'No se pudo verificar', text: String(err.message||err) });
-            }
-          });
-        })();
-        <?php endif; ?>
+        // Flujo OTP duplicado eliminado; se mantiene solo el modal del servidor.
         const selLaptop = document.getElementById('id_laptop');
         const selProy = document.getElementById('id_proyector');
         const wrapMouse = document.getElementById('wrap_mouse');

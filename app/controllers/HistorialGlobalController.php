@@ -62,14 +62,20 @@ class HistorialGlobalController {
         if (!$tipo || strtolower($tipo) === 'prestamo' || strtolower($tipo) === 'préstamo') {
             $prestamos = $this->consultarPrestamos($desde, $hasta, $prof);
             foreach ($prestamos as $p) {
-                // Construir chips/badges para los equipos agrupados
-                $chips = '';
+                // Construir texto plano para equipos (sin HTML)
+                $plainEquipos = '';
                 $lista = isset($p['equipos_concat']) ? explode('||', (string)$p['equipos_concat']) : [];
-                foreach ($lista as $eq) {
-                    $eqSafe = htmlspecialchars(trim($eq), ENT_QUOTES, 'UTF-8');
-                    if ($eqSafe !== '') {
-                        $chips .= "<span class=\"badge rounded-pill text-bg-info me-1\">{$eqSafe}</span>";
-                    }
+                if (!empty($lista)) {
+                    // Sanear, normalizar y concatenar
+                    $san = array_map(function($x){
+                        $t = trim(strip_tags((string)$x));
+                        // Normalizar Extension -> Extensión (solo palabra exacta)
+                        $t = preg_replace('/^(?i)extension$/u', 'Extensión', $t);
+                        return $t;
+                    }, $lista);
+                    // Eliminar vacíos y duplicados manteniendo orden
+                    $san = array_values(array_unique(array_filter($san, fn($v)=>$v!=='')));
+                    $plainEquipos = implode(' · ', $san);
                 }
                 $result[] = [
                     'id'           => $p['id_prestamo'],
@@ -81,7 +87,7 @@ class HistorialGlobalController {
                     'estado'       => $p['estado'] ?? '',
                     'aula'         => $p['nombre_aula'] ?? '',
                     'observacion'  => $p['comentario_devolucion'] ?? '',
-                    'equipo'       => $chips !== '' ? $chips : ($p['nombre_equipo'] ?? ''),
+                    'equipo'       => $plainEquipos !== '' ? $plainEquipos : strip_tags($p['nombre_equipo'] ?? ''),
                 ];
             }
         }

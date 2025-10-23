@@ -9,15 +9,17 @@ use Exception;
 class SmsService {
     private $client;
     private $fromNumber;
-    private $testMode;
-    private $testNumber;
 
     public function __construct() {
         $config = require __DIR__ . '/../config/twilio.php';
-        $this->client = new Client($config['account_sid'], $config['auth_token']);
-        $this->fromNumber = $config['from_number'];
-        $this->testMode = $config['test_mode'] ?? false;
-        $this->testNumber = $config['test_number'] ?? '';
+        $sid = trim((string)($config['account_sid'] ?? ''));
+        $token = trim((string)($config['auth_token'] ?? ''));
+        $this->fromNumber = trim((string)($config['from_number'] ?? ''));
+
+        if ($sid === '' || $token === '' || $this->fromNumber === '') {
+            throw new Exception('Twilio no configurado. Completa account_sid, auth_token y from_number en app/config/twilio.php');
+        }
+        $this->client = new Client($sid, $token);
     }
 
     /**
@@ -29,24 +31,17 @@ class SmsService {
      */
     public function sendSms($to, $message) {
         try {
-            // En modo prueba, redirigir todos los mensajes al número de prueba
-            if ($this->testMode && !empty($this->testNumber)) {
-                $to = $this->testNumber;
-            }
-
-            // Normalizar número (Perú por defecto)
+            // Normalizar número (E.164, Perú por defecto si aplica)
             $to = $this->normalizeNumber($to);
-
-            $message = $this->client->messages->create($to, [
+            $twMsg = $this->client->messages->create($to, [
                 'from' => $this->fromNumber,
                 'body' => $message
             ]);
-
             return [
                 'success' => true,
                 'message' => 'Mensaje enviado correctamente',
-                'sid' => $message->sid,
-                'status' => $message->status
+                'sid' => $twMsg->sid,
+                'status' => $twMsg->status
             ];
         } catch (Exception $e) {
             return [

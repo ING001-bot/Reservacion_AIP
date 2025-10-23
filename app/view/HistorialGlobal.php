@@ -30,10 +30,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
         <div class="text-muted small">Semana de lunes a sábado</div>
       </div>
       <div class="d-flex gap-2 align-items-center">
-        <div class="btn-group" role="group" aria-label="Tabs historial">
-          <button id="tab-reservas" class="btn btn-brand btn-sm">Historial/Reserva</button>
-          <button id="tab-equipos" class="btn btn-outline-brand btn-sm">Historial/Equipos</button>
-        </div>
         <?php if ($rol === 'Administrador'): ?>
           <a class="btn btn-outline-brand btn-sm" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
         <?php endif; ?>

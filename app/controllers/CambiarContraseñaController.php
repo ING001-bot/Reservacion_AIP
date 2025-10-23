@@ -13,8 +13,10 @@ if (!isset($_SESSION['correo'])) {
     exit();
 }
 
-// Verificar si ya está verificado para cambio de clave
-$necesitaVerificacion = !isset($_SESSION['verified_cambio_clave']) || $_SESSION['verified_cambio_clave'] !== true;
+// Verificar si ya está verificado para cambio de clave (solo Profesores requieren OTP)
+$rolActual = $_SESSION['tipo'] ?? '';
+$esProfesor = ($rolActual === 'Profesor');
+$necesitaVerificacion = $esProfesor && (!isset($_SESSION['verified_cambio_clave']) || $_SESSION['verified_cambio_clave'] !== true);
 
 // Si necesita verificación y no es una petición de verificación, enviar código
 if ($necesitaVerificacion && !isset($_POST['verificar_codigo']) && !isset($_GET['reenviar'])) {
@@ -47,6 +49,8 @@ if (isset($_POST['verificar_codigo'])) {
     
     if ($verificationService->verifyCode($_SESSION['id_usuario'], $codigo, 'cambio_clave')) {
         $_SESSION['verified_cambio_clave'] = true;
+        // Ventana de validez de 10 minutos (coherente con otros flujos)
+        $_SESSION['otp_verified_until'] = time() + 10*60;
         $necesitaVerificacion = false;
         $mensajeVerificacion = '✅ Código verificado correctamente. Ahora puedes cambiar tu contraseña.';
     } else {

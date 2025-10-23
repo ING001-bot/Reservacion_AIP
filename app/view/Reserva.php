@@ -40,6 +40,8 @@ if (isset($_POST['verificar_codigo'])) {
     
     if ($verificationService->verifyCode($_SESSION['id_usuario'], $codigo, 'reserva')) {
         $_SESSION['verified_reserva'] = true;
+        // Ventana de validez de 10 minutos para controladores
+        $_SESSION['otp_verified_until'] = time() + 10*60;
         $necesitaVerificacion = false;
         $mensajeVerificacion = '✅ Código verificado correctamente. Ahora puedes realizar reservas.';
     } else {
@@ -436,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tablaCanceladas = document.getElementById('tabla-canceladas');
     const formReserva = document.getElementById('form-reserva');
     const fechaInput = document.getElementById('fecha-select');
-    let otpOk = false;
+    let otpOk = false; // modal del servidor maneja verificación; no usar prompts duplicados
 
     function mostrarRealizadas() {
         tablaRealizadas.style.display = '';
@@ -470,92 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     <?php endif; ?>
 
-    // Enviar OTP
-    // OTP automático al cargar para Profesor
-    <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-    (async function(){
-        if (otpOk) return;
-        try{
-            let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-            let data = await resp.json();
-            if (!resp.ok || !data.ok) {
-                const msg = data.msg || ('HTTP '+resp.status);
-                if (/verificar tu teléfono/i.test(msg)) {
-                    let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
-                    let d2 = await r2.json();
-                    if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
-                    const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, showCancelButton:false, confirmButtonText:'Verificar' });
-                    const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
-                    let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
-                    let j2 = await v2.json();
-                    if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
-                    await Swal.fire({ icon:'success', title:'Teléfono verificado' });
-                    resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-                    data = await resp.json();
-                    if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
-                } else {
-                    throw new Error(msg);
-                }
-            }
-            const askCode = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-            const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
-            const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
-            const vj = await vr.json();
-            if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
-            otpOk = true;
-            Swal.fire({ icon:'success', title:'Código verificado', text:'Tienes 10 minutos para confirmar la reserva.' });
-            const fab = document.getElementById('otp-fab'); if (fab) fab.style.display='none';
-        }catch(err){
-            Swal.fire({ icon:'error', title:'No se pudo iniciar la verificación', text: String(err.message||err) });
-            const fab = document.getElementById('otp-fab'); if (fab) fab.style.display='block';
-        }
-    })();
-    <?php endif; ?>
-
-    // Botón flotante para reintentar OTP
-    <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-    (function(){
-      const fab = document.getElementById('otp-fab');
-      const btn = fab ? fab.querySelector('button') : null;
-      if (!btn) return;
-      btn.addEventListener('click', async function(){
-        try{
-          let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method:'POST' });
-          let data = await resp.json();
-          if (!resp.ok || !data.ok) {
-            const msg = data.msg || ('HTTP '+resp.status);
-            if (/verificar tu teléfono/i.test(msg)) {
-              let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
-              let d2 = await r2.json();
-              if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
-              const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-              if (!ask.value || !/^\d{6}$/.test(String(ask.value))) throw new Error('Código inválido.');
-              const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
-              let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
-              let j2 = await v2.json();
-              if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
-              await Swal.fire({ icon:'success', title:'Teléfono verificado' });
-              resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-              data = await resp.json();
-              if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
-            } else {
-              throw new Error(msg);
-            }
-          }
-          const askCode = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{maxlength:6,autocapitalize:'off',autocorrect:'off'}, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-          if (!askCode.value || !/^\d{6}$/.test(String(askCode.value))) throw new Error('Código inválido.');
-          const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
-          const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
-          const vj = await vr.json();
-          if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
-          otpOk = true; fab.style.display='none';
-          Swal.fire({ icon:'success', title:'Código verificado' });
-        }catch(err){
-          Swal.fire({ icon:'error', title:'No se pudo verificar', text: String(err.message||err) });
-        }
-      });
-    })();
-    <?php endif; ?>
+    // Flujo OTP duplicado eliminado; se mantiene solo el modal del servidor
 
     // Validación y envío de la reserva
     const btnReservar = document.getElementById('btn-reservar');
@@ -571,13 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
             }
-            // Requerir OTP (Docente)
-            <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-            if (!otpOk) {
-                Swal.fire({ icon:'info', title:'Verificación requerida', text:'Primero debes ingresar el código enviado por SMS.' });
-                return;
-            }
-            <?php endif; ?>
+            // La verificación OTP la gestiona el modal del servidor
             formReserva.submit();
         });
     }

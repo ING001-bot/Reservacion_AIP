@@ -93,56 +93,8 @@ $vista = $_GET['view'] ?? 'inicio';
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../../Public/js/theme.js"></script>
-<script>
-// Salvaguarda global: si por alguna razón la vista no disparó OTP, lo hacemos aquí.
-(function(){
-  <?php if (($_SESSION['tipo'] ?? '') === 'Profesor'): ?>
-  const params = new URLSearchParams(location.search);
-  const view = (params.get('view')||'inicio').toLowerCase();
-  const requiereOtp = ['prestamo','reserva','password'];
-  if (requiereOtp.includes(view)) {
-    if (window.__otpInit) return; // evitar duplicados si la vista ya lo hace
-    window.__otpInit = true;
-    (async function(){
-      try{
-        let resp = await fetch('../api/otp_send.php?purpose=prestamo', { method:'POST' });
-        let data = await resp.json();
-        if (!resp.ok || !data.ok) {
-          const msg = data.msg || ('HTTP '+resp.status);
-          if (/verificar tu teléfono/i.test(msg)) {
-            let r2 = await fetch('../api/otp_send.php?purpose=phone_verify', { method:'POST' });
-            let d2 = await r2.json();
-            if (!r2.ok || !d2.ok) throw new Error(d2.msg||('HTTP '+r2.status));
-            const ask = await Swal.fire({ title:'Ingresa el código', input:'text', inputLabel:'Código de 6 dígitos', inputPlaceholder:'######', inputAttributes:{ maxlength:6, autocapitalize:'off', autocorrect:'off' }, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-            if (!ask.value || !/^\d{6}$/.test(String(ask.value))) throw new Error('Código inválido.');
-            const fdv = new FormData(); fdv.append('code', ask.value); fdv.append('purpose','phone_verify');
-            let v2 = await fetch('../api/otp_verify.php', { method:'POST', body: fdv });
-            let j2 = await v2.json();
-            if (!v2.ok || !j2.ok) throw new Error(j2.msg||('HTTP '+v2.status));
-            await Swal.fire({ icon:'success', title:'Teléfono verificado' });
-            resp = await fetch('../api/otp_send.php?purpose=prestamo', { method: 'POST' });
-            data = await resp.json();
-            if (!resp.ok || !data.ok) throw new Error(data.msg||('HTTP '+resp.status));
-          } else {
-            throw new Error(msg);
-          }
-        }
-        const askCode = await Swal.fire({ title:'Verificación 2FA', input:'text', inputLabel:'Te enviamos un código de 6 dígitos a tu teléfono', inputPlaceholder:'######', inputAttributes:{ maxlength:6, autocapitalize:'off', autocorrect:'off' }, confirmButtonText:'Verificar', allowOutsideClick:false, allowEscapeKey:false });
-        if (!askCode.value || !/^\d{6}$/.test(String(askCode.value))) throw new Error('Código inválido.');
-        const fd = new FormData(); fd.append('code', askCode.value); fd.append('purpose','prestamo');
-        const vr = await fetch('../api/otp_verify.php', { method:'POST', body: fd });
-        const vj = await vr.json();
-        if (!vr.ok || !vj.ok) throw new Error(vj.msg||('HTTP '+vr.status));
-        // éxito: no redirigimos, la vista sigue funcionando y el servidor validará al enviar
-      }catch(err){
-        console.warn('OTP global no pudo iniciar:', err);
-      }
-    })();
-  }
-  <?php endif; ?>
-})();
-</script>
+<!-- Flujo OTP global eliminado para evitar prompts duplicados; cada vista maneja su modal -->
+
 </body>
 </html>

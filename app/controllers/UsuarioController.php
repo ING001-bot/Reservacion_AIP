@@ -213,14 +213,14 @@ class UsuarioController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['registrar_usuario_admin'])) {
-                $telefono = $_POST['telefono'] ?? null;
+                $telefono = $this->normalizeTelefono($_POST['telefono'] ?? null);
                 $res = $this->registrarUsuario($_POST['nombre'], $_POST['correo'], $_POST['contraseña'], $_POST['tipo'], $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
             }
 
             if (isset($_POST['registrar_profesor_publico'])) {
-                $telefono = $_POST['telefono'] ?? null;
+                $telefono = $this->normalizeTelefono($_POST['telefono'] ?? null);
                 $res = $this->registrarProfesorPublico($_POST['nombre'], $_POST['correo'], $_POST['contraseña'], $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
@@ -233,7 +233,7 @@ class UsuarioController {
             }
 
             if (isset($_POST['editar_usuario'])) {
-                $telefono = $_POST['telefono'] ?? null;
+                $telefono = $this->normalizeTelefono($_POST['telefono'] ?? null);
                 $res = $this->editarUsuario($_POST['id_usuario'], $_POST['nombre'], $_POST['correo'], $_POST['tipo'], $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
@@ -293,6 +293,30 @@ class UsuarioController {
             .   '<p style="color:#555;">Si no solicitaste esta cuenta, ignora este mensaje.</p>'
             . '</div>';
         return $this->mailer->send($correo, $subject, $html);
+    }
+
+    /** Normaliza teléfono a formato peruano E.164: +51XXXXXXXXX */
+    private function normalizeTelefono(?string $telefono): ?string {
+        if ($telefono === null) return null;
+        $telefono = trim((string)$telefono);
+        if ($telefono === '') return null;
+        $digits = preg_replace('/\D+/', '', $telefono) ?? '';
+        // Casos comunes: 9 dígitos (móvil), 0 + 9 dígitos, 51 + 9 dígitos
+        if (strlen($digits) === 9) {
+            return '+51' . $digits;
+        }
+        if (strlen($digits) === 10 && $digits[0] === '0') {
+            return '+51' . substr($digits, 1);
+        }
+        if (strlen($digits) === 11 && substr($digits, 0, 2) === '51') {
+            return '+' . $digits;
+        }
+        // Fallback: si tiene más dígitos, tomar los últimos 9 como número móvil
+        if (strlen($digits) > 9) {
+            return '+51' . substr($digits, -9);
+        }
+        // Si no calza en ningún caso, devolver con prefijo por defecto si hay algo
+        return $digits ? ('+51' . str_pad($digits, 9, '0', STR_PAD_LEFT)) : null;
     }
 
     // Validación estricta de correo: formato, MX y dominios comunes escritos correctamente
