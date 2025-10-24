@@ -16,8 +16,9 @@ class VerifyMiddleware {
             session_start();
         }
         
-        // Verificar si el usuario está autenticado
-        if (!isset($_SESSION['usuario_id'])) {
+        // Verificar si el usuario está autenticado (aceptar ambas llaves de sesión)
+        $sessionUserId = $_SESSION['usuario_id'] ?? $_SESSION['id_usuario'] ?? null;
+        if ($sessionUserId === null) {
             $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
             header('Location: /Sistema_reserva_AIP/Public/login.php');
             exit;
@@ -26,7 +27,7 @@ class VerifyMiddleware {
         // Verificar si ya está verificado para esta acción
         if (!isset($_SESSION['verified_' . $actionType]) || $_SESSION['verified_' . $actionType] !== true) {
             // Enviar código SMS automáticamente
-            $this->sendVerificationCode($_SESSION['usuario_id'], $actionType);
+            $this->sendVerificationCode($sessionUserId, $actionType);
             
             // Redirigir a la página de verificación
             $_SESSION['pending_action'] = $actionType;
@@ -44,7 +45,7 @@ class VerifyMiddleware {
         require_once __DIR__ . '/../lib/VerificationService.php';
         require_once __DIR__ . '/../models/UsuarioModel.php';
         
-        $usuarioModel = new UsuarioModel($this->conexion);
+        $usuarioModel = new \UsuarioModel($this->conexion);
         $usuario = $usuarioModel->obtenerPorId($userId);
         
         if ($usuario && !empty($usuario['telefono'])) {

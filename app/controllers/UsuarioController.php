@@ -28,20 +28,32 @@ class UsuarioController {
         if ($this->usuarioModel->existeCorreo($correo)) {
             return ['error' => true, 'mensaje' => '⚠️ El correo ya está registrado. Si necesitas acceso, edita ese usuario o usa "Olvidé mi contraseña".'];
         }
+        // Validar teléfono único si se proporcionó
+        if ($telefono !== null && $telefono !== '') {
+            if ($this->usuarioModel->existeTelefono($telefono)) {
+                return ['error' => true, 'mensaje' => '⚠️ El teléfono ya está registrado en otro usuario.'];
+            }
+        }
+
         // Si existe como inactivo, reactivarlo (reusar fila) en vez de intentar insertar y chocar con UNIQUE
         $reactivado = false;
         if ($this->usuarioModel->existeCorreoInactivo($correo)) {
             $hash = password_hash($contraseña, PASSWORD_BCRYPT);
-            $reactivado = $this->usuarioModel->reactivarUsuarioAdmin($nombre, $correo, $hash, $tipo_usuario);
+            $token = bin2hex(random_bytes(32));
+            $expira = date('Y-m-d H:i:s', time() + 24*60*60);
+            $reactivado = $this->usuarioModel->reactivarUsuarioAdmin($nombre, $correo, $hash, $tipo_usuario, $token, $expira);
             if ($reactivado) {
-                // Confirmar existencia del buzón por SMTP
-                $subject = 'Se reactivó tu cuenta - Aulas de Innovación';
-                $rol = htmlspecialchars($tipo_usuario);
-                $html = '<p>Hola ' . htmlspecialchars($nombre) . ',</p>' .
-                        '<p>Tu cuenta de ' . $rol . ' ha sido reactivada.</p>';
-                $sent = $this->mailer->send($correo, $subject, $html);
+                // Enviar enlace de verificación al correo (requerido para activar)
+                $link = $this->buildVerificationLink($correo, $token);
+                $sent = $this->mailer->send(
+                    $correo,
+                    'Verifica tu cuenta reactivada - Aulas de Innovación',
+                    '<p>Hola '.htmlspecialchars($nombre).',</p>' .
+                    '<p>Hemos reactivado tu cuenta. Para activarla, verifica tu correo en el siguiente enlace:</p>' .
+                    '<p><a href="'.htmlspecialchars($link).'">'.htmlspecialchars($link).'</a></p>'
+                );
                 if (!$sent) {
-                    // Si no se pudo notificar (correo inexistente), volvemos a inactivar para no dejar cuentas inválidas
+                    // Si no se pudo notificar (correo inexistente), volver a inactivar
                     $this->usuarioModel->eliminarUsuario($this->usuarioModel->obtenerPorCorreo($correo)['id_usuario'] ?? 0);
                     return ['error' => true, 'mensaje' => '❌ Ese correo no existe o no acepta mensajes. Solo se permiten correos existentes (verificados por envío).'];
                 }
@@ -49,7 +61,7 @@ class UsuarioController {
                 if ($telefono !== null && $telefono !== '') {
                     try { $this->usuarioModel->actualizarTelefonoPorCorreo($correo, $telefono); } catch (\Throwable $e) { /* ignore */ }
                 }
-                return ['error' => false, 'mensaje' => '✅ Usuario reactivado y notificado por correo.'];
+                return ['error' => false, 'mensaje' => '✅ Usuario reactivado. Revisa tu correo para verificar y activar la cuenta.'];
             }
         }
         if (strlen($contraseña) < 6) {
@@ -66,6 +78,10 @@ class UsuarioController {
             try {
                 $u = $this->usuarioModel->obtenerPorCorreo($correo);
                 if ($u && !empty($u['id_usuario'])) {
+                    // Antes de guardar teléfono, volver a validar que no esté tomado (carrera)
+                    if ($this->usuarioModel->existeTelefonoDeOtro($telefono, (int)$u['id_usuario'])) {
+                        return ['error' => true, 'mensaje' => '⚠️ El teléfono ya está registrado.'];
+                    }
                     $this->usuarioModel->actualizarUsuario((int)$u['id_usuario'], $nombre, $correo, $tipo_usuario, $telefono);
                 }
             } catch (\Throwable $e) { /* noop */ }
@@ -99,6 +115,11 @@ class UsuarioController {
         if ($this->usuarioModel->existeCorreo($correo)) {
             return ['error' => true, 'mensaje' => '⚠️ El correo ya está en uso'];
         }
+        if ($telefono !== null && $telefono !== '') {
+            if ($this->usuarioModel->existeTelefono($telefono)) {
+                return ['error' => true, 'mensaje' => '⚠️ El teléfono ya está registrado en otro usuario.'];
+            }
+        }
         // Si existe como inactivo, reactivarlo (reusar fila) para registro público
         $reactivado = false;
         if ($this->usuarioModel->existeCorreoInactivo($correo)) {
@@ -128,6 +149,9 @@ class UsuarioController {
             try {
                 $u = $this->usuarioModel->obtenerPorCorreo($correo);
                 if ($u && !empty($u['id_usuario'])) {
+                    if ($this->usuarioModel->existeTelefonoDeOtro($telefono, (int)$u['id_usuario'])) {
+                        return ['error' => true, 'mensaje' => '⚠️ El teléfono ya está registrado.'];
+                    }
                     $this->usuarioModel->actualizarUsuario((int)$u['id_usuario'], $nombre, $correo, 'Profesor', $telefono);
                 }
             } catch (\Throwable $e) { /* noop */ }
@@ -187,12 +211,42 @@ class UsuarioController {
         if ($this->usuarioModel->existeCorreoDeOtro($correo, (int)$id_usuario)) {
             return ['error' => true, 'mensaje' => '⚠️ El correo ya está en uso por otro usuario.'];
         }
-
-        $ok = $this->usuarioModel->actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario);
-        if ($ok && $telefono !== null) {
-            try { $this->usuarioModel->actualizarTelefonoPorId((int)$id_usuario, $telefono); } catch (\Throwable $e) { /* ignore */ }
+        // Evitar duplicidad de teléfono con otro usuario activo
+        if ($telefono !== null && $telefono !== '') {
+            if ($this->usuarioModel->existeTelefonoDeOtro($telefono, (int)$id_usuario)) {
+                return ['error' => true, 'mensaje' => '⚠️ El teléfono ya está en uso por otro usuario.'];
+            }
         }
-        $ok = $this->usuarioModel->actualizarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, $telefono);
+
+        // Detectar cambio de correo
+        $actual = $this->usuarioModel->obtenerPorId((int)$id_usuario);
+        $correoAnterior = strtolower(trim($actual['correo'] ?? ''));
+        $correoNuevo = $correo;
+
+        if ($correoAnterior !== '' && $correoNuevo !== '' && $correoAnterior !== $correoNuevo) {
+            // Generar token de verificación para el nuevo correo
+            $token = bin2hex(random_bytes(32));
+            $expira = date('Y-m-d H:i:s', time() + 24*60*60);
+            $ok = $this->usuarioModel->actualizarCorreoConVerificacion((int)$id_usuario, $nombre, $correoNuevo, $tipo_usuario, $telefono, $token, $expira);
+            if (!$ok) {
+                return ['error' => true, 'mensaje' => '❌ No se pudo actualizar el correo.'];
+            }
+            // Enlace de verificación para el nuevo correo
+            $link = $this->buildVerificationLink($correoNuevo, $token);
+            $this->mailer->send($correoNuevo, 'Verifica tu nuevo correo - Aulas de Innovación',
+                '<p>Hola '.htmlspecialchars($nombre).',</p><p>Has solicitado cambiar tu correo a esta dirección. Por favor verifica el cambio haciendo clic en el siguiente enlace:</p><p><a href="'.htmlspecialchars($link).'">'.htmlspecialchars($link).'</a></p><p>Si no solicitaste este cambio, comunícate con el administrador.</p>');
+            // Notificar al correo anterior del cambio (sin enlace)
+            if ($correoAnterior) {
+                try {
+                    $this->mailer->send($correoAnterior, 'Se cambió tu correo - Aulas de Innovación',
+                        '<p>Hola '.htmlspecialchars($nombre).',</p><p>Tu correo fue actualizado a <strong>'.htmlspecialchars($correoNuevo).'</strong>.</p><p>Si no fuiste tú, por favor contacta al administrador.</p>');
+                } catch (\Throwable $e) { /* suave */ }
+            }
+            return ['error' => false, 'mensaje' => '✅ Correo actualizado. Debe verificarse en el nuevo buzón.'];
+        }
+
+        // Si no cambió el correo, actualizar normalmente
+        $ok = $this->usuarioModel->actualizarUsuario((int)$id_usuario, $nombre, $correoNuevo, $tipo_usuario, $telefono);
         return [
             'error' => !$ok,
             'mensaje' => $ok ? '✅ Usuario actualizado correctamente.' : '❌ Error al actualizar.'
@@ -295,28 +349,17 @@ class UsuarioController {
         return $this->mailer->send($correo, $subject, $html);
     }
 
-    /** Normaliza teléfono a formato peruano E.164: +51XXXXXXXXX */
+    /** Normaliza teléfono para almacenar solo 9 dígitos (Perú). */
     private function normalizeTelefono(?string $telefono): ?string {
         if ($telefono === null) return null;
         $telefono = trim((string)$telefono);
         if ($telefono === '') return null;
         $digits = preg_replace('/\D+/', '', $telefono) ?? '';
-        // Casos comunes: 9 dígitos (móvil), 0 + 9 dígitos, 51 + 9 dígitos
-        if (strlen($digits) === 9) {
-            return '+51' . $digits;
+        // Quitar prefijos comunes (51 o 0) y quedarse con últimos 9
+        if (strlen($digits) >= 9) {
+            return substr($digits, -9);
         }
-        if (strlen($digits) === 10 && $digits[0] === '0') {
-            return '+51' . substr($digits, 1);
-        }
-        if (strlen($digits) === 11 && substr($digits, 0, 2) === '51') {
-            return '+' . $digits;
-        }
-        // Fallback: si tiene más dígitos, tomar los últimos 9 como número móvil
-        if (strlen($digits) > 9) {
-            return '+51' . substr($digits, -9);
-        }
-        // Si no calza en ningún caso, devolver con prefijo por defecto si hay algo
-        return $digits ? ('+51' . str_pad($digits, 9, '0', STR_PAD_LEFT)) : null;
+        return null;
     }
 
     // Validación estricta de correo: formato, MX y dominios comunes escritos correctamente

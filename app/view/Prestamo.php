@@ -26,6 +26,14 @@ if ($necesitaVerificacion && !isset($_POST['verificar_codigo']) && !isset($_GET[
     if ($usuario && !empty($usuario['telefono'])) {
         $verificationService = new \App\Lib\VerificationService($conexion);
         $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'prestamo');
+        if (empty($resultadoSMS['success'])) {
+            $errorVerificacion = '⚠️ No se pudo enviar el SMS de verificación. Verifica que tu número esté en formato +51XXXXXXXXX y vuelve a intentar. ';
+            if (!empty($resultadoSMS['error'])) {
+                $errorVerificacion .= ' Detalle: ' . htmlspecialchars($resultadoSMS['error']);
+            }
+        }
+    } else {
+        $errorVerificacion = '⚠️ No tienes un teléfono registrado. Actualiza tu número en tu perfil o solicita al administrador que lo registre con formato +51XXXXXXXXX.';
     }
 }
 
@@ -36,7 +44,10 @@ if (isset($_GET['reenviar']) && $necesitaVerificacion) {
     
     if ($usuario && !empty($usuario['telefono'])) {
         $verificationService = new \App\Lib\VerificationService($conexion);
-        $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'prestamo');
+        $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'prestamo');
+        if (empty($resultadoSMS['success'])) {
+            $errorVerificacion = '⚠️ No se pudo enviar el SMS de verificación. Verifica que tu número esté en formato +51XXXXXXXXX e inténtalo de nuevo.';
+        }
         header('Location: Prestamo.php');
         exit;
     }
@@ -135,9 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['verificar_codigo']))
     }
 }
 
-// Obtener préstamos del usuario (ambos sistemas)
+// Obtener préstamos del usuario (solo individuales)
 $id_usuario = $_SESSION['id_usuario'];
-$packs = $prestamoController->listarPacksPorUsuario((int)$id_usuario);
 $prestamosIndividuales = $prestamoController->listarPrestamosPorUsuario((int)$id_usuario);
 $usuario = htmlspecialchars($_SESSION['usuario'] ?? 'Usuario', ENT_QUOTES, 'UTF-8');
 
@@ -517,7 +527,7 @@ setTimeout(() => {
                 </tr>
             </thead>
             <tbody>
-                <?php if (empty($prestamosIndividuales) && empty($packs)): ?>
+                <?php if (empty($prestamosIndividuales)): ?>
                     <tr>
                         <td colspan="7" class="text-muted py-4">
                             No tienes préstamos registrados aún.
@@ -587,67 +597,6 @@ setTimeout(() => {
                     </tr>
                 <?php endforeach; ?>
                 
-                <!-- Packs (sistema nuevo) -->
-                <?php foreach ($packs as $p): ?>
-                    <?php $items = $prestamoController->obtenerItemsDePack((int)$p['id_pack']); ?>
-                    <tr>
-                        <td>
-                            <?php if ($items): ?>
-                                <?php 
-                                // Normalizar etiqueta de tipo y ordenar por prioridad
-                                $mapLabel = function(string $tipo): string {
-                                    $t = strtoupper($tipo);
-                                    if ($t === 'LAPTOP') return 'Laptop';
-                                    if ($t === 'PROYECTOR') return 'Proyector';
-                                    if ($t === 'EXTENSION' || $t === 'EXTENSIÓN') return 'Extensión';
-                                    if ($t === 'MOUSE') return 'Mouse';
-                                    if ($t === 'PARLANTE') return 'Parlante';
-                                    return ucwords(strtolower($tipo));
-                                };
-                                $prioTipo = function(string $tipo): int {
-                                    $t = strtoupper($tipo);
-                                    if ($t === 'LAPTOP') return 1;
-                                    if ($t === 'PROYECTOR') return 2;
-                                    if ($t === 'EXTENSION' || $t === 'EXTENSIÓN') return 3;
-                                    if ($t === 'MOUSE') return 4;
-                                    if ($t === 'PARLANTE') return 5;
-                                    return 99;
-                                };
-                                usort($items, function($a, $b) use ($prioTipo) {
-                                    $pa = $prioTipo($a['tipo_equipo'] ?? '');
-                                    $pb = $prioTipo($b['tipo_equipo'] ?? '');
-                                    if ($pa === $pb) return strcasecmp($a['tipo_equipo'] ?? '', $b['tipo_equipo'] ?? '');
-                                    return $pa <=> $pb;
-                                });
-                                $labels = [];
-                                foreach ($items as $it) {
-                                    $tipo = strip_tags($it['tipo_equipo'] ?? '');
-                                    $label = $mapLabel($tipo);
-                                    if (!empty($it['cantidad']) && (int)$it['cantidad'] > 1) {
-                                        $label .= ' x' . (int)$it['cantidad'];
-                                    }
-                                    $labels[] = $label;
-                                }
-                                echo htmlspecialchars(implode(' · ', $labels));
-                                ?>
-                            <?php else: ?>
-                                -
-                            <?php endif; ?>
-                        </td>
-                        <td><?= htmlspecialchars($p['nombre_aula'] ?? '-') ?></td>
-                        <td><?= htmlspecialchars($p['fecha_prestamo'] ?? '-') ?></td>
-                        <td><?= htmlspecialchars($p['hora_inicio'] ?? '-') ?></td>
-                        <td><?= htmlspecialchars($p['hora_fin'] ?? '-') ?></td>
-                        <td>
-                            <?php if ($p['estado'] === 'Prestado'): ?>
-                                <span class="badge bg-warning">Prestado</span>
-                            <?php else: ?>
-                                <span class="badge bg-success">Devuelto</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= htmlspecialchars($p['fecha_devolucion'] ?? '-') ?></td>
-                    </tr>
-                <?php endforeach; ?>
             </tbody>
         </table>
     </div>

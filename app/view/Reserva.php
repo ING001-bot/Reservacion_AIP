@@ -17,6 +17,14 @@ if ($necesitaVerificacion && !isset($_POST['verificar_codigo']) && !isset($_GET[
     if ($usuario && !empty($usuario['telefono'])) {
         $verificationService = new \App\Lib\VerificationService($conexion);
         $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'reserva');
+        if (empty($resultadoSMS['success'])) {
+            $errorVerificacion = '⚠️ No se pudo enviar el SMS de verificación. Verifica que tu número esté en formato +51XXXXXXXXX y vuelve a intentar.';
+            if (!empty($resultadoSMS['error'])) {
+                $errorVerificacion .= ' Detalle: ' . htmlspecialchars($resultadoSMS['error']);
+            }
+        }
+    } else {
+        $errorVerificacion = '⚠️ No tienes un teléfono registrado. Actualiza tu número en tu perfil o solicita al administrador que lo registre con formato +51XXXXXXXXX.';
     }
 }
 
@@ -27,7 +35,10 @@ if (isset($_GET['reenviar']) && $necesitaVerificacion) {
     
     if ($usuario && !empty($usuario['telefono'])) {
         $verificationService = new \App\Lib\VerificationService($conexion);
-        $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'reserva');
+        $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'reserva');
+        if (empty($resultadoSMS['success'])) {
+            $errorVerificacion = '⚠️ No se pudo enviar el SMS de verificación. Verifica que tu número esté en formato +51XXXXXXXXX e inténtalo de nuevo.';
+        }
         header('Location: Reserva.php');
         exit;
     }

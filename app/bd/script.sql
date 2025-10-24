@@ -82,32 +82,6 @@ CREATE TABLE reservas_canceladas (
   CONSTRAINT fk_cancel_aula FOREIGN KEY (id_aula) REFERENCES aulas(id_aula) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Tabla: prestamos_pack
-CREATE TABLE prestamos_pack (
-  id_pack INT AUTO_INCREMENT PRIMARY KEY,
-  id_usuario INT NOT NULL,
-  id_aula INT NULL,
-  fecha_prestamo DATE NOT NULL,
-  hora_inicio TIME NOT NULL,
-  hora_fin TIME NULL,
-  estado ENUM('Prestado','Devuelto') NOT NULL DEFAULT 'Prestado',
-  fecha_devolucion DATE NULL,
-  comentario_devolucion TEXT NULL,
-  CONSTRAINT fk_pack_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
-  CONSTRAINT fk_pack_aula FOREIGN KEY (id_aula) REFERENCES aulas(id_aula) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Tabla: prestamos_pack_items
-CREATE TABLE prestamos_pack_items (
-  id_item INT AUTO_INCREMENT PRIMARY KEY,
-  id_pack INT NOT NULL,
-  tipo_equipo VARCHAR(50) NOT NULL,
-  es_complemento TINYINT(1) NOT NULL DEFAULT 0,
-  cantidad INT NOT NULL DEFAULT 1,
-  CONSTRAINT fk_items_pack FOREIGN KEY (id_pack) REFERENCES prestamos_pack(id_pack) ON DELETE CASCADE,
-  INDEX idx_pack (id_pack),
-  INDEX idx_tipo (tipo_equipo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabla: app_config
 CREATE TABLE app_config (

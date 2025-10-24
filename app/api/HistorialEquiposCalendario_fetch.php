@@ -85,27 +85,6 @@ foreach ($rowsInd as $r) {
     if ($eqName !== '') $groupedInd[$key]['equipos'][] = $eqName;
 }
 
-// Recolectar préstamos pack de la semana
-$sqlPack = "SELECT p.id_pack, p.id_usuario, u.nombre AS profesor, a.nombre_aula,
-                   p.fecha_prestamo AS fecha, p.hora_inicio, p.hora_fin, p.estado,
-                   GROUP_CONCAT(UPPER(i.tipo_equipo) SEPARATOR ',') AS tipos
-            FROM prestamos_pack p
-            JOIN usuarios u ON p.id_usuario = u.id_usuario
-            JOIN aulas a ON p.id_aula = a.id_aula
-            JOIN prestamos_pack_items i ON p.id_pack = i.id_pack
-            WHERE p.fecha_prestamo BETWEEN :desde AND :hasta
-            GROUP BY p.id_pack, p.id_usuario, u.nombre, a.nombre_aula, p.fecha_prestamo, p.hora_inicio, p.hora_fin, p.estado";
-$paramsPack = [':desde' => $weekDates[0], ':hasta' => end($weekDates)];
-if (!in_array($rol, ['Administrador','Encargado'])) {
-    $sqlPack .= " HAVING p.id_usuario = :u";
-    $paramsPack[':u'] = $id_usuario;
-}
-$sqlPack .= $q ? " " . (strpos($sqlPack, 'HAVING')!==false ? " AND" : " HAVING") . " (u.nombre LIKE :q OR a.nombre_aula LIKE :q OR GROUP_CONCAT(UPPER(i.tipo_equipo) SEPARATOR ',') LIKE :q)" : "";
-$stmtPack = $db->prepare($sqlPack);
-if ($q) $paramsPack[':q'] = "%$q%";
-foreach ($paramsPack as $k=>$v) { if ($v!==null) $stmtPack->bindValue($k, $v); }
-$stmtPack->execute();
-$rowsPack = $stmtPack->fetchAll(PDO::FETCH_ASSOC);
 
 // Función para agregar item a agenda
 $addAgenda = function(array &$bucket, string $fecha, string $hora_inicio, string $hora_fin, string $profesor){
@@ -134,27 +113,6 @@ foreach ($groupedInd as $g) {
     ];
 }
 
-// Mapear packs
-foreach ($rowsPack as $r) {
-    $fecha = $r['fecha'];
-    if (!in_array($fecha, $weekDates, true)) continue;
-    $tipos = strtoupper($r['tipos'] ?? '');
-    $prof = $r['profesor'] ?? '';
-    $hi = $normTime($r['hora_inicio'] ?? '');
-    $hf = $normTime($r['hora_fin'] ?? '');
-    $addAgenda($agenda, $fecha, $hi, $hf, $prof);
-    $prestamosTabla[] = [
-        'id' => (int)$r['id_pack'],
-        'tipo' => 'Pack',
-        'equipo' => 'Items: ' . $tipos,
-        'profesor' => $prof,
-        'aula' => $r['nombre_aula'] ?? '',
-        'fecha' => $fecha,
-        'hora_inicio' => $hi,
-        'hora_fin' => $hf,
-        'estado' => $r['estado'] ?? ''
-    ];
-}
 
 // Ordenar por hora dentro de cada día
 foreach ($agenda as $fecha => $arr) {

@@ -39,10 +39,14 @@ class VerificationService {
                 return ['success' => true, 'code' => $code];
             }
 
-            // Si falla el envío, eliminar el código recién creado
+            // Si falla el envío, eliminar el código recién creado y propagar detalle
             $del = $this->db->prepare('DELETE FROM verification_codes WHERE user_id = ? AND code = ? AND action_type = ?');
             $del->execute([(int)$userId, $code, $actionType]);
-            return ['success' => false, 'error' => 'Error al enviar el SMS'];
+            $detail = '';
+            if (is_array($result)) {
+                $detail = trim(($result['error'] ?? '').' '.(isset($result['code']) ? ('(code: '.$result['code'].')') : ''));
+            }
+            return ['success' => false, 'error' => $detail !== '' ? $detail : 'Error al enviar el SMS'];
         }
 
         return ['success' => false, 'error' => 'Error al generar el código'];

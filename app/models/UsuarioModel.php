@@ -37,6 +37,24 @@ class UsuarioModel {
         $stmt->execute([$correo]);
         return $stmt->rowCount() > 0;
     }
+
+    // Verifica si el teléfono ya está usado por un usuario activo
+    public function existeTelefono(?string $telefono): bool {
+        if ($telefono === null || $telefono === '') return false;
+        $tel = $this->normalizePhone($telefono);
+        $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE telefono = ?");
+        $stmt->execute([$tel]);
+        return $stmt->rowCount() > 0;
+    }
+
+    // Verifica si el teléfono ya está usado por otro usuario activo
+    public function existeTelefonoDeOtro(?string $telefono, int $id_usuario): bool {
+        if ($telefono === null || $telefono === '') return false;
+        $tel = $this->normalizePhone($telefono);
+        $stmt = $this->db->prepare("SELECT 1 FROM usuarios WHERE telefono = ? AND id_usuario <> ?");
+        $stmt->execute([$tel, $id_usuario]);
+        return $stmt->rowCount() > 0;
+    }
     
     /**
      * Obtiene un usuario por su ID
@@ -74,12 +92,12 @@ class UsuarioModel {
         return $stmt->execute([$nombre, $correo, $contraseña, $tipo_usuario, $telefono]);
     }
 
-    // Reactivar (reusar fila existente por UNIQUE correo) para admin
-    public function reactivarUsuarioAdmin($nombre, $correo, $contraseña, $tipo_usuario) {
+    // Reactivar (reusar fila existente por UNIQUE correo) para admin, PERO exigiendo verificación por correo
+    public function reactivarUsuarioAdmin($nombre, $correo, $contraseña, $tipo_usuario, string $token, string $expira) {
         $nombre = ucwords(strtolower(trim($nombre)));
         $correo = strtolower(trim($correo));
-        $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, contraseña = ?, tipo_usuario = ?, verificado = 1, verification_token = NULL, token_expira = NULL, activo = 1 WHERE correo = ?");
-        return $stmt->execute([$nombre, $contraseña, $tipo_usuario, $correo]);
+        $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, contraseña = ?, tipo_usuario = ?, verificado = 0, verification_token = ?, token_expira = ?, activo = 1 WHERE correo = ?");
+        return $stmt->execute([$nombre, $contraseña, $tipo_usuario, $token, $expira, $correo]);
     }
 
     public function obtenerUsuarios() {
@@ -108,6 +126,16 @@ class UsuarioModel {
         // Si cambia el teléfono, reiniciar verificación
         $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ?, telefono = ?, telefono_verificado = IF(telefono <> ?, 0, telefono_verificado), telefono_verificado_at = IF(telefono <> ?, NULL, telefono_verificado_at) WHERE id_usuario = ?");
         return $stmt->execute([$nombre, $correo, $tipo_usuario, $telefono, $telefono, $telefono, $id_usuario]);
+    }
+
+    // Actualiza correo estableciendo verificado=0 y guardando token/expira
+    public function actualizarCorreoConVerificacion(int $id_usuario, string $nombre, string $nuevoCorreo, string $tipo_usuario, ?string $telefono, string $token, string $expira): bool {
+        $nombre = ucwords(strtolower(trim($nombre)));
+        $correo = strtolower(trim($nuevoCorreo));
+        $telefono = $this->normalizePhone($telefono);
+        $sql = "UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ?, telefono = ?, verificado = 0, verification_token = ?, token_expira = ? WHERE id_usuario = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$nombre, $correo, $tipo_usuario, $telefono, $token, $expira, $id_usuario]);
     }
 
     // Actualiza el teléfono por correo (útil inmediatamente después de crear)
@@ -241,8 +269,12 @@ class UsuarioModel {
     private function normalizePhone(?string $telefono): ?string {
         if (!$telefono) return null;
         $t = trim($telefono);
-        $t = preg_replace('/[^+0-9]/','', $t);
-        return $t ?: null;
+        // mantener solo dígitos y quedarnos con los últimos 9
+        $digits = preg_replace('/\D+/', '', $t) ?? '';
+        if (strlen($digits) >= 9) {
+            return substr($digits, -9);
+        }
+        return null;
     }
 }
 ?>

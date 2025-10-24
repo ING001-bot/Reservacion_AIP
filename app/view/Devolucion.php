@@ -41,15 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-    if (isset($_POST['devolver_pack_id'])) {
-        $idp = intval($_POST['devolver_pack_id']);
-        $comentp = isset($_POST['comentario_pack']) ? trim($_POST['comentario_pack']) : null;
-        if ($controller->devolverPack($idp, $comentp)) {
-            $mensaje = '✅ Devolución de pack registrada correctamente.';
-        } else {
-            $mensaje = '❌ No se pudo registrar la devolución del pack.';
-        }
-    }
+    // Packs eliminados del sistema
 }
 
 // Filtros simples - Por defecto mostrar todos los estados (así, al confirmar, la fila sigue visible)
@@ -65,7 +57,6 @@ if (empty($desde) && empty($hasta)) {
 
 // Siempre usar filtros para optimizar la consulta
 $prestamos = $controller->obtenerPrestamosFiltrados($estado ?: null, $desde ?: null, $hasta ?: null, $q ?: null);
-$packs = $controller->listarPacksFiltrados($estado ?: null, $desde ?: null, $hasta ?: null, $q ?: null);
 $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
@@ -248,30 +239,7 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
             $rows = array_values($grupos);
           }
           
-          // Agregar packs (solo si hay datos)
-          if (!empty($packs)) {
-            foreach ($packs as $p) {
-              $badges = [];
-              if (isset($p['items'])) {
-                foreach ($p['items'] as $it) {
-                  $badges[] = $it['tipo_equipo'].' x'.$it['cantidad'].($it['es_complemento']?' (C)':'');
-                }
-              }
-              
-              $rows[] = [
-                'tipo_reg' => 'pack',
-                'detalle_badges' => $badges ?: ['Pack'],
-                'responsable' => $p['nombre_usuario'],
-                'aula' => $p['nombre_aula'],
-                'fecha' => $p['fecha_prestamo'],
-                'hora_inicio' => $p['hora_inicio'],
-                'hora_fin' => $p['hora_fin'],
-                'fecha_devolucion' => $p['fecha_devolucion'],
-                'estado' => $p['estado'],
-                'id_pack' => $p['id_pack'],
-              ];
-            }
-          }
+          // Packs eliminados: no agregar filas de packs
         ?>
 
         <h2 class="text-center text-brand mb-3">📖 Préstamos Registrados</h2>
@@ -316,10 +284,6 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
                                         <?php if(($r['estado'] ?? '')==='Prestado'): ?>
                                             <?php if(($r['tipo_reg'] ?? '')==='unitario_grupo'): ?>
                                                 <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalDevolverGrupo" data-ids="<?= htmlspecialchars(json_encode($r['ids_prestamos'] ?? [])) ?>" data-equipos="<?= htmlspecialchars(implode(', ', $r['detalle_badges'] ?? [])) ?>">
-                                                    ✅ Confirmar
-                                                </button>
-                                            <?php elseif(($r['tipo_reg'] ?? '')==='pack'): ?>
-                                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalDevolverPack" data-idpack="<?= (int)($r['id_pack'] ?? 0) ?>" data-detalle="<?= htmlspecialchars(implode(' | ', $r['detalle_badges'] ?? [])) ?>">
                                                     ✅ Confirmar
                                                 </button>
                                             <?php endif; ?>
@@ -388,40 +352,7 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
       </div>
     </div>
 
-    <!-- Modal Devolver Pack -->
-    <div class="modal fade" id="modalDevolverPack" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form method="post" action="">
-            <div class="modal-header">
-              <h5 class="modal-title">Confirmar Devolución de Pack</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <input type="hidden" name="devolver_pack_id" id="devolver-pack-id" value="">
-              <div class="mb-2">
-                <div class="small text-muted">Detalle</div>
-                <div id="devolver-pack-detalle" class="fw-semibold"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Estado de los equipos</label>
-                <select class="form-select" id="estado-entrega-pack" name="estado_entrega_pack">
-                  <option value="ok" selected>En buen estado / Todo correcto</option>
-                  <option value="mal">Mal estado</option>
-                </select>
-              </div>
-              <label class="form-label">Comentario</label>
-              <textarea class="form-control" id="comentario-entrega-pack" name="comentario_pack" rows="3" placeholder="Describe el problema..." disabled></textarea>
-              <small class="text-muted">Solo requerido si el estado es "Mal estado"</small>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-success">Marcar como Devuelto</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Modal Devolver unitario -->
     <div class="modal fade" id="modalDevolver" tabindex="-1" aria-hidden="true">
@@ -528,40 +459,7 @@ document.addEventListener('DOMContentLoaded', function(){
     
     if (estadoSel) estadoSel.addEventListener('change', refreshComentario);
   }
-  // Modal para packs
-  const modalPack = document.getElementById('modalDevolverPack');
-  if (modalPack) {
-    const estadoSelP = modalPack.querySelector('#estado-entrega-pack');
-    const comentarioP = modalPack.querySelector('#comentario-entrega-pack');
-    
-    function refreshComentarioPack(){
-      const mal = estadoSelP.value === 'mal';
-      comentarioP.disabled = !mal;
-      comentarioP.required = mal;
-      if (!mal) comentarioP.value = '';
-    }
-    
-    const formP = modalPack.querySelector('form');
-    formP?.addEventListener('submit', function(){
-      const btn = formP.querySelector('button[type="submit"]');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-      }
-    });
-    
-    modalPack.addEventListener('show.bs.modal', function (event) {
-      const button = event.relatedTarget;
-      const idp = button?.getAttribute('data-idpack') || '';
-      const detalle = button?.getAttribute('data-detalle') || '';
-      modalPack.querySelector('#devolver-pack-id').value = idp;
-      modalPack.querySelector('#devolver-pack-detalle').textContent = detalle;
-      if (estadoSelP) estadoSelP.value = 'ok';
-      if (comentarioP) { comentarioP.value=''; comentarioP.disabled = true; comentarioP.required = false; }
-    });
-    
-    if (estadoSelP) estadoSelP.addEventListener('change', refreshComentarioPack);
-  }
+  // Packs eliminados: sin modal ni lógica de packs
 
   // Toast after server feedback
   <?php if (!empty($mensaje)): ?>

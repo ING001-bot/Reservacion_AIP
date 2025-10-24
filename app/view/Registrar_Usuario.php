@@ -64,8 +64,8 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 <input type="email" name="correo" class="form-control" required>
             </div>
             <div class="col-12 col-sm-6 col-lg-4">
-                <label class="form-label">Teléfono (con código de país)</label>
-                <input type="tel" name="telefono" class="form-control" value="+51" placeholder="+51987654321" pattern="^\+51\d{9}$" inputmode="numeric" maxlength="12" required>
+                <label class="form-label">Teléfono (9 dígitos)</label>
+                <input type="tel" name="telefono" class="form-control" value="" placeholder="987654321" pattern="^\d{9}$" inputmode="numeric" maxlength="9" required>
             </div>
             <div class="col-12 col-sm-6 col-lg-4">
                 <label class="form-label">Contraseña</label>
@@ -116,7 +116,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                             <td class="col-num"><?= $i ?></td>
                             <td><input type="text" name="nombre" value="<?= htmlspecialchars($user['nombre']) ?>" class="form-control" required></td>
                             <td><input type="email" name="correo" value="<?= htmlspecialchars($user['correo']) ?>" class="form-control" required></td>
-                            <td><input type="tel" name="telefono" value="<?= htmlspecialchars(($user['telefono'] ?? '') !== '' ? $user['telefono'] : '+51') ?>" class="form-control" placeholder="+51987654321" pattern="^\+51\d{9}$" inputmode="numeric" maxlength="12" required></td>
+                            <td><input type="tel" name="telefono" value="<?= htmlspecialchars(substr(preg_replace('/[^0-9]/','', $user['telefono'] ?? ''), -9)) ?>" class="form-control" placeholder="987654321" pattern="^\d{9}$" inputmode="numeric" maxlength="9" required></td>
                             <td>
                                 <select name="tipo" class="form-select" required>
                                     <option value="Profesor" <?= $user['tipo_usuario']=='Profesor'?'selected':'' ?>>Profesor</option>
@@ -210,8 +210,8 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 <input type="email" name="correo" class="form-control" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Teléfono</label>
-                <input type="tel" name="telefono" class="form-control" value="+51" placeholder="+519XXXXXXXX" pattern="^\+51\d{9}$" inputmode="numeric" maxlength="12" required>
+                <label class="form-label">Teléfono (9 dígitos)</label>
+                <input type="tel" name="telefono" class="form-control" value="" placeholder="987654321" pattern="^\d{9}$" inputmode="numeric" maxlength="9" required>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Contraseña</label>
@@ -237,10 +237,10 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
 <?php if (!defined('EMBEDDED_VIEW')): ?>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../../Public/js/registrar_usuario.js"></script>
 <?php endif; ?>
 
-<!-- Script de usuarios siempre se carga -->
+<!-- Scripts comunes (siempre) -->
+<script src="../../Public/js/registrar_usuario.js?v=<?= time() ?>"></script>
 <script src="../../Public/js/usuarios.js?v=<?= time() ?>"></script>
 
 <?php if (!defined('EMBEDDED_VIEW')): ?>
