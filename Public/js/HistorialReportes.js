@@ -8,7 +8,6 @@
   const btnReset = document.getElementById('btn-reset');
   const tbody = document.querySelector('#tabla-historial tbody');
   const btnPdf = document.getElementById('btn-export-pdf');
-  const btnCsv = document.getElementById('btn-export-csv');
   const countBadge = document.getElementById('count-badge');
 
   // Rango rápido
@@ -116,24 +115,8 @@
     }
   }
 
-  function exportCSV(){
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    if (!rows.length) return;
-    const headers = ['Fecha','Inicio','Fin','Profesor','Aula/Equipo','Tipo','Estado','Observación'];
-    const lines = [headers.join(',')];
-    rows.forEach(tr => {
-      const cols = Array.from(tr.children).map(td => td.innerText);
-      lines.push(cols.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
-    });
-    const blob = new Blob([lines.join('\n')], {type: 'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download='historial_reportes.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-  }
-
   formFiltros?.addEventListener('submit', (e)=>{ e.preventDefault(); loadData(); });
   btnReset?.addEventListener('click', ()=>{ formFiltros?.reset(); loadData(); });
-  btnCsv?.addEventListener('click', exportCSV);
   btnPdf?.addEventListener('click', ()=>{
     const fd = new FormData(formFiltros);
     const params = new URLSearchParams();

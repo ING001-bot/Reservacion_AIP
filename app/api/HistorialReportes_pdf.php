@@ -15,6 +15,7 @@ if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo'])) {
 }
 
 $rol = $_SESSION['tipo'];
+$usuario_nombre = $_SESSION['usuario'] ?? '';
 $controller = new HistorialGlobalController($conexion);
 
 // Filtros como en HistorialGlobal_fetch
@@ -35,8 +36,21 @@ try {
     exit;
 }
 
-// Preparar HTML del PDF
+// Preparar datos comunes y branding
+date_default_timezone_set('America/Lima');
 $fecha_descarga = date('Y-m-d H:i:s');
+$colegio = "Colegio Juan Tomis Stack";
+// Cargar logo como data URI (similar a exportar_pdf.php)
+$logoDataUri = null;
+$logoAbs = realpath(__DIR__ . '/../../Public/img/logo_colegio.png');
+if ($logoAbs && is_file($logoAbs)) {
+    $mime = 'image/png';
+    $data = @file_get_contents($logoAbs);
+    if ($data !== false) { $logoDataUri = 'data:' . $mime . ';base64,' . base64_encode($data); }
+}
+$logoUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/Sistema_reserva_AIP/Public/img/logo_colegio.png';
+
+// Preparar subtítulo con filtros
 $subtitulo = [];
 if (!empty($opts['desde']) || !empty($opts['hasta'])) {
     $subtitulo[] = 'Rango: ' . ($opts['desde'] ?? '—') . ' a ' . ($opts['hasta'] ?? '—');
@@ -53,23 +67,43 @@ ob_start();
 <head>
   <meta charset="utf-8" />
   <style>
+    /* Paleta institucional */
+    .brand-bg { background:#1E6BD6; color:#fff; }
+    .brand-text { color:#0F3E91; }
+    .brand-light { background:#EAF2FF; }
+    .brand-border { border-color:#C7DAFF !important; }
+
     body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color:#222; }
-    h1 { font-size: 18px; margin: 0 0 6px 0; }
-    .meta { font-size: 11px; color: #555; margin-bottom: 10px; }
+    header { display:flex; align-items:center; gap:12px; margin-bottom: 12px; padding:10px; border:1px solid #C7DAFF; background:#F7FAFF; border-radius:6px; }
+    header img { height: 50px; }
+    h1 { font-size: 18px; margin: 0; color:#0F3E91; }
+    .meta { font-size: 11px; color: #445; margin-top: 4px; }
+
     table { width:100%; border-collapse: collapse; }
-    th, td { border: 1px solid #999; padding: 6px 8px; }
-    th { background:#f0f0f0; font-weight:700; }
-    td.center, th.center { text-align:center; }
-    .small { color:#777; font-size: 11px; }
+    th, td { border: 1px solid #C7DAFF; padding: 6px 8px; }
+    th { background:#EAF2FF; color:#0F3E91; font-weight:700; }
+    tbody tr:nth-child(odd) { background:#FCFDFF; }
+
+    .small { color:#4a5568; font-size: 11px; }
     .nowrap { white-space: nowrap; }
+    .center { text-align:center; }
   </style>
   <title>Reportes y Filtros</title>
 </head>
 <body>
-  <h1>Reportes y Filtros</h1>
-  <div class="meta">
-    Rol: <?= htmlspecialchars($rol) ?><?= $sub ? ' · ' . htmlspecialchars($sub) : '' ?> · Generado: <?= htmlspecialchars($fecha_descarga) ?>
-  </div>
+  <header>
+    <?php if (!empty($logoDataUri)): ?>
+      <img src="<?= htmlspecialchars($logoDataUri) ?>" alt="Logo" />
+    <?php else: ?>
+      <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" />
+    <?php endif; ?>
+    <div>
+      <h1>Reportes y Filtros</h1>
+      <div class="meta">
+        <?= htmlspecialchars($colegio) ?> · Descargado por: <?= htmlspecialchars($usuario_nombre ?: '—') ?> · Rol: <?= htmlspecialchars($rol) ?><?= $sub ? ' · ' . htmlspecialchars($sub) : '' ?> · Generado: <?= htmlspecialchars($fecha_descarga) ?>
+      </div>
+    </div>
+  </header>
   <?php if (!empty($rows)): ?>
     <table>
       <thead>

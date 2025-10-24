@@ -156,7 +156,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
         <div class="fw-semibold">Resultados <span class="badge rounded-pill text-bg-secondary" id="count-badge">0</span></div>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-brand" id="btn-export-pdf">Exportar PDF</button>
-          <button class="btn btn-outline-brand" id="btn-export-csv">Exportar CSV</button>
         </div>
       </div>
       <div class="table-responsive">
