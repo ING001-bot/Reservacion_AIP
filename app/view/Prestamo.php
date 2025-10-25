@@ -86,7 +86,7 @@ $fecha_prestamo_check = $_POST['fecha_prestamo'] ?? date('Y-m-d', strtotime('+1 
 $laptops = $prestamoController->listarEquiposPorTipoConStock('LAPTOP', $fecha_prestamo_check);
 $proyectores = $prestamoController->listarEquiposPorTipoConStock('PROYECTOR', $fecha_prestamo_check);
 $mouses = $prestamoController->listarEquiposPorTipoConStock('MOUSE', $fecha_prestamo_check);
-$extensiones = $prestamoController->listarEquiposPorTipoConStock('EXTENSIÓN', $fecha_prestamo_check);
+$extensiones = $prestamoController->listarEquiposPorTipoConStock('EXTENSION', $fecha_prestamo_check);
 $parlantes = $prestamoController->listarEquiposPorTipoConStock('PARLANTE', $fecha_prestamo_check);
 
 // Calcular totales disponibles
@@ -344,7 +344,7 @@ setTimeout(() => {
                 <p class="mb-0">Verifica que:</p>
                 <ul class="mb-0">
                     <li>Se hayan registrado equipos en el sistema</li>
-                    <li>Los tipos de equipos sean: <strong>LAPTOP, PROYECTOR, MOUSE, EXTENSIÓN, PARLANTE</strong> (en mayúsculas)</li>
+                    <li>Los tipos de equipos sean: <strong>LAPTOP, PROYECTOR, MOUSE, EXTENSION, PARLANTE</strong> (en mayúsculas)</li>
                     <li>Los equipos estén marcados como <strong>activos</strong></li>
                 </ul>
                 <a href="Admin.php?view=equipos" class="btn btn-sm btn-primary mt-2">Ir a Gestión de Equipos</a>
@@ -367,15 +367,15 @@ setTimeout(() => {
                 <strong>📊 Stock Disponible:</strong>
                 <span class="badge bg-primary ms-2">💻 Laptops: <?= $total_laptops ?></span>
                 <span class="badge bg-primary ms-2">📽 Proyectores: <?= $total_proyectores ?></span>
-                <span class="badge bg-primary ms-2">🔌 Extensiones: <?= $total_extensiones ?></span>
+                <span class="badge bg-primary ms-2">🔌 Extensions: <?= $total_extensiones ?></span>
                 <span class="badge bg-secondary ms-2">🖱 Mouses: <?= $total_mouses ?></span>
                 <span class="badge bg-secondary ms-2">🔊 Parlantes: <?= $total_parlantes ?></span>
             </div>
             
             <div class="d-flex flex-wrap gap-2 mb-3 filters-actions">
                 <?php $hasLap = $total_laptops>0; $hasProy = $total_proyectores>0; $hasExt = $total_extensiones>0; $hasParl = $total_parlantes>0; ?>
-                <button type="button" class="btn btn-brand btn-control" id="pack-completo" <?= ($hasLap && $hasProy && $hasExt)?'':'disabled' ?>>📦 Laptop + Proyector + Extensión</button>
-                <button type="button" class="btn btn-outline-brand btn-control" id="pack-proyector" <?= ($hasProy && $hasExt)?'':'disabled' ?>>📽 Solo Proyector + Extensión</button>
+                <button type="button" class="btn btn-brand btn-control" id="pack-completo" <?= ($hasLap && $hasProy && $hasExt)?'':'disabled' ?>>📦 Laptop + Proyector + Extension</button>
+                <button type="button" class="btn btn-outline-brand btn-control" id="pack-proyector" <?= ($hasProy && $hasExt)?'':'disabled' ?>>📽 Solo Proyector + Extension</button>
                 <button type="button" class="btn btn-outline-brand btn-control" id="pack-laptop" <?= $hasLap?'':'disabled' ?>>💻 Solo Laptop</button>
                 <button type="button" class="btn btn-outline-secondary btn-control" id="pack-parlante" <?= $hasParl?'':'disabled' ?>>🔊 Solo Parlante</button>
                 <button type="button" class="btn btn-outline-danger btn-control" id="pack-limpiar">✖ Limpiar</button>
@@ -434,9 +434,9 @@ setTimeout(() => {
                     </div>
                     <?php if (count($mouses)==0): ?><div class="form-text text-muted">No hay Mouse en stock.</div><?php endif; ?>
                 </div>
-                <!-- Extensión (aparece cuando se elige un Proyector) -->
+                <!-- Extension (aparece cuando se elige un Proyector) -->
                 <div class="col-md-4 col-12" id="wrap_extension" style="display:none">
-                    <label class="form-label">Extensión (opcional) <small class="text-muted">(<?= count($extensiones) ?> disp.)</small></label>
+                    <label class="form-label">Extension (opcional) <small class="text-muted">(<?= count($extensiones) ?> disp.)</small></label>
                     <div class="input-group">
                         <span class="input-group-text">
                             <input class="form-check-input mt-0" type="checkbox" id="use_extension" name="use_extension" value="1">
@@ -448,7 +448,7 @@ setTimeout(() => {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <?php if (count($extensiones)==0): ?><div class="form-text text-muted">No hay Extensiones en stock.</div><?php endif; ?>
+                    <?php if (count($extensiones)==0): ?><div class="form-text text-muted">No hay Extensions en stock.</div><?php endif; ?>
                 </div>
                 <!-- Parlante (aparece siempre como opcional) -->
                 <div class="col-md-4 col-12" id="wrap_parlante">
@@ -558,7 +558,7 @@ setTimeout(() => {
                     <tr>
                         <td>
                             <?php 
-                            // Ordenar por prioridad visible: Laptop, Proyector, Extensión, Mouse, Parlante
+                            // Ordenar por prioridad visible: Laptop, Proyector, Extension, Mouse, Parlante
                             $prioridad = function(string $nombre): int {
                                 $n = mb_strtolower($nombre, 'UTF-8');
                                 if (strpos($n, 'laptop') !== false) return 1;
@@ -574,10 +574,10 @@ setTimeout(() => {
                                 if ($pa === $pb) return strcasecmp($a, $b);
                                 return $pa <=> $pb;
                             });
-                            // Sanear y normalizar: quitar etiquetas HTML y 'Extension' -> 'Extensión'
+                            // Sanear y normalizar: quitar etiquetas HTML y 'Extension' -> 'Extension'
                             $equipos = array_map(function($e){
                                 $trim = trim((string)strip_tags($e));
-                                return preg_replace('/^(?i)extension$/u', 'Extensión', $trim);
+                                return preg_replace('/^(?i)extension$/u', 'Extension', $trim);
                             }, $equipos);
                             echo htmlspecialchars(implode(' · ', $equipos));
                             ?>

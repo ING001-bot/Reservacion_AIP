@@ -73,16 +73,7 @@ class PrestamoModel {
 
     public function listarEquiposPorTipo($tipo) {
         $tipo = strtoupper(trim($tipo)); // Normalizar a mayúsculas
-        $stmt = $this->db->prepare("\n            SELECT id_equipo, nombre_equipo, tipo_equipo\n            FROM equipos\n            WHERE UPPER(tipo_equipo) = ?\n            AND activo = 1\n            AND stock > 0\n            AND id_equipo NOT IN (\n                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()\n            )\n        ");
-        $stmt = $this->db->prepare("
-            SELECT id_equipo, nombre_equipo, tipo_equipo
-            FROM equipos
-            WHERE UPPER(TRIM(tipo_equipo)) = ?
-            AND activo = 1
-            AND id_equipo NOT IN (
-                SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()
-            )
-        ");
+        $stmt = $this->db->prepare("\n            SELECT id_equipo, nombre_equipo, tipo_equipo\n            FROM equipos\n            WHERE \n              REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(TRIM(tipo_equipo)),'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U') =\n              REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(TRIM(?)),'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U')\n              AND activo = 1\n              AND id_equipo NOT IN (\n                  SELECT id_equipo FROM prestamos WHERE estado = 'Prestado' AND fecha_prestamo = CURDATE()\n              )\n        ");
         $stmt->execute([$tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -92,18 +83,7 @@ class PrestamoModel {
         // Al prestar se decrementa y al devolver se incrementa. No debemos volver a restar
         // los préstamos del día aquí para evitar doble descuento.
         $tipo = strtoupper(trim($tipo));
-        $stmt = $this->db->prepare('
-            SELECT 
-                e.id_equipo,
-                e.nombre_equipo,
-                e.tipo_equipo,
-                e.stock AS disponible
-            FROM equipos e
-            WHERE UPPER(TRIM(e.tipo_equipo)) = ?
-              AND e.activo = 1
-              AND e.stock > 0
-            ORDER BY e.nombre_equipo ASC
-        ');
+        $stmt = $this->db->prepare("\n            SELECT \n                e.id_equipo,\n                e.nombre_equipo,\n                e.tipo_equipo,\n                e.stock AS disponible\n            FROM equipos e\n            WHERE \n              REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(TRIM(e.tipo_equipo)),'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U') =\n              REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(TRIM(?)),'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U')\n              AND e.activo = 1\n              AND e.stock > 0\n            ORDER BY e.nombre_equipo ASC\n        ");
         $stmt->execute([$tipo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

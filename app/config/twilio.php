@@ -9,5 +9,6 @@ return [
     // Ejemplo: your_auth_token
     'auth_token'  => '744acba11d0988e40c10434aa68a8ffb',
     // Ejemplo: +16205518379 (formato E.164)
-    'from_number' => '+16205518379'
+    'from_number' => '+16205518379',
+    'whatsapp_from' => '+14155238886'
 ];

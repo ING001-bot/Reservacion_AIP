@@ -37,10 +37,20 @@ class EquipoController {
             'PARLANTE' => ['parlante','parlan','bafle','altavoz','speaker']
         ];
         $lowerName = mb_strtolower($nombre_equipo, 'UTF-8');
+        // Normalizador para comparación insensible a tildes
+        $normalizeType = function(string $s): string {
+            $s = trim($s);
+            $s = mb_strtoupper($s, 'UTF-8');
+            $s = strtr($s, [
+                'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
+                'Ü' => 'U', 'Ñ' => 'N'
+            ]);
+            return $s;
+        };
         foreach ($map as $tipo => $palabras) {
             foreach ($palabras as $p) {
                 if (mb_strpos($lowerName, $p, 0, 'UTF-8') !== false) {
-                    if ($tipoNorm !== $tipo) {
+                    if ($normalizeType($tipoNorm) !== $normalizeType($tipo)) {
                         return ['error' => true, 'mensaje' => '❌ El nombre parece corresponder a "'.$tipo.'", pero seleccionaste "'.htmlspecialchars($tipoNorm).'". Corrige el tipo.'];
                     }
                     break 2; // ya matcheó un tipo

@@ -9,12 +9,14 @@ use Exception;
 class SmsService {
     private $client;
     private $fromNumber;
+    private $whatsappFrom;
 
     public function __construct() {
         $config = require __DIR__ . '/../config/twilio.php';
         $sid = trim((string)($config['account_sid'] ?? ''));
         $token = trim((string)($config['auth_token'] ?? ''));
         $this->fromNumber = trim((string)($config['from_number'] ?? ''));
+        $this->whatsappFrom = trim((string)($config['whatsapp_from'] ?? ''));
 
         if ($sid === '' || $token === '' || $this->fromNumber === '') {
             throw new Exception('Twilio no configurado. Completa account_sid, auth_token y from_number en app/config/twilio.php');
@@ -95,6 +97,40 @@ class SmsService {
                     'status' => $account->status,
                     'type' => $account->type
                 ]
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ];
+        }
+    }
+
+    /** Indica si hay remitente de WhatsApp configurado */
+    public function hasWhatsApp(): bool {
+        return $this->whatsappFrom !== '';
+    }
+
+    /**
+     * Envía un mensaje por WhatsApp usando Twilio
+     * Requiere tener configurado 'whatsapp_from' en app/config/twilio.php
+     */
+    public function sendWhatsApp(string $to, string $message): array {
+        try {
+            if ($this->whatsappFrom === '') {
+                throw new Exception('WhatsApp no está configurado. Define whatsapp_from en app/config/twilio.php');
+            }
+            $to = $this->normalizeNumber($to);
+            $twMsg = $this->client->messages->create('whatsapp:' . $to, [
+                'from' => 'whatsapp:' . $this->whatsappFrom,
+                'body' => $message
+            ]);
+            return [
+                'success' => true,
+                'message' => 'Mensaje de WhatsApp enviado correctamente',
+                'sid' => $twMsg->sid,
+                'status' => $twMsg->status
             ];
         } catch (Exception $e) {
             return [

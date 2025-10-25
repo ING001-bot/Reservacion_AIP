@@ -31,22 +31,26 @@ class VerificationService {
 
         $ok = $stmt->execute([(int)$userId, $code, $actionType, $expiresAt]);
         if ($ok) {
-            // Enviar SMS con el código
             $message = 'Tu código de verificación para ' . $this->getActionName($actionType) . ' es: ' . $code;
             $result = $this->smsService->sendSms($phone, $message);
-
             if (!empty($result['success'])) {
                 return ['success' => true, 'code' => $code];
             }
-
-            // Si falla el envío, eliminar el código recién creado y propagar detalle
+            $waTried = false;
+            $waRes = null;
+            if (method_exists($this->smsService, 'hasWhatsApp') && $this->smsService->hasWhatsApp()) {
+                $waTried = true;
+                $waRes = $this->smsService->sendWhatsApp($phone, $message);
+                if (!empty($waRes['success'])) {
+                    return ['success' => true, 'code' => $code];
+                }
+            }
             $del = $this->db->prepare('DELETE FROM verification_codes WHERE user_id = ? AND code = ? AND action_type = ?');
             $del->execute([(int)$userId, $code, $actionType]);
-            $detail = '';
-            if (is_array($result)) {
-                $detail = trim(($result['error'] ?? '').' '.(isset($result['code']) ? ('(code: '.$result['code'].')') : ''));
-            }
-            return ['success' => false, 'error' => $detail !== '' ? $detail : 'Error al enviar el SMS'];
+            $detailSms = is_array($result) ? trim(($result['error'] ?? '').' '.(isset($result['code']) ? ('(code: '.$result['code'].')') : '')) : '';
+            $detailWa = ($waTried && is_array($waRes)) ? trim(($waRes['error'] ?? '').' '.(isset($waRes['code']) ? ('(code: '.$waRes['code'].')') : '')) : '';
+            $detail = trim($detailSms . (($detailSms && $detailWa)?' | ':'') . $detailWa);
+            return ['success' => false, 'error' => $detail !== '' ? $detail : 'Error al enviar el código'];
         }
 
         return ['success' => false, 'error' => 'Error al generar el código'];
