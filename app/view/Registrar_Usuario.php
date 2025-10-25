@@ -139,7 +139,15 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                             <td><?= htmlspecialchars($user['telefono'] ?? '') ?></td>
                             <td><?= htmlspecialchars($user['tipo_usuario']) ?></td>
                             <td class="text-center table-action-cell">
-                                <a href="Admin.php?view=usuarios&editar=<?= $user['id_usuario'] ?>" class="btn btn-sm btn-outline-primary">✏️ Editar</a>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-editar-usuario"
+                                        data-id="<?= $user['id_usuario'] ?>"
+                                        data-nombre="<?= htmlspecialchars($user['nombre']) ?>"
+                                        data-correo="<?= htmlspecialchars($user['correo']) ?>"
+                                        data-telefono="<?= htmlspecialchars($user['telefono'] ?? '') ?>"
+                                        data-tipo="<?= htmlspecialchars($user['tipo_usuario']) ?>">
+                                    ✏️ Editar
+                                </button>
                                 <form method="post" class="d-inline form-eliminar-usuario">
                                     <input type="hidden" name="id_usuario" value="<?= $user['id_usuario'] ?>">
                                     <button type="submit" name="eliminar_usuario" class="btn btn-sm btn-outline-danger">🗑️ Eliminar</button>

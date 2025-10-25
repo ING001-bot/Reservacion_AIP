@@ -19,42 +19,93 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
   <link rel="stylesheet" href="../../Public/css/historial_global.css?v=<?php echo time(); ?>">
 </head>
 <body>
-  <main class="container my-3" id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php require __DIR__ . '/partials/navbar.php'; ?>
+  <main class="container my-3 content" id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
 <?php else: ?>
   <div id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
 <?php endif; ?>
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
       <div>
         <h1 class="m-0 text-brand">Reportes y Filtros</h1>
         <div class="text-muted small">Genere listados por fecha, profesor, tipo y estado</div>
       </div>
       <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" href="Admin.php?view=historial_global">Volver al Calendario</a>
+        <a class="btn btn-outline-secondary btn-hide-xs" href="Admin.php?view=historial_global">Volver al Calendario</a>
+      </div>
+    </div>
+
+    <!-- Barra sticky de filtros para móvil -->
+    <div class="d-md-none position-sticky" style="top:60px; z-index:9;">
+      <div class="d-flex justify-content-stretch gap-2 mb-2">
+        <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse" aria-expanded="false" aria-controls="filtrosCollapse">
+          <i class="fas fa-sliders-h me-1"></i> Filtros
+        </button>
       </div>
     </div>
 
     <section class="card shadow-sm mb-3 p-3">
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
         <div class="fw-semibold text-brand">Filtros</div>
-        <div class="btn-group" role="group" aria-label="Rango rápido">
+        <div class="d-none d-md-flex btn-group" role="group" aria-label="Rango rápido">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-range="hoy">Hoy</button>
           <button type="button" class="btn btn-outline-secondary btn-sm" data-range="7">Últimos 7 días</button>
           <button type="button" class="btn btn-outline-secondary btn-sm" data-range="mes">Este mes</button>
           <button type="button" class="btn btn-outline-secondary btn-sm" data-range="todo">Todo</button>
         </div>
+        <!-- Toggle filtros en móvil (secundario) -->
+        <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse" aria-expanded="false" aria-controls="filtrosCollapse">
+          Mostrar/Ocultar filtros
+        </button>
       </div>
-      <form id="form-filtros" class="row gy-2 gx-2 align-items-end">
-        <div class="col-6 col-md-3">
-          <label class="form-label">Desde</label>
-          <input type="date" class="form-control" name="desde" placeholder="AAAA-MM-DD">
-          <div class="form-text">Fecha inicial del rango</div>
+      <div class="collapse d-md-block" id="filtrosCollapse">
+        <!-- Rangos rápidos visibles en móvil dentro del panel -->
+        <div class="d-flex d-md-none btn-group-wrap mb-2" role="group" aria-label="Rango rápido móvil">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-range="hoy">Hoy</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-range="7">Últimos 7 días</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-range="mes">Este mes</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-range="todo">Todo</button>
         </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label">Hasta</label>
-          <input type="date" class="form-control" name="hasta" placeholder="AAAA-MM-DD">
-          <div class="form-text">Fecha final del rango</div>
-        </div>
-        <div class="col-12 col-md-3">
+        <form id="form-filtros" class="row gy-2 gx-2 align-items-end">
+          <div class="col-6 col-md-3">
+            <label class="form-label">Desde</label>
+            <input type="date" class="form-control" name="desde" placeholder="AAAA-MM-DD">
+            <div class="form-text">Fecha inicial del rango</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Hasta</label>
+            <input type="date" class="form-control" name="hasta" placeholder="AAAA-MM-DD">
+            <div class="form-text">Fecha final del rango</div>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label">Profesor</label>
+            <input type="text" class="form-control" name="profesor" placeholder="Ej: Juan Pérez">
+            <div class="form-text">Coincidencia por nombre</div>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Tipo</label>
+            <select name="tipo" class="form-select">
+              <option value="">Todos</option>
+              <option value="reserva">Reserva</option>
+              <option value="prestamo">Préstamo</option>
+            </select>
+            <div class="form-text">Clase de movimiento</div>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label">Estado</label>
+            <select name="estado" class="form-select">
+              <option value="">Todos</option>
+              <option value="Activa">Programada</option>
+              <option value="Cancelada">Cancelada</option>
+              <option value="Prestado">Prestado</option>
+              <option value="Devuelto">Devuelto</option>
+            </select>
+            <div class="form-text">Situación del registro</div>
+          </div>
+          <div class="col-12 col-md-12 d-flex gap-2 justify-content-end">
+            <button type="submit" class="btn btn-brand">Aplicar filtros</button>
+            <button type="button" id="btn-reset" class="btn btn-outline-secondary">Limpiar</button>
+          </div>
+        </form>
           <label class="form-label">Profesor</label>
           <input type="text" class="form-control" name="profesor" placeholder="Ej: Juan Pérez">
           <div class="form-text">Coincidencia por nombre</div>
@@ -84,6 +135,7 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
           <button type="button" id="btn-reset" class="btn btn-outline-secondary">Limpiar</button>
         </div>
       </form>
+      </div>
     </section>
 
     <section class="mb-3">

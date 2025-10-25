@@ -38,15 +38,15 @@
   function renderList(el, arr, labelKey, valueKey){
     if (!el) return;
     if (!arr || arr.length === 0){ el.innerHTML = '<li class="text-muted">Sin datos en el rango seleccionado.</li>'; return; }
-    el.innerHTML = arr.map((it, idx) => {
+    el.innerHTML = arr.map((it) => {
       const label = (it[labelKey] || '—').toString();
       const value = it[valueKey] ?? 0;
-      return `<li><strong>${idx+1}.</strong> ${label} <span class="text-muted">(${value})</span></li>`;
+      return `<li>${label} <span class="text-muted">(${value})</span></li>`;
     }).join('');
   }
 
   function renderChart(seriesObj){
-    console.log('📊 Renderizando gráfico...');
+    console.log(' Renderizando grfico...');
     console.log('Canvas encontrado:', !!chartCanvas);
     console.log('Chart.js disponible:', typeof Chart !== 'undefined');
     console.log('Datos del gráfico:', seriesObj);
@@ -67,12 +67,33 @@
     console.log('Labels:', labels);
     console.log('Data:', data);
 
-    if (chartInstance){ 
-      console.log('Destruyendo gráfico anterior');
-      chartInstance.destroy(); 
+    // Destruir gráfico existente (local o global) para evitar "Canvas is already in use"
+    try {
+      if (chartInstance) {
+        console.log('Destruyendo gráfico anterior (instancia local)');
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+      if (typeof Chart !== 'undefined' && Chart.getChart) {
+        const existing = Chart.getChart(chartCanvas);
+        if (existing) {
+          console.log('Destruyendo gráfico existente (Chart.getChart)');
+          existing.destroy();
+        }
+      }
+    } catch (e) {
+      console.warn('No se pudo destruir instancia previa de Chart:', e);
     }
     
     try {
+      // Ajustar altura para móvil/desktop
+      try {
+        const w = window.innerWidth || 1024;
+        const h = w < 576 ? 240 : 320;
+        chartCanvas.style.width = '100%';
+        chartCanvas.style.height = h + 'px';
+      } catch(_){}
+
       chartInstance = new Chart(chartCanvas, {
         type: 'line',
         data: {
@@ -88,6 +109,8 @@
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             x: { ticks: { maxRotation: 0, autoSkip: true }, grid: { display: false } },

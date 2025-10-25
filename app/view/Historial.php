@@ -99,16 +99,7 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
     <!-- Placeholder oculto para compatibilidad con Public/js/Historial.js -->
     <div id="tabla-prestamos" style="display:none"></div>
 
-    <!-- Barra inferior móvil para PDF (no se sale del sistema) -->
-    <div class="mobile-bottom-bar">
-      <form action="../view/exportar_pdf.php" method="POST" target="_blank" class="w-100 m-0">
-        <input type="hidden" name="start_week" id="pdf-start-week-bottom" value="<?php echo $startOfWeek; ?>">
-        <input type="hidden" name="turno" id="pdf-turno-bottom" value="manana">
-        <button type="submit" class="btn btn-brand w-100">
-          <i class="fas fa-file-arrow-down me-1"></i> Descargar PDF
-        </button>
-      </form>
-    </div>
+    
   </main>
 
   <?php $v = time(); ?>
@@ -142,17 +133,7 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
     // default
     showRes();
 
-    // Mantener sincronizados los campos del PDF de la barra inferior
-    const topStart = document.getElementById('pdf-start-week');
-    const topTurno = document.getElementById('pdf-turno');
-    const botStart = document.getElementById('pdf-start-week-bottom');
-    const botTurno = document.getElementById('pdf-turno-bottom');
-    function sync(){
-      if (topStart && botStart) botStart.value = topStart.value;
-      if (topTurno && botTurno) botTurno.value = topTurno.value;
-    }
-    sync();
-    [topStart, topTurno].forEach(el => el && el.addEventListener('change', sync));
+    // Sincronización ya no necesaria: solo hay un botón PDF (arriba)
   });
   </script>
 </body>

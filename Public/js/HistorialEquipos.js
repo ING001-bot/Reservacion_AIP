@@ -1,7 +1,8 @@
 // Public/js/HistorialEquipos.js
 // Vista: Historial / Equipos
 (function(){
-  const apiBase = '/Sistema_reserva_AIP/app/api/HistorialEquipos_fetch.php';
+  // Usar ruta relativa desde vistas en app/view/* hacia app/api/*
+  const apiBase = '../api/HistorialEquipos_fetch.php';
   const eqStart = document.getElementById('eq-start-of-week');
   const btnPrev = document.getElementById('eq-prev-week');
   const btnNext = document.getElementById('eq-next-week');
@@ -9,7 +10,7 @@
   const btnTarde = document.getElementById('eq-btn-tarde');
   const rangeDisplay = document.getElementById('eq-week-range-display');
   const grid = document.getElementById('calendarios-equipos');
-  const tablaHost = document.getElementById('tabla-equipos');
+  const tablaHost = document.getElementById('tabla-equipos') || document.getElementById('eq-table-container');
   const searchInput = document.getElementById('eq-search');
   const pdfStart = document.getElementById('eq-pdf-start-week');
   const pdfTurno = document.getElementById('eq-pdf-turno');

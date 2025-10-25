@@ -512,7 +512,10 @@ setTimeout(() => {
     </div>
 
     <!-- Tabla de préstamos -->
-    <h2 class="text-center text-brand mb-3">📖 Mis Préstamos Registrados</h2>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="text-brand m-0">📖 Mis Préstamos Registrados</h2>
+        <a href="../view/Dashboard.php" class="btn btn-outline-brand">🔙 Volver</a>
+    </div>
     <div class="table-responsive shadow-lg">
         <table class="table table-hover align-middle text-center table-brand">
             <thead class="table-primary text-center">
@@ -601,9 +604,7 @@ setTimeout(() => {
         </table>
     </div>
                     
-    <div class="text-center mt-3">
-        <a href="../view/Dashboard.php" class="btn btn-outline-brand hide-xs">🔙 Volver</a>
-    </div>
+    
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

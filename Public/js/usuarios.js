@@ -31,6 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('edit_id_usuario').value = this.dataset.id;
       document.getElementById('edit_nombre').value = this.dataset.nombre;
       document.getElementById('edit_correo').value = this.dataset.correo;
+      // Normalizar teléfono: si vienen 9 dígitos, anteponer +51
+      let tel = (this.dataset.telefono || '').replace(/[^0-9+]/g,'');
+      if (/^\d{9}$/.test(tel)) { tel = '+51' + tel; }
+      if (/^51\d{9}$/.test(tel)) { tel = '+' + tel; }
+      document.getElementById('edit_telefono').value = tel;
       document.getElementById('edit_tipo').value = this.dataset.tipo;
       
       // Mostrar el modal

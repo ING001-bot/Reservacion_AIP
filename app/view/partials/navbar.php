@@ -31,29 +31,58 @@ $badge = count($no_leidas);
 
 <!-- Menú móvil -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
-  <div class="offcanvas-header bg-brand text-white">
-    <h5 class="offcanvas-title" id="mobileMenuLabel">Menú</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+  <div class="offcanvas-header bg-white border-bottom">
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+        <i class="fas fa-user text-brand" style="font-size:1.4rem;"></i>
+      </div>
+      <div>
+        <div class="fw-semibold" style="line-height:1.1;"><?= $nombre ?></div>
+        <small class="text-muted"><?= $tipo ?></small>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
   </div>
   <div class="offcanvas-body p-0">
     <div class="d-flex flex-column h-100">
-      <div class="p-3 border-bottom">
-        <div class="d-flex align-items-center gap-3">
-          <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-            <i class="fas fa-user text-brand" style="font-size: 1.5rem;"></i>
-          </div>
-          <div>
-            <h6 class="mb-0 fw-bold"><?= $nombre ?></h6>
-            <small class="text-muted"><?= $tipo ?></small>
-          </div>
-        </div>
-      </div>
-      
       <nav class="nav flex-column flex-grow-1 p-3">
         <a href="../view/Dashboard.php" class="nav-link d-flex align-items-center gap-3 py-3">
           <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
           <span>🏠 Inicio</span>
         </a>
+        <?php if ($tipo === 'Profesor'): ?>
+        <a href="../view/Profesor.php?view=reserva" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-calendar-check" style="width: 24px; text-align: center;"></i>
+          <span>🗓 Reservas</span>
+        </a>
+        <a href="../view/Profesor.php?view=prestamo" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-laptop" style="width: 24px; text-align: center;"></i>
+          <span>💻 Préstamos</span>
+        </a>
+        <a href="../view/Profesor.php?view=historial" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-history" style="width: 24px; text-align: center;"></i>
+          <span>📜 Historial</span>
+        </a>
+        <a href="../view/Profesor.php?view=password" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-key" style="width: 24px; text-align: center;"></i>
+          <span>🔐 Cambiar contraseña</span>
+        </a>
+        <?php endif; ?>
+        
+        <?php if ($es_admin): ?>
+        <a href="../view/Admin.php" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-gauge" style="width: 24px; text-align: center;"></i>
+          <span>🏠 Inicio Admin</span>
+        </a>
+        <a href="../view/HistorialReportes.php" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-chart-line" style="width: 24px; text-align: center;"></i>
+          <span>📊 Reportes y Filtros</span>
+        </a>
+        <a href="../view/HistorialGlobal.php" class="nav-link d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-calendar" style="width: 24px; text-align: center;"></i>
+          <span>🗓 Historial Global</span>
+        </a>
+        <?php endif; ?>
         
         <?php if ($es_encargado): ?>
         <a href="../view/Historial.php" class="nav-link d-flex align-items-center gap-3 py-3">
@@ -68,7 +97,7 @@ $badge = count($no_leidas);
         <?php endif; ?>
         
         <div class="mt-auto pt-3 border-top">
-          <a href="../controllers/LogoutController.php" class="nav-link d-flex align-items-center gap-3 py-3 text-danger">
+          <a href="../controllers/LogoutController.php" class="nav-link d-flex align-items-center gap-3 py-3 text-danger d-md-none">
             <i class="fas fa-sign-out-alt" style="width: 24px; text-align: center;"></i>
             <span>🚪 Cerrar sesión</span>
           </a>
@@ -140,7 +169,7 @@ $badge = count($no_leidas);
       </div>
       <?php endif; ?>
       
-      <!-- Perfil de usuario (todas las pantallas) -->
+      <!-- Perfil de usuario (informativo para evitar duplicar "Cerrar sesión") -->
       <div class="dropdown">
         <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-display="static" aria-expanded="false">
           <i class="fas fa-user-circle me-2"></i>
@@ -148,8 +177,8 @@ $badge = count($no_leidas);
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
           <li><span class="dropdown-item-text small text-muted"><?= $tipo ?></span></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="../controllers/LogoutController.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a></li>
+          <li><hr class="dropdown-divider d-none d-md-block"></li>
+          <li class="d-none d-md-block"><a class="dropdown-item" href="../controllers/LogoutController.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a></li>
         </ul>
       </div>
     </div>
@@ -160,6 +189,22 @@ $badge = count($no_leidas);
 <style>
 .offcanvas {
   width: 280px;
+  max-width: 85vw;
+  background-color: #ffffff; /* Fondo sólido para no mezclar con la barra azul */
+}
+
+/* Asegurar que el offcanvas y su backdrop queden por encima de la navbar */
+/* Usar z-index por defecto de Bootstrap para evitar superposiciones indeseadas */
+/* offcanvas y backdrop se quedan con sus z-index nativos */
+/* Elevar un poco para garantizar que NO lo tape la cabecera */
+.offcanvas, .offcanvas-backdrop { z-index: 1065; }
+/* Backdrop no bloquea clics y no oscurece en exceso */
+.offcanvas-backdrop {
+  background-color: rgba(0,0,0,0.08) !important;
+  pointer-events: none;
+}
+
+.offcanvas {
   transition: transform 0.3s ease-in-out;
 }
 
@@ -281,6 +326,11 @@ body.dark #notif-list::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Asegurar clic en campana y usuario por encima de contenidos */
+.navbar.sticky-top{ z-index: 1020; position: sticky; }
+.dropdown-menu{ z-index: 1050; }
+.navbar .btn-link, .hamburger-btn, .btn-back{ position: relative; z-index: auto; }
+
 /* Forzar visibilidad del dropdown */
 .dropdown-menu.show {
   display: block !important;
@@ -345,60 +395,17 @@ body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); b
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../Public/js/notifications.js"></script>
 <script>
-// FORZAR dropdowns a funcionar SIEMPRE
-(function() {
-  'use strict';
-  
-  function forceDropdowns() {
-    // Esperar a Bootstrap
-    if (typeof bootstrap === 'undefined' || !bootstrap.Dropdown) {
-      setTimeout(forceDropdowns, 100);
-      return;
-    }
-    
-    console.log('🔧 Inicializando dropdowns forzadamente...');
-    
-    // Obtener todos los triggers
-    var triggers = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-    
-    triggers.forEach(function(trigger) {
-      try {
-        // Destruir instancia previa
-        var instance = bootstrap.Dropdown.getInstance(trigger);
-        if (instance) instance.dispose();
-        
-        // Crear nueva instancia FORZADA
-        var dropdown = new bootstrap.Dropdown(trigger, {
-          autoClose: true,
-          popperConfig: { strategy: 'fixed', modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport' } }] },
-          container: 'body' // sacar el menú fuera de contenedores con overflow
-        });
-        
-        // Forzar que el click funcione
-        trigger.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          dropdown.toggle();
-        });
-        
-        console.log('✅ Dropdown OK:', trigger.id);
-      } catch (err) {
-        console.error('❌ Error en dropdown:', trigger.id, err);
-      }
-    });
-  }
-  
-  // Ejecutar múltiples veces para asegurar
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', forceDropdowns);
-  } else {
-    forceDropdowns();
-  }
-  
-  window.addEventListener('load', function() {
-    setTimeout(forceDropdowns, 500);
+// Inicialización simple de dropdowns (sin prevenir eventos)
+document.addEventListener('DOMContentLoaded', function(){
+  if (typeof bootstrap === 'undefined' || !bootstrap.Dropdown) return;
+  document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function(el){
+    try {
+      var inst = bootstrap.Dropdown.getInstance(el);
+      if (inst) inst.dispose();
+      new bootstrap.Dropdown(el, { autoClose: true });
+    } catch(e) { /* noop */ }
   });
-})();
+});
 </script>
 
 <script>

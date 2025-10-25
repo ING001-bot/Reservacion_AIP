@@ -57,6 +57,14 @@ Tables
 /* ruptura de palabras para evitar desbordes en celdas */
 .table td, .table th{ word-break: break-word; overflow-wrap: anywhere; }
 
+/* Tabla de reportes: asegurar scroll horizontal en móviles y columnas legibles */
+#historial-reportes .table-responsive{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+@media (max-width: 600px){
+  #historial-reportes table.table{ font-size:.9rem; }
+  #historial-reportes table.table th, #historial-reportes table.table td{ padding:.5rem .4rem; white-space: nowrap; }
+  #historial-reportes table.table td:nth-child(8){ white-space: normal; }
+}
+
 /********************
 Cards & blocks
 ********************/
@@ -67,6 +75,11 @@ Cards & blocks
 /* Ajustes de márgenes compactos en móvil */
 @media (max-width: 600px){
   .card .card-body{ padding: 0.85rem; }
+}
+
+/* Reportes/Filtros: filtros colapsables sticky en móvil */
+@media (max-width: 600px){
+  #filtrosCollapse{ position: sticky; top: 60px; z-index: 10; background:#fff; padding-top:.5rem; padding-bottom:.5rem; border-bottom:1px solid #eef2f7; }
 }
 
 /********************
@@ -97,6 +110,17 @@ Filters and buttons groups
   .d-flex.gap-2>.btn, .d-flex.gap-2>form>.btn{ flex:1 1 48%; }
   .filters-actions{ flex-direction: column !important; align-items: stretch !important; }
   .filters-actions .btn{ width:100%; }
+}
+
+/* Reportes/Filtros: gráfico responsive */
+#chart-reservas-dia{ width:100% !important; max-width:100%; height: 240px !important; }
+@media (min-width: 576px){
+  #chart-reservas-dia{ height: 320px !important; }
+}
+
+/* Espaciado compacto para estadísticas en móvil */
+@media (max-width: 600px){
+  #historial-reportes .row.g-3{ --bs-gutter-y: .75rem; --bs-gutter-x: .75rem; }
 }
 
 /********************
