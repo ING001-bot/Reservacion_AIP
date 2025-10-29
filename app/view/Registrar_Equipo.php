@@ -180,9 +180,9 @@ $tipos = $tipoModel->listar();
 <?php if (!empty($mensaje)): ?>
 <script>
 Swal.fire({
-    icon: '<?= $mensaje_tipo === "success" ? "success" : "error" ?>',
-    title: '<?= $mensaje_tipo === "success" ? "Éxito" : "Error" ?>',
-    text: '<?= $mensaje ?>',
+    icon: <?= json_encode($mensaje_tipo === "success" ? "success" : "error") ?>,
+    title: <?= json_encode($mensaje_tipo === "success" ? "Éxito" : "Error") ?>,
+    text: <?= json_encode($mensaje, JSON_UNESCAPED_UNICODE) ?>,
     confirmButtonColor: '#3085d6'
 });
 </script>
@@ -197,9 +197,9 @@ Swal.fire({
       // Si SweetAlert está disponible via Admin.php, lo usamos para notificar también en vista embebida
       if (window.Swal) {
         Swal.fire({
-          icon: '<?= $mensaje_tipo === "success" ? "success" : "error" ?>',
-          title: '<?= $mensaje_tipo === "success" ? "Éxito" : "Error" ?>',
-          text: '<?= $mensaje ?>',
+          icon: <?= json_encode($mensaje_tipo === "success" ? "success" : "error") ?>,
+          title: <?= json_encode($mensaje_tipo === "success" ? "Éxito" : "Error") ?>,
+          text: <?= json_encode($mensaje, JSON_UNESCAPED_UNICODE) ?>,
           confirmButtonColor: '#3085d6'
         });
       }

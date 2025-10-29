@@ -45,6 +45,25 @@ class VerificationService {
                     return ['success' => true, 'code' => $code];
                 }
             }
+            // Fallback de desarrollo: si Twilio devuelve 401/Authenticate y allow_dev_mode=true, permitir continuar sin SMS
+            $cfgPath = __DIR__ . '/../config/twilio.php';
+            $allowDev = false;
+            if (file_exists($cfgPath)) {
+                $twCfg = require $cfgPath;
+                $allowDev = !empty($twCfg['allow_dev_mode']);
+            }
+            $errText = '';
+            $errCode = null;
+            if (is_array($result)) { $errText = (string)($result['error'] ?? ''); $errCode = $result['code'] ?? null; }
+            $waErrText = is_array($waRes ?? null) ? (string)($waRes['error'] ?? '') : '';
+
+            $isAuthError = (stripos($errText, 'Authenticate') !== false) || (stripos($waErrText, 'Authenticate') !== false) || (in_array((int)$errCode, [401, 20003], true));
+            if ($allowDev && $isAuthError) {
+                // No borrar el código; permitir continuar en entorno de desarrollo
+                return ['success' => true, 'code' => $code, 'dev_mode' => true];
+            }
+
+            // Si no hay fallback válido, limpiar y devolver error
             $del = $this->db->prepare('DELETE FROM verification_codes WHERE user_id = ? AND code = ? AND action_type = ?');
             $del->execute([(int)$userId, $code, $actionType]);
             $detailSms = is_array($result) ? trim(($result['error'] ?? '').' '.(isset($result['code']) ? ('(code: '.$result['code'].')') : '')) : '';

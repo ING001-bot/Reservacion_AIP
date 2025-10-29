@@ -17,10 +17,31 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
   <link rel="stylesheet" href="../../Public/css/brand.css">
   <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="../../Public/css/historial_global.css?v=<?php echo time(); ?>">
+  <style>
+    html, body{ overflow-x:hidden; }
+    #historial-reportes .btn-group-wrap{ display:flex; gap:.5rem; flex-wrap:wrap; }
+    #historial-reportes .table-responsive.mobile-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    #historial-reportes .table-responsive.mobile-scroll::-webkit-scrollbar{ height:8px; }
+    #historial-reportes .table-responsive.mobile-scroll::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px; }
+    #historial-reportes .table-nowrap th, #historial-reportes .table-nowrap td{ white-space:nowrap; }
+    #tabla-historial{ min-width: 760px; }
+    /* Evitar sobre-salida en móvil */
+    #historial-reportes{ max-width:100vw; overflow-x:hidden; }
+    @media (max-width: 576px){
+      .content.container{ max-width:100% !important; padding-left:12px !important; padding-right:12px !important; }
+      #historial-reportes .card.p-3{ padding: .75rem !important; }
+      #historial-reportes .fs-3{ font-size: 1.5rem !important; }
+      #historial-reportes .content .row.g-3{ --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+      #historial-reportes .position-sticky{ left:0; right:0; width:100%; }
+      #historial-reportes .d-flex.gap-2{ row-gap:.5rem; }
+    }
+    /* Charts 100% ancho contenedor */
+    #historial-reportes canvas{ max-width:100% !important; width:100% !important; height:auto !important; }
+  </style>
 </head>
 <body>
   <?php require __DIR__ . '/partials/navbar.php'; ?>
-  <main class="container my-3 content" id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
+  <main class="container-fluid my-3 content" id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
 <?php else: ?>
   <div id="historial-reportes" data-role="<?php echo htmlspecialchars($rol, ENT_QUOTES, 'UTF-8'); ?>">
 <?php endif; ?>
@@ -35,8 +56,8 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
     </div>
 
     <!-- Barra sticky de filtros para móvil -->
-    <div class="d-md-none position-sticky" style="top:60px; z-index:9;">
-      <div class="d-flex justify-content-stretch gap-2 mb-2">
+    <div class="d-md-none position-sticky bg-white shadow-sm" style="top:60px; z-index:9;">
+      <div class="d-flex justify-content-stretch gap-2 mb-2 px-2 py-2">
         <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse" aria-expanded="false" aria-controls="filtrosCollapse">
           <i class="fas fa-sliders-h me-1"></i> Filtros
         </button>
@@ -106,59 +127,30 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
             <button type="button" id="btn-reset" class="btn btn-outline-secondary">Limpiar</button>
           </div>
         </form>
-          <label class="form-label">Profesor</label>
-          <input type="text" class="form-control" name="profesor" placeholder="Ej: Juan Pérez">
-          <div class="form-text">Coincidencia por nombre</div>
-        </div>
-        <div class="col-6 col-md-2">
-          <label class="form-label">Tipo</label>
-          <select name="tipo" class="form-select">
-            <option value="">Todos</option>
-            <option value="reserva">Reserva</option>
-            <option value="prestamo">Préstamo</option>
-          </select>
-          <div class="form-text">Clase de movimiento</div>
-        </div>
-        <div class="col-6 col-md-2">
-          <label class="form-label">Estado</label>
-          <select name="estado" class="form-select">
-            <option value="">Todos</option>
-            <option value="Activa">Programada</option>
-            <option value="Cancelada">Cancelada</option>
-            <option value="Prestado">Prestado</option>
-            <option value="Devuelto">Devuelto</option>
-          </select>
-          <div class="form-text">Situación del registro</div>
-        </div>
-        <div class="col-12 col-md-12 d-flex gap-2 justify-content-end">
-          <button type="submit" class="btn btn-brand">Aplicar filtros</button>
-          <button type="button" id="btn-reset" class="btn btn-outline-secondary">Limpiar</button>
-        </div>
-      </form>
       </div>
     </section>
 
     <section class="mb-3">
       <div class="row g-3">
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
           <div class="card shadow-sm p-3 h-100">
             <div class="text-muted">Reservas</div>
             <div class="fs-3 fw-bold" id="stat-reservas">0</div>
           </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
           <div class="card shadow-sm p-3 h-100">
             <div class="text-muted">Cancelaciones</div>
             <div class="fs-3 fw-bold" id="stat-cancelaciones">0</div>
           </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
           <div class="card shadow-sm p-3 h-100">
             <div class="text-muted">Préstamos</div>
             <div class="fs-3 fw-bold" id="stat-prestamos">0</div>
           </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
           <div class="card shadow-sm p-3 h-100">
             <div class="text-muted">Horas Reservadas</div>
             <div class="fs-3 fw-bold" id="stat-horas">0</div>
@@ -210,9 +202,9 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
           <button class="btn btn-outline-brand" id="btn-export-pdf">Exportar PDF</button>
         </div>
       </div>
-      <div class="table-responsive">
-        <table class="table table-striped align-middle" id="tabla-historial">
-          <thead class="table-brand">
+      <div class="table-responsive mobile-scroll">
+        <table class="table table-striped align-middle table-nowrap" id="tabla-historial">
+          <thead class="table-brand sticky-top" style="position: sticky; top: 0; z-index: 5;">
             <tr>
               <th>Fecha</th>
               <th>Inicio</th>

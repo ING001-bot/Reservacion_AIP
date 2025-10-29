@@ -41,6 +41,9 @@ $vista = $_GET['view'] ?? 'inicio';
       case 'password':
           include 'Cambiar_Contraseña.php';
           break;
+      case 'tommibot':
+          include 'Tommibot.php';
+          break;
       default: ?>
           <div class="text-center mb-4">
               <h1 class="fw-bold text-brand">👨‍🏫 Panel del Profesor</h1>
@@ -86,6 +89,8 @@ $vista = $_GET['view'] ?? 'inicio';
                       </div>
                   </div>
               </div>
+
+              
           </div>
   <?php
   }

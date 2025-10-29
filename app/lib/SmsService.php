@@ -10,16 +10,18 @@ class SmsService {
     private $client;
     private $fromNumber;
     private $whatsappFrom;
+    private $messagingServiceSid;
 
     public function __construct() {
         $config = require __DIR__ . '/../config/twilio.php';
-        $sid = trim((string)($config['account_sid'] ?? ''));
-        $token = trim((string)($config['auth_token'] ?? ''));
-        $this->fromNumber = trim((string)($config['from_number'] ?? ''));
-        $this->whatsappFrom = trim((string)($config['whatsapp_from'] ?? ''));
+        $sid = trim((string)(getenv('TWILIO_ACCOUNT_SID') ?: ($config['account_sid'] ?? '')));
+        $token = trim((string)(getenv('TWILIO_AUTH_TOKEN') ?: ($config['auth_token'] ?? '')));
+        $this->fromNumber = trim((string)(getenv('TWILIO_FROM') ?: ($config['from_number'] ?? '')));
+        $this->whatsappFrom = trim((string)(getenv('TWILIO_WHATSAPP_FROM') ?: ($config['whatsapp_from'] ?? '')));
+        $this->messagingServiceSid = trim((string)(getenv('TWILIO_MESSAGING_SERVICE_SID') ?: ($config['messaging_service_sid'] ?? '')));
 
-        if ($sid === '' || $token === '' || $this->fromNumber === '') {
-            throw new Exception('Twilio no configurado. Completa account_sid, auth_token y from_number en app/config/twilio.php');
+        if ($sid === '' || $token === '' || ($this->fromNumber === '' && $this->messagingServiceSid === '')) {
+            throw new Exception('Twilio no configurado. Completa account_sid, auth_token y from_number o messaging_service_sid en app/config/twilio.php');
         }
         $this->client = new Client($sid, $token);
     }
@@ -35,10 +37,10 @@ class SmsService {
         try {
             // Normalizar número (E.164, Perú por defecto si aplica)
             $to = $this->normalizeNumber($to);
-            $twMsg = $this->client->messages->create($to, [
-                'from' => $this->fromNumber,
-                'body' => $message
-            ]);
+            $params = [ 'body' => $message ];
+            if ($this->messagingServiceSid !== '') { $params['messagingServiceSid'] = $this->messagingServiceSid; }
+            else { $params['from'] = $this->fromNumber; }
+            $twMsg = $this->client->messages->create($to, $params);
             return [
                 'success' => true,
                 'message' => 'Mensaje enviado correctamente',

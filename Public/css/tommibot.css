@@ -1,0 +1,44 @@
+/* Estilos del módulo Tommibot */
+:root{
+  --tb-bg:#f7f9fc; --tb-accent:#1E6BD6; --tb-accent-2:#0b5ed7; --tb-text:#1f2937; --tb-muted:#6b7280;
+}
+.tbm-wrap{ max-width: 900px; margin:0 auto; }
+.tbm-card{ background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(2,6,23,.08); overflow:hidden; border:1px solid #eef2f7; }
+.tbm-header{ display:flex; align-items:center; gap:12px; padding:16px 18px; background:linear-gradient(135deg, #e8f1ff, #ffffff); border-bottom:1px solid #e8eef7; }
+.tbm-avatar{ width:40px; height:40px; border-radius:12px; background:var(--tb-accent); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; box-shadow:0 6px 16px rgba(30,107,214,.25); }
+.tbm-title{ font-weight:800; color:var(--tb-text); margin:0; }
+.tbm-sub{ color:var(--tb-muted); font-size:.9rem; }
+
+.tbm-body{ display:grid; grid-template-columns: 1fr 320px; gap:16px; padding:18px; }
+@media (max-width: 992px){ .tbm-body{ grid-template-columns:1fr; } }
+
+.tbm-chat{ background:var(--tb-bg); border:1px solid #e5ecf6; border-radius:14px; padding:14px; height:520px; display:flex; flex-direction:column; }
+.tbm-msgs{ flex:1; overflow-y:auto; padding:4px; display:flex; flex-direction:column; gap:10px; }
+.tbm-msg{ max-width:80%; padding:10px 12px; border-radius:12px; font-size:.95rem; line-height:1.35; box-shadow:0 2px 6px rgba(2,6,23,.06); }
+.tbm-msg.user{ margin-left:auto; background:#fff; border:1px solid #e5e7eb; }
+.tbm-msg.bot{ background:#e8f1ff; border:1px solid #d8e6ff; }
+.tbm-time{ display:block; font-size:.75rem; color:#94a3b8; margin-top:4px; }
+
+.tbm-input{ display:flex; gap:8px; margin-top:12px; }
+.tbm-input .form-control{ border-radius:12px; padding:.75rem .9rem; }
+.tbm-btn{ border-radius:12px; font-weight:700; }
+.tbm-voice{ display:flex; align-items:center; gap:8px; }
+.tbm-voice .state{ font-size:.8rem; color:var(--tb-muted); }
+
+.tbm-help{ border:1px dashed #dbe4f3; border-radius:14px; padding:12px; }
+.tbm-help h6{ font-weight:800; color:var(--tb-text); }
+.tbm-help ul{ margin:0; padding-left:18px; }
+.tbm-help li{ margin:6px 0; color:#374151; }
+
+.tbm-chip{ display:inline-block; background:#fff; border:1px solid #e4e7ec; border-radius:9999px; padding:.35rem .65rem; font-size:.85rem; margin:.2rem; cursor:pointer; }
+.tbm-chip:hover{ background:#f2f5fb; border-color:#d8deea; }
+
+/* Bot flotante opcional (no anclado por defecto) */
+  .tbm-fab{ position:fixed; right:72px; bottom:16px; background:var(--tb-accent); color:#fff; border-radius:9999px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(30,107,214,.35); border:none; z-index:1040; }
+  .tbm-fab:hover{ background:var(--tb-accent-2); }
+
+/* Panel flotante */
+.tbm-panel{ position:fixed; right:18px; bottom:86px; width:420px; max-width:92vw; height:560px; z-index:1040; display:none; }
+.tbm-panel.show{ display:block; animation: tbmSlideUp .18s ease-out; }
+@keyframes tbmSlideUp{ from{ transform: translateY(8px); opacity:.0; } to{ transform:none; opacity:1; } }
+@media (max-width: 520px){ .tbm-panel{ right:10px; bottom:76px; height:70vh; } }

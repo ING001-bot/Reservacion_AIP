@@ -11,4 +11,5 @@ return [
     // Ejemplo: +16205518379 (formato E.164)
     'from_number' => '+16205518379',
     'whatsapp_from' => '+14155238886'
+    , 'allow_dev_mode' => false
 ];

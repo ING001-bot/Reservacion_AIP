@@ -395,6 +395,8 @@ body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); b
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../Public/js/notifications.js"></script>
 <script>
+// Exponer nombre del usuario para Tommibot (saludo por voz)
+window.__tbUserName = <?= json_encode($nombre, JSON_UNESCAPED_UNICODE) ?>;
 // Inicialización simple de dropdowns (sin prevenir eventos)
 document.addEventListener('DOMContentLoaded', function(){
   if (typeof bootstrap === 'undefined' || !bootstrap.Dropdown) return;
@@ -407,6 +409,52 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
+
+<?php if ($tipo === 'Profesor' && strtolower($view ?? '') !== 'tommibot'): ?>
+  <link rel="stylesheet" href="../../Public/css/tommibot.css?v=<?= time() ?>">
+  <button id="tbm-fab" class="tbm-fab" title="Abrir Tommibot"><i class="fas fa-robot"></i></button>
+  <div id="tbm-panel" class="tbm-panel">
+    <div class="tbm-card">
+      <div class="tbm-header">
+        <div class="tbm-avatar">T</div>
+        <div>
+          <h6 class="tbm-title mb-0">Tommibot</h6>
+          <div class="tbm-sub">Asistente para docentes</div>
+        </div>
+        <button type="button" id="tbm-close" class="btn btn-sm btn-outline-secondary ms-auto">Cerrar</button>
+      </div>
+      <div class="tbm-body" style="grid-template-columns:1fr; padding:14px;">
+        <div class="tbm-chat" style="height:440px;">
+          <div id="tbm-msgs" class="tbm-msgs"></div>
+          <div class="tbm-input">
+            <input id="tbm-input" class="form-control" placeholder="Escribe tu consulta..." autocomplete="off">
+            <button id="tbm-send" class="btn btn-brand tbm-btn" type="button">Enviar</button>
+          </div>
+          <div class="mt-2 d-flex align-items-center justify-content-between">
+            <div class="tbm-voice">
+              <button id="tbm-mic" class="btn btn-outline-brand btn-sm tbm-btn" type="button"><i class="fas fa-microphone"></i> Hablar</button>
+              <span id="tbm-mic-state" class="state">Pulsa para hablar</span>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="tbm-speak" checked>
+              <label class="form-check-label" for="tbm-speak">Leer respuestas</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../../Public/js/tommibot.js?v=<?= time() ?>"></script>
+  <script>
+    (function(){
+      var fab = document.getElementById('tbm-fab');
+      var panel = document.getElementById('tbm-panel');
+      var closeBtn = document.getElementById('tbm-close');
+      if (fab && panel){ fab.addEventListener('click', function(){ panel.classList.add('show'); }); }
+      if (closeBtn && panel){ closeBtn.addEventListener('click', function(){ panel.classList.remove('show'); }); }
+    })();
+  </script>
+<?php endif; ?>
 
 <script>
 // Ocultar enlaces/botones "Volver" o "Atrás" en pantallas pequeñas
