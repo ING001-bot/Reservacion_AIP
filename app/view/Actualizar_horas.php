@@ -16,31 +16,40 @@ if ($id_aula && $fecha) {
         // 13:00 hasta 18:15 (para que el fin sea 19:00)
         $t_inicio = strtotime('13:00');
         $t_ult_inicio = strtotime('18:15');
-    } else {
-        // mañana: 06:00 hasta 12:45
-        $t_inicio = strtotime('06:00');
-        $t_ult_inicio = strtotime('12:45');
-    }
+        while ($t_inicio <= $t_ult_inicio) {
+            $inicio_hm = date('H:i', $t_inicio);
+            $fin_hm    = date('H:i', $t_inicio + $intervalo);
+            $inicio = $inicio_hm . ":00";
+            $fin    = $fin_hm . ":00";
 
-    while ($t_inicio <= $t_ult_inicio) {
-        $inicio_hm = date('H:i', $t_inicio);
-        $fin_hm    = date('H:i', $t_inicio + $intervalo);
-        $inicio = $inicio_hm . ":00";
-        $fin    = $fin_hm . ":00";
-
-        $ocupada = false;
-        foreach ($reservas as $res) {
-            // Punto ocupado si está dentro de [hora_inicio, hora_fin] (inclusivo)
-            if ($inicio >= $res['hora_inicio'] && $inicio <= $res['hora_fin']) {
-                $ocupada = true;
-                break;
+            $ocupada = false;
+            foreach ($reservas as $res) {
+                if ($inicio >= $res['hora_inicio'] && $inicio <= $res['hora_fin']) { $ocupada = true; break; }
             }
+            $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+            echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            $t_inicio += $intervalo;
         }
+    } else {
+        // mañana: 06:00 y 06:45, luego desde 07:00 cada 45 minutos hasta 12:45
+        $morning_starts = ['06:00','06:45'];
+        $s = strtotime('07:00');
+        $last = strtotime('12:45');
+        while ($s <= $last) { $morning_starts[] = date('H:i',$s); $s += 45*60; }
+        // Asegurar 12:45 explícitamente
+        if (!in_array('12:45', $morning_starts, true)) { $morning_starts[] = '12:45'; }
 
-        $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-        echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
-
-        $t_inicio += $intervalo;
+        foreach ($morning_starts as $inicio_hm) {
+            $inicio = $inicio_hm . ":00";
+            $fin_hm = date('H:i', strtotime($inicio_hm) + 45*60);
+            $fin    = $fin_hm . ":00";
+            $ocupada = false;
+            foreach ($reservas as $res) {
+                if ($inicio >= $res['hora_inicio'] && $inicio <= $res['hora_fin']) { $ocupada = true; break; }
+            }
+            $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+            echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+        }
     }
     // Agregar casilla de las 19:00 como punto final cuando es turno tarde
     if ($turno === 'tarde') {

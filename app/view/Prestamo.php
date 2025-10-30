@@ -619,18 +619,18 @@ setTimeout(() => {
         let otpOk = false;
         if (form && fechaInput) {
             form.addEventListener('submit', async function(e) {
+                e.preventDefault();
                 const fechaSeleccionada = fechaInput.value;
                 if (!fechaSeleccionada) return;
-                
+
                 // Validar que la fecha sea al menos 1 día después de hoy
                 const hoy = new Date();
                 hoy.setHours(0, 0, 0, 0);
                 const mañana = new Date(hoy);
                 mañana.setDate(mañana.getDate() + 1);
                 const fecha = new Date(fechaSeleccionada + 'T00:00:00');
-                
+
                 if (fecha < mañana) {
-                    e.preventDefault();
                     Swal.fire({
                         icon: 'error',
                         title: '⚠️ Fecha no permitida',
@@ -639,7 +639,22 @@ setTimeout(() => {
                     });
                     return false;
                 }
-                // La verificación OTP se gestiona con el modal del servidor; no duplicar en frontend.
+
+                // Confirmación bonita
+                Swal.fire({
+                    title: '¿Confirmar solicitud de préstamo?',
+                    text: 'Se registrará tu solicitud con los equipos seleccionados.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, enviar',
+                    cancelButtonText: 'Volver',
+                    confirmButtonColor: '#16a34a',
+                    cancelButtonColor: '#1e6bd6'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         }
         // Flujo OTP duplicado eliminado; se mantiene solo el modal del servidor.

@@ -7,9 +7,10 @@
   const btnManana = document.getElementById('btn-manana');
   const btnTarde = document.getElementById('btn-tarde');
   const calendarios = document.getElementById('calendarios');
-  const pdfStart = document.getElementById('pdf-start-week');
-  const pdfTurno = document.getElementById('pdf-turno');
-  const pdfProf = document.getElementById('pdf-prof');
+  const pdfStart = document.getElementById('pdf-start-week') || document.getElementById('uni-pdf-start-week');
+  const pdfTurno = document.getElementById('pdf-turno') || document.getElementById('uni-pdf-turno');
+  // En el unificado usamos 'uni-pdf-q' para búsquedas; si existe, úsalo como destino del filtro
+  const pdfProf = document.getElementById('pdf-prof') || document.getElementById('uni-pdf-q');
   const profFilter = document.getElementById('calendar-prof-filter');
   const weekRangeDisplay = document.getElementById('week-range-display');
 
@@ -49,11 +50,11 @@
     button.classList.add('active');
   }
 
-  btnManana.addEventListener('click', ()=>{ turno='manana'; setActiveTurn(btnManana); pdfTurno.value='manana'; loadCalendar(); });
-  btnTarde.addEventListener('click', ()=>{ turno='tarde'; setActiveTurn(btnTarde); pdfTurno.value='tarde'; loadCalendar(); });
+  btnManana.addEventListener('click', ()=>{ turno='manana'; setActiveTurn(btnManana); if (pdfTurno) pdfTurno.value='manana'; loadCalendar(); });
+  btnTarde.addEventListener('click', ()=>{ turno='tarde'; setActiveTurn(btnTarde); if (pdfTurno) pdfTurno.value='tarde'; loadCalendar(); });
 
-  btnPrev.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value=startOfWeek; pdfStart.value=startOfWeek; updateWeekRangeDisplay(startOfWeek); loadCalendar(); });
-  btnNext.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value=startOfWeek; pdfStart.value=startOfWeek; updateWeekRangeDisplay(startOfWeek); loadCalendar(); });
+  btnPrev.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, -7); startInput.value=startOfWeek; if (pdfStart) pdfStart.value=startOfWeek; updateWeekRangeDisplay(startOfWeek); loadCalendar(); });
+  btnNext.addEventListener('click', ()=>{ startOfWeek = shiftWeek(startOfWeek, 7); startInput.value=startOfWeek; if (pdfStart) pdfStart.value=startOfWeek; updateWeekRangeDisplay(startOfWeek); loadCalendar(); });
 
   function shiftWeek(dateStr, delta){
     const d = new Date(dateStr+'T00:00:00');
@@ -67,7 +68,7 @@
   async function loadCalendar(){
     try{
       const prof = (profFilter?.value || '').trim();
-      pdfProf.value = prof;
+      if (pdfProf) pdfProf.value = prof;
       const url = `../../app/api/HistorialGlobalCalendario_fetch.php?start=${startOfWeek}&turno=${turno}${prof?`&profesor=${encodeURIComponent(prof)}`:''}`;
       const resp = await fetch(url);
       if(!resp.ok){ const t=await resp.text(); throw new Error(`HTTP ${resp.status} – ${t.slice(0,200)}`); }

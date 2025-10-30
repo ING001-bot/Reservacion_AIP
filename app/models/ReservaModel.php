@@ -10,6 +10,14 @@ class ReservaModel {
         return $this->db;
     }
 
+    // Obtener una reserva específica perteneciente a un usuario
+    public function obtenerReservaDeUsuario(int $id_reserva, int $id_usuario): ?array {
+        $stmt = $this->db->prepare("SELECT id_reserva, id_aula, id_usuario, fecha, hora_inicio, hora_fin FROM reservas WHERE id_reserva = ? AND id_usuario = ?");
+        $stmt->execute([$id_reserva, $id_usuario]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public function crearReserva($id_aula, $id_usuario, $fecha, $hora_inicio, $hora_fin) {
         $stmt = $this->db->prepare("
             INSERT INTO reservas (id_aula, id_usuario, fecha, hora_inicio, hora_fin)

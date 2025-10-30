@@ -1,12 +1,13 @@
-document.addEventListener('DOMContentLoaded', () => {
+(function(){
+function init(){
     const fechaInput = document.getElementById('fecha-select');
     const aulaSelect = document.getElementById('aula-select');
     const cuadroHoras = document.getElementById('cuadro-horas');
     const fechaBadge = document.getElementById('fecha-badge');
     const btnReservar = document.getElementById('btn-reservar');
     const formReserva = document.getElementById('form-reserva');
-    const horaInicioInput = formReserva.querySelector("[name='hora_inicio']");
-    const horaFinInput = formReserva.querySelector("[name='hora_fin']");
+    const horaInicioInput = formReserva ? formReserva.querySelector("[name='hora_inicio']") : null;
+    const horaFinInput = formReserva ? formReserva.querySelector("[name='hora_fin']") : null;
     const btnTurnoManana = document.getElementById('btn-turno-manana');
     const btnTurnoTarde = document.getElementById('btn-turno-tarde');
     const btnLimpiarSel = document.getElementById('btn-limpiar-seleccion');
@@ -33,18 +34,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Restaurar resaltado si aplica
                 aplicarResaltado();
             })
-            .catch(() => {
-                // Si no existe el endpoint, dejamos el contenido actual o mensaje
-                if (!cuadroHoras.innerHTML.trim()) {
-                    cuadroHoras.innerHTML = "<small class='text-muted'>No se pudo cargar disponibilidad. Ingresa horas manualmente.</small>";
-                }
-            });
-    }
 
-    // Inicializar botones de turno
-    function actualizarBotonesTurno() {
-        if (btnTurnoManana && btnTurnoTarde) {
-            btnTurnoManana.classList.toggle('active', turno === 'manana');
+        function actualizarHoras() {
+            const fecha = fechaInput.value;
+            const aula = aulaSelect.value;
+            if (!fecha || !aula) {
+                cuadroHoras.innerHTML = "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
+                return;
+            }
+            fechaBadge.textContent = fecha;
+            fetch(`actualizar_horas.php?id_aula=${encodeURIComponent(aula)}&fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}`)
+                .then(res => res.ok ? res.text() : Promise.reject(new Error('No se pudo cargar disponibilidad')))
+                .then(html => {
+                    cuadroHoras.innerHTML = html;
+                    // Restaurar resaltado si aplica
+                    aplicarResaltado();
+                })
+                .catch(error => {
+                    console.error(error);
+                    // Si no existe el endpoint, dejamos el contenido actual o mensaje
+                    if (!cuadroHoras.innerHTML.trim()) {
+                        cuadroHoras.innerHTML = "<small class='text-muted'>No se pudo cargar disponibilidad. Ingresa horas manualmente.</small>";
+                    }
+                });
             btnTurnoTarde.classList.toggle('active', turno === 'tarde');
         }
     }
@@ -56,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     aulaSelect.addEventListener('change', actualizarHoras);
 
     // Selección de franja horaria: botones individuales HH:MM
-    cuadroHoras.addEventListener('click', (e) => {
+    if (cuadroHoras) cuadroHoras.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
         if (btn.classList.contains('btn-danger')) return; // ocupada
@@ -106,8 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function aplicarResaltado() {
         // Actualizar inputs y texto
-        horaInicioInput.value = selInicio || '';
-        horaFinInput.value = selFin || '';
+        if (horaInicioInput) horaInicioInput.value = selInicio || '';
+        if (horaFinInput) horaFinInput.value = selFin || '';
         if (txtInicio) txtInicio.textContent = selInicio || '—';
         if (txtFin) txtFin.textContent = selFin || '—';
 
@@ -163,35 +175,33 @@ document.addEventListener('DOMContentLoaded', () => {
         aplicarResaltado();
     });
 
-    // Confirmación al reservar
-    btnReservar.addEventListener('click', () => {
-        const aula = formReserva.querySelector("[name='id_aula']").value;
-        const fecha = formReserva.querySelector("[name='fecha']").value;
-        const horaInicio = horaInicioInput.value;
-        const horaFin = horaFinInput.value;
+    function confirmarYEnviar() {
+        if (!formReserva) return;
+        const aulaEl = formReserva.querySelector("[name='id_aula']");
+        const fechaEl = formReserva.querySelector("[name='fecha']");
+        const aula = aulaEl ? aulaEl.value : '';
+        const fecha = fechaEl ? fechaEl.value : '';
+        const horaInicio = horaInicioInput ? horaInicioInput.value : '';
+        const horaFin = horaFinInput ? horaFinInput.value : '';
 
         if (!aula || !fecha || !horaInicio || !horaFin) {
             Swal.fire("⚠️ Campos incompletos", "Por favor completa todos los campos antes de reservar.", "warning");
             return;
         }
 
-        // Validar que la fecha sea al menos 1 día después de hoy
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         const mañana = new Date(hoy);
         mañana.setDate(mañana.getDate() + 1);
         const fechaSeleccionada = new Date(fecha + 'T00:00:00');
-        
         if (fechaSeleccionada < mañana) {
             Swal.fire("⚠️ Fecha no permitida", "Solo puedes reservar a partir del día siguiente. Las reservas deben hacerse con anticipación.", "error");
             return;
         }
-
         if (horaInicio >= horaFin) {
             Swal.fire("⚠️ Error en horas", "La hora de inicio debe ser menor a la hora de fin.", "error");
             return;
         }
-
         Swal.fire({
             title: "¿Confirmar reserva?",
             text: "Se registrará la reserva con los datos seleccionados.",
@@ -199,19 +209,47 @@ document.addEventListener('DOMContentLoaded', () => {
             showCancelButton: true,
             confirmButtonText: "Sí, reservar",
             cancelButtonText: "Cancelar",
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33"
+            confirmButtonColor: "#16a34a",
+            cancelButtonColor: "#1e6bd6"
         }).then((result) => {
             if (result.isConfirmed) {
-                btnReservar.disabled = true;
+                if (btnReservar) btnReservar.disabled = true;
+                allowSubmit = true;
                 formReserva.submit();
             }
         });
+    }
+    // Confirmación al reservar con click del botón
+    if (btnReservar) btnReservar.addEventListener('click', (e) => {
+        e.preventDefault();
+        confirmarYEnviar();
+    });
+    // Flag para permitir el envío programático después de confirmar
+    let allowSubmit = false;
+    // Interceptar submit del formulario (Enter o envíos programáticos)
+    if (formReserva) formReserva.addEventListener('submit', (e) => {
+        if (!allowSubmit) {
+            e.preventDefault();
+            confirmarYEnviar();
+        }
+    }, true); // usar captura para asegurar bloqueo temprano
+
+    // Forzar confirmación también con Enter en cualquier campo del formulario
+    if (formReserva) formReserva.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmarYEnviar();
+        }
     });
 
     // Cancelar con motivo
     document.querySelectorAll(".cancelar-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
+            // Si está deshabilitado por ventana de tiempo, avisar y salir
+            if (btn.classList.contains('disabled') || btn.hasAttribute('disabled')) {
+                Swal.fire({ icon:'info', title:'La reserva ya ha pasado', text:'Las cancelaciones solo se permiten hasta 1 hora antes del inicio.' });
+                return;
+            }
             const formCancelar = e.target.closest("form");
             Swal.fire({
                 title: "Cancelar reserva",

@@ -167,6 +167,35 @@ class ReservaController {
             return false;
         }
 
+        // Ventana de cancelación: hasta 1 hora antes del inicio. Si ya pasó la fecha/hora, no permitir.
+        try {
+            date_default_timezone_set('America/Lima');
+            $reserva = $this->model->obtenerReservaDeUsuario((int)$id_reserva, (int)$id_usuario);
+            if (!$reserva) {
+                $this->mensaje = "⚠️ No se encontró la reserva o no te pertenece.";
+                $this->tipo = "danger";
+                return false;
+            }
+            // Construir DateTime de inicio
+            $fecha = $reserva['fecha'];
+            $hora_inicio = $reserva['hora_inicio'];
+            if (strlen($hora_inicio) === 5) { $hora_inicio .= ':00'; }
+            $inicio = new DateTime($fecha . ' ' . $hora_inicio, new \DateTimeZone('America/Lima'));
+            $limite = (clone $inicio)->modify('-1 hour');
+            $ahora = new DateTime('now', new \DateTimeZone('America/Lima'));
+
+            if ($ahora > $limite) {
+                $this->mensaje = "⛔ No puedes cancelar esta reserva. Las cancelaciones solo se permiten hasta 1 hora antes del inicio.";
+                $this->tipo = "danger";
+                return false;
+            }
+        } catch (\Throwable $e) {
+            // Si algo falla al validar tiempo, por seguridad no permitir
+            $this->mensaje = "⛔ No se pudo validar la ventana de cancelación. Inténtalo más tarde.";
+            $this->tipo = "danger";
+            return false;
+        }
+
         $ok = $this->model->cancelarReserva($id_reserva, $id_usuario, $motivo);
         if ($ok) {
             $this->mensaje = "✅ Reserva cancelada correctamente.";

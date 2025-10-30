@@ -12,6 +12,9 @@
   --border-soft: #d9e2f3;  /* bordes suaves */
   --shadow-brand: 0 12px 32px rgba(30, 107, 214, 0.15);
 
+  /* acento verde para degradados institucionales */
+  --accent-green: #16a34a;
+
   /* neutrales ampliados */
   --muted: #44516d;
   --panel: #ffffff;
@@ -83,6 +86,21 @@ p { color: var(--muted); }
 }
 .btn-ghost-brand:hover { color: var(--brand-dark); text-decoration: underline; }
 
+/* Botones segmentados estilo Docente (aplicar también en Encargado) */
+.segmented{ display:inline-flex; gap:0; border-radius: 12px; overflow: hidden; border:1px solid var(--brand-color); }
+.segmented .btn{ border:0; border-radius:0; background:#fff; color: var(--brand-color); font-weight:600; padding:.5rem 1rem; }
+.segmented .btn + .btn{ border-left:1px solid var(--brand-color); }
+.segmented .btn.active,
+.segmented .btn:active,
+.segmented .btn:focus,
+.btn-check:checked + .btn,
+.btn-outline-brand.active{
+  background: linear-gradient(135deg, var(--brand-color) 0%, var(--accent-green) 100%);
+  color:#fff !important; border-color: transparent !important;
+}
+.segmented.rounded .btn:first-child{ border-top-left-radius:12px; border-bottom-left-radius:12px; }
+.segmented.rounded .btn:last-child{ border-top-right-radius:12px; border-bottom-right-radius:12px; }
+
 /* ==============================
    📋 TABLAS
    ============================== */
@@ -101,6 +119,28 @@ p { color: var(--muted); }
 }
 
 .table-brand td, .table-brand th { border-color: var(--border-soft) !important; }
+/* Pulido global: alineación y espaciado uniforme */
+.table, table.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table th, .table td, table.table th, table.table td{
+  vertical-align: middle !important;
+  padding: .6rem .6rem !important;
+}
+/* Evitar cortes raros de encabezados y mantener legibilidad */
+.table thead th, table.table thead th{ white-space: nowrap; font-weight: 700; }
+/* Contenedores con scroll horizontal si hace falta */
+.table-responsive{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.table-responsive::-webkit-scrollbar{ height:8px; }
+.table-responsive::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px; }
+
+/* Evitar que las tarjetas/paneles oculten la barra horizontal */
+.card, .panel { overflow: visible; }
+.card .table-responsive, .panel .table-responsive{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* ==============================
    📑 FORMULARIOS

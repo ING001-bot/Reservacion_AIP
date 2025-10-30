@@ -33,6 +33,16 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
         <?php if ($rol === 'Administrador'): ?>
           <a class="btn btn-outline-brand btn-sm" href="Admin.php?view=reportes">📊 Reportes / Filtros</a>
         <?php endif; ?>
+        <?php if (in_array($rol, ['Administrador','Encargado','Profesor'])): ?>
+        <form id="form-pdf-unificado" action="../view/exportar_pdf.php" method="POST" target="_blank" class="m-0">
+          <input type="hidden" name="start_week" id="uni-pdf-start-week" value="<?php echo date('Y-m-d'); ?>">
+          <input type="hidden" name="turno" id="uni-pdf-turno" value="manana">
+          <input type="hidden" name="q" id="uni-pdf-q" value="">
+          <button type="submit" class="btn btn-success btn-sm" data-confirm="¿Descargar PDF de la semana visible?" data-confirm-ok="Sí, descargar" data-confirm-cancel="Volver">
+            <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+          </button>
+        </form>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -55,16 +65,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
             <button id="btn-manana" class="btn btn-brand btn-sm active">☀️ Mañana</button>
             <button id="btn-tarde" class="btn btn-outline-brand btn-sm">🌙 Tarde</button>
           </div>
-          <?php if (in_array($rol, ['Administrador','Encargado'])): ?>
-          <form id="form-pdf-global" action="../view/exportar_pdf.php" method="POST" target="_blank" class="m-0 w-100 w-md-auto">
-            <input type="hidden" name="start_week" id="pdf-start-week" value="<?php echo date('Y-m-d'); ?>">
-            <input type="hidden" name="turno" id="pdf-turno" value="manana">
-            <input type="hidden" name="profesor" id="pdf-prof" value="">
-            <button type="submit" class="btn btn-success btn-sm w-100">
-              <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
-            </button>
-          </form>
-          <?php endif; ?>
         </div>
       </div>
       <div class="d-flex gap-2 align-items-center justify-content-center mb-3">
@@ -96,16 +96,6 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
             </div>
             <?php endif; ?>
           </div>
-          <?php if (in_array($rol, ['Administrador','Encargado'])): ?>
-          <form id="form-pdf-equipos" action="../view/exportar_pdf_equipos.php" method="POST" target="_blank" class="m-0 w-100 w-md-auto">
-            <input type="hidden" name="start_week" id="eq-pdf-start-week" value="<?php echo date('Y-m-d'); ?>">
-            <input type="hidden" name="turno" id="eq-pdf-turno" value="manana">
-            <input type="hidden" name="q" id="eq-pdf-q" value="">
-            <button type="submit" class="btn btn-success btn-sm w-100">
-              <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
-            </button>
-          </form>
-          <?php endif; ?>
         </div>
 
         <div class="d-flex gap-2 align-items-center justify-content-center mb-2">
@@ -136,12 +126,35 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
     const tabEquipos = document.getElementById('tab-equipos');
     const vistaReserva = document.getElementById('vista-reserva');
     const vistaEquipos = document.getElementById('vista-equipos');
+    const formPdf = document.getElementById('form-pdf-unificado');
+    const uniWeek = document.getElementById('uni-pdf-start-week');
+    const uniTurno = document.getElementById('uni-pdf-turno');
+    const uniQ = document.getElementById('uni-pdf-q');
+
     if (!tabReserva || !tabEquipos || !vistaReserva || !vistaEquipos) return;
+
+    function syncReservaParams(){
+      const start = document.getElementById('start-of-week');
+      if (start && uniWeek) uniWeek.value = start.value || '';
+      if (formPdf) formPdf.action = '../view/exportar_pdf.php';
+      // Reserva no usa filtro q
+      if (uniQ) uniQ.value = '';
+    }
+
+    function syncEquiposParams(){
+      const start = document.getElementById('eq-start-of-week');
+      if (start && uniWeek) uniWeek.value = start.value || '';
+      if (formPdf) formPdf.action = '../view/exportar_pdf_equipos.php';
+      const q = document.getElementById('eq-search');
+      if (uniQ) uniQ.value = q ? (q.value || '') : '';
+    }
+
     tabReserva.addEventListener('click', function(){
       tabReserva.classList.add('btn-brand'); tabReserva.classList.remove('btn-outline-brand');
       tabEquipos.classList.remove('btn-brand'); tabEquipos.classList.add('btn-outline-brand');
       vistaReserva.style.display='block';
       vistaEquipos.style.display='none';
+      syncReservaParams();
     });
     tabEquipos.addEventListener('click', function(){
       tabEquipos.classList.add('btn-brand'); tabEquipos.classList.remove('btn-outline-brand');
@@ -152,7 +165,53 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
       if (window.HistorialEquipos && typeof window.HistorialEquipos.init === 'function') {
         window.HistorialEquipos.init();
       }
+      syncEquiposParams();
     });
+
+    // Sincronizar semana al cambiar flechas
+    const prevWeek = document.getElementById('prev-week');
+    const nextWeek = document.getElementById('next-week');
+    const eqPrevWeek = document.getElementById('eq-prev-week');
+    const eqNextWeek = document.getElementById('eq-next-week');
+    if (prevWeek) prevWeek.addEventListener('click', function(){ setTimeout(syncReservaParams, 0); });
+    if (nextWeek) nextWeek.addEventListener('click', function(){ setTimeout(syncReservaParams, 0); });
+    if (eqPrevWeek) eqPrevWeek.addEventListener('click', function(){ setTimeout(syncEquiposParams, 0); });
+    if (eqNextWeek) eqNextWeek.addEventListener('click', function(){ setTimeout(syncEquiposParams, 0); });
+
+    // Inicial: vista reserva
+    syncReservaParams();
+  })();
+  (function(){
+    var bm = document.getElementById('btn-manana');
+    var bt = document.getElementById('btn-tarde');
+    var ebm = document.getElementById('eq-btn-manana');
+    var ebt = document.getElementById('eq-btn-tarde');
+    var uniTurno = document.getElementById('uni-pdf-turno');
+    function setTurno(val){ if (uniTurno) uniTurno.value = val; }
+    if (bm && bt){
+      bm.addEventListener('click', function(){
+        bm.classList.add('btn-brand'); bm.classList.remove('btn-outline-brand');
+        bt.classList.remove('btn-brand'); bt.classList.add('btn-outline-brand');
+        setTurno('manana');
+      });
+      bt.addEventListener('click', function(){
+        bt.classList.add('btn-brand'); bt.classList.remove('btn-outline-brand');
+        bm.classList.remove('btn-brand'); bm.classList.add('btn-outline-brand');
+        setTurno('tarde');
+      });
+    }
+    if (ebm && ebt){
+      ebm.addEventListener('click', function(){
+        ebm.classList.add('btn-brand'); ebm.classList.remove('btn-outline-brand');
+        ebt.classList.remove('btn-brand'); ebt.classList.add('btn-outline-brand');
+        setTurno('manana');
+      });
+      ebt.addEventListener('click', function(){
+        ebt.classList.add('btn-brand'); ebt.classList.remove('btn-outline-brand');
+        ebm.classList.remove('btn-brand'); ebm.classList.add('btn-outline-brand');
+        setTurno('tarde');
+      });
+    }
   })();
   </script>
 <?php if (!defined('EMBEDDED_VIEW')): ?>

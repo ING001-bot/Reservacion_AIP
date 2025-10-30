@@ -30,67 +30,67 @@ $badge = count($no_leidas);
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
 <!-- Menú móvil -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
-  <div class="offcanvas-header bg-white border-bottom">
+<div class="offcanvas offcanvas-start bg-brand text-white" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
+  <div class="offcanvas-header bg-brand text-white border-0">
     <div class="d-flex align-items-center gap-3">
-      <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-        <i class="fas fa-user text-brand" style="font-size:1.4rem;"></i>
+      <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px; background: rgba(255,255,255,.15);">
+        <i class="fas fa-user text-white" style="font-size:1.4rem;"></i>
       </div>
       <div>
-        <div class="fw-semibold" style="line-height:1.1;"><?= $nombre ?></div>
-        <small class="text-muted"><?= $tipo ?></small>
+        <div class="fw-semibold text-white" style="line-height:1.1;"><?= $nombre ?></div>
+        <small class="text-white-50"><?= $tipo ?></small>
       </div>
     </div>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
   </div>
-  <div class="offcanvas-body p-0">
+  <div class="offcanvas-body p-0 text-white">
     <div class="d-flex flex-column h-100">
       <nav class="nav flex-column flex-grow-1 p-3">
-        <a href="../view/Dashboard.php" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Dashboard.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
           <span>🏠 Inicio</span>
         </a>
         <?php if ($tipo === 'Profesor'): ?>
-        <a href="../view/Profesor.php?view=reserva" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Profesor.php?view=reserva" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-calendar-check" style="width: 24px; text-align: center;"></i>
           <span>🗓 Reservas</span>
         </a>
-        <a href="../view/Profesor.php?view=prestamo" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Profesor.php?view=prestamo" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-laptop" style="width: 24px; text-align: center;"></i>
           <span>💻 Préstamos</span>
         </a>
-        <a href="../view/Profesor.php?view=historial" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Profesor.php?view=historial" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-history" style="width: 24px; text-align: center;"></i>
           <span>📜 Historial</span>
         </a>
-        <a href="../view/Profesor.php?view=password" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Profesor.php?view=password" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-key" style="width: 24px; text-align: center;"></i>
           <span>🔐 Cambiar contraseña</span>
         </a>
         <?php endif; ?>
         
         <?php if ($es_admin): ?>
-        <a href="../view/Admin.php" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Admin.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-gauge" style="width: 24px; text-align: center;"></i>
           <span>🏠 Inicio Admin</span>
         </a>
-        <a href="../view/HistorialReportes.php" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/HistorialReportes.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-chart-line" style="width: 24px; text-align: center;"></i>
           <span>📊 Reportes y Filtros</span>
         </a>
-        <a href="../view/HistorialGlobal.php" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/HistorialGlobal.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-calendar" style="width: 24px; text-align: center;"></i>
           <span>🗓 Historial Global</span>
         </a>
         <?php endif; ?>
         
         <?php if ($es_encargado): ?>
-        <a href="../view/Historial.php" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Historial.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-history" style="width: 24px; text-align: center;"></i>
           <span>📜 Historial</span>
         </a>
         
-        <a href="../view/Devolucion.php" class="nav-link d-flex align-items-center gap-3 py-3">
+        <a href="../view/Devolucion.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-undo" style="width: 24px; text-align: center;"></i>
           <span>🔄 Devolución</span>
         </a>
@@ -390,10 +390,19 @@ body.dark #notif-list::-webkit-scrollbar-thumb:hover {
 .hamburger-btn i{ font-size: 18px; }
 .hamburger-btn:hover{ background: var(--brand-light); color: var(--brand-dark); }
 body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); border-color: var(--border-soft); }
+
+/* --- Forzar scroll horizontal inferior en todas las tablas (efecto inmediato) --- */
+.table-responsive{ display:block; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding-bottom:6px; margin-bottom:-6px; }
+.table-responsive>table{ width:max-content; min-width:100%; }
+.table th, .table td{ white-space:nowrap; vertical-align:middle; }
+/* Utilidad para columnas que sí deban romper línea */
+.wrap{ white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../../Public/js/notifications.js"></script>
+<script src="../../Public/js/theme.js"></script>
 <script>
 // Exponer nombre del usuario para Tommibot (saludo por voz)
 window.__tbUserName = <?= json_encode($nombre, JSON_UNESCAPED_UNICODE) ?>;

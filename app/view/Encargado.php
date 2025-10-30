@@ -20,6 +20,7 @@ $vista = $_GET['view'] ?? 'inicio';
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../Public/css/brand.css">
+  <link rel="stylesheet" href="../../Public/css/admin_mobile.css?v=<?= time() ?>">
 </head>
 <body class="bg-light">
 <?php require __DIR__ . '/partials/navbar.php'; ?>

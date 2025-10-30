@@ -267,7 +267,7 @@ setTimeout(() => {
         <div class="col-lg-6">
             <div class="card card-brand shadow-lg">
                 <div class="card-body">
-                    <form id="form-reserva" method="POST" class="row g-3">
+                    <form id="form-reserva" method="POST" class="row g-3" onsubmit="return false;">
                         <input type="hidden" name="accion" value="guardar">
                         <div class="col-12">
                             <label class="form-label">Profesor</label>
@@ -322,24 +322,26 @@ setTimeout(() => {
                     <div id="cuadro-horas" class="d-flex flex-wrap gap-2">
                         <?php
                         if (!empty($fecha_default) && !empty($id_aula_selected)) {
-                            $t_inicio = strtotime("06:00");
-                            $t_fin = strtotime("19:00");
-                            $intervalo = 45 * 60;
-                            while ($t_inicio < $t_fin) {
-                                $inicio_hm = date("H:i", $t_inicio);
-                                $fin_hm = date("H:i", $t_inicio + $intervalo);
-                                $inicio = $inicio_hm . ":00";
-                                $fin = $fin_hm . ":00";
+                            // Slots: 06:00, 06:45 y desde 07:00 cada 45 minutos hasta 12:45 inclusive
+                            $starts = [];
+                            $starts[] = '06:00';
+                            $starts[] = '06:45';
+                            $s = strtotime('07:00');
+                            $endStart = strtotime('12:45');
+                            while ($s <= $endStart) { $starts[] = date('H:i', $s); $s += 45*60; }
+
+                            foreach ($starts as $inicio_hm) {
+                                $inicio = $inicio_hm . ':00';
+                                // Duración estándar 45 minutos
+                                $fin_ts = strtotime($inicio_hm) + 45*60;
+                                $fin_hm = date('H:i', $fin_ts);
+                                $fin = $fin_hm . ':00';
                                 $ocupada = false;
                                 foreach ($reservas_existentes as $res) {
-                                    if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) {
-                                        $ocupada = true;
-                                        break;
-                                    }
+                                    if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
                                 }
-                                $clase = $ocupada ? "btn btn-danger btn-sm" : "btn btn-success btn-sm";
-                                echo "<button type='button' class='{$clase} mb-1'>{$inicio_hm} - {$fin_hm}</button>";
-                                $t_inicio += $intervalo;
+                                $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+                                echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
                             }
                         } else {
                             echo "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
@@ -379,7 +381,19 @@ setTimeout(() => {
             </thead>
             <tbody>
             <?php $reservas = $controller->obtenerReservas($_SESSION['id_usuario']); ?>
-            <?php foreach ($reservas as $reserva): ?>
+            <?php
+            date_default_timezone_set('America/Lima');
+            foreach ($reservas as $reserva):
+                $fechaR = $reserva['fecha'];
+                $horaIni = $reserva['hora_inicio'];
+                if (strlen($horaIni) === 5) { $horaIni .= ':00'; }
+                try {
+                    $dtInicio = new DateTime($fechaR . ' ' . $horaIni, new DateTimeZone('America/Lima'));
+                } catch (Exception $e) { $dtInicio = null; }
+                $limite = $dtInicio ? (clone $dtInicio)->modify('-1 hour') : null;
+                $ahora = new DateTime('now', new DateTimeZone('America/Lima'));
+                $bloqueado = !$dtInicio || ($ahora > $limite);
+            ?>
                 <tr>
                     <td><?= htmlspecialchars($reserva['profesor']) ?></td>
                     <td><?= htmlspecialchars($reserva['nombre_aula']) ?></td>
@@ -391,7 +405,13 @@ setTimeout(() => {
                         <form method="POST" class="d-inline form-cancelar">
                             <input type="hidden" name="accion" value="eliminar">
                             <input type="hidden" name="id_reserva" value="<?= $reserva['id_reserva'] ?>">
-                            <button type="button" class="btn btn-danger btn-sm cancelar-btn">Cancelar</button>
+                            <button type="button"
+                                    class="btn btn-danger btn-sm cancelar-btn<?= $bloqueado ? ' disabled' : '' ?>"
+                                    data-fecha="<?= htmlspecialchars($fechaR) ?>"
+                                    data-hora-inicio="<?= htmlspecialchars($reserva['hora_inicio']) ?>"
+                                    <?= $bloqueado ? 'disabled aria-disabled="true" title="La reserva ya ha pasado o está dentro de la hora límite"' : '' ?>>
+                                Cancelar
+                            </button>
                         </form>
                     </td>
                 </tr>
