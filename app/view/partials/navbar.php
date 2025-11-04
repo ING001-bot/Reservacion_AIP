@@ -153,13 +153,24 @@ $badge = count($no_leidas);
               <div class="p-3 text-muted small text-center">No hay notificaciones nuevas</div>
             <?php else: ?>
               <?php foreach ($notis as $n): ?>
-                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-start" href="<?= htmlspecialchars($n['url'] ?? '#') ?>">
-                  <div class="me-3">
-                    <div class="fw-semibold small"><?= htmlspecialchars($n['titulo']) ?></div>
+                <?php
+                  $tituloN = (string)($n['titulo'] ?? '');
+                  $icon = 'fa-info-circle text-secondary';
+                  if (stripos($tituloN, 'reserva') !== false) { $icon = 'fa-calendar-check text-success'; }
+                  elseif (stripos($tituloN, 'préstamo') !== false || stripos($tituloN, 'prestamo') !== false) { $icon = 'fa-laptop text-primary'; }
+                  elseif (stripos($tituloN, 'devolución') !== false || stripos($tituloN, 'devolucion') !== false) { $icon = 'fa-undo text-info'; }
+                  elseif (stripos($tituloN, 'cancelación') !== false || stripos($tituloN, 'cancelacion') !== false) { $icon = 'fa-ban text-warning'; }
+                ?>
+                <a class="list-group-item list-group-item-action d-flex align-items-start gap-3" href="<?= htmlspecialchars($n['url'] ?? '#') ?>">
+                  <div class="pt-1" style="width:22px; text-align:center;">
+                    <i class="fas <?= $icon ?>"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold small mb-1"><?= htmlspecialchars($tituloN) ?></div>
                     <div class="small text-muted"><?= htmlspecialchars(mb_strimwidth($n['mensaje'], 0, 80, '…')) ?></div>
                   </div>
                   <?php if (!(int)$n['leida']): ?>
-                    <span class="badge bg-primary rounded-pill">nuevo</span>
+                    <span class="badge bg-primary rounded-pill ms-auto">nuevo</span>
                   <?php endif; ?>
                 </a>
               <?php endforeach; ?>
@@ -172,13 +183,13 @@ $badge = count($no_leidas);
       <!-- Perfil de usuario (informativo para evitar duplicar "Cerrar sesión") -->
       <div class="dropdown">
         <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-display="static" aria-expanded="false">
-          <i class="fas fa-user-circle me-2"></i>
+          <img src="../../Public/img/logo_colegio.png" alt="Logo" class="me-2" style="height:20px; width:auto; object-fit:contain;">
           <span><?= $nombre ?></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
           <li><span class="dropdown-item-text small text-muted"><?= $tipo ?></span></li>
-          <li><hr class="dropdown-divider d-none d-md-block"></li>
-          <li class="d-none d-md-block"><a class="dropdown-item" href="../controllers/LogoutController.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="../controllers/LogoutController.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a></li>
         </ul>
       </div>
     </div>
@@ -326,10 +337,10 @@ body.dark #notif-list::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Asegurar clic en campana y usuario por encima de contenidos */
-.navbar.sticky-top{ z-index: 1020; position: sticky; }
-.dropdown-menu{ z-index: 1050; }
-.navbar .btn-link, .hamburger-btn, .btn-back{ position: relative; z-index: auto; }
+/* Asegurar clic en campana y usuario por encima de contenidos (máxima prioridad) */
+.navbar.sticky-top{ z-index: 3000; position: sticky; }
+.dropdown, .navbar .btn-link, .hamburger-btn, .btn-back{ position: relative; z-index: 3001; pointer-events: auto; }
+.dropdown-menu{ z-index: 3002; position: absolute; }
 
 /* Forzar visibilidad del dropdown */
 .dropdown-menu.show {
@@ -407,16 +418,41 @@ body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); b
 // Exponer nombre del usuario para Tommibot (saludo por voz)
 window.__tbUserName = <?= json_encode($nombre, JSON_UNESCAPED_UNICODE) ?>;
 // Inicialización simple de dropdowns (sin prevenir eventos)
-document.addEventListener('DOMContentLoaded', function(){
-  if (typeof bootstrap === 'undefined' || !bootstrap.Dropdown) return;
-  document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function(el){
-    try {
-      var inst = bootstrap.Dropdown.getInstance(el);
-      if (inst) inst.dispose();
-      new bootstrap.Dropdown(el, { autoClose: true });
-    } catch(e) { /* noop */ }
+  document.addEventListener('DOMContentLoaded', function(){
+    var supportsBootstrap = (typeof bootstrap !== 'undefined' && bootstrap.Dropdown);
+    document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function(el){
+      try {
+        // Inicializa Bootstrap si está disponible
+        if (supportsBootstrap){
+          var inst = bootstrap.Dropdown.getInstance(el);
+          if (inst) inst.dispose();
+          new bootstrap.Dropdown(el, { autoClose: true });
+        }
+        // Fallback SIEMPRE ACTIVO: asegura apertura/cierre aunque Bootstrap falle
+        el.addEventListener('click', function(ev){
+          // Permitir que Bootstrap maneje primero
+          setTimeout(function(){
+            var menu = el.parentElement && el.parentElement.querySelector('.dropdown-menu');
+            if (!menu) return;
+            // Si Bootstrap no abrió, alternar manualmente
+            var opened = menu.classList.contains('show');
+            if (!opened){
+              document.querySelectorAll('.dropdown-menu.show').forEach(function(m){ m.classList.remove('show'); });
+              menu.classList.add('show');
+            }
+          }, 0);
+        });
+      } catch(e) { /* noop */ }
+    });
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', function(e){
+      document.querySelectorAll('.dropdown-menu.show').forEach(function(m){
+        var toggle = m.parentElement && m.parentElement.querySelector('[data-bs-toggle="dropdown"]');
+        if (toggle && (toggle.contains(e.target) || m.contains(e.target))) return;
+        m.classList.remove('show');
+      });
+    });
   });
-});
 </script>
 
 <?php if ($tipo === 'Profesor' && strtolower($view ?? '') !== 'tommibot'): ?>

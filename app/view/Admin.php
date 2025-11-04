@@ -103,37 +103,14 @@ $vista = $_GET['view'] ?? 'inicio';
         include 'cambiar_contraseña.php';
         break;
       default: ?>
-        <div class="d-flex align-items-center justify-content-between flex-wrap">
-          <h2 class="mb-3 text-brand">🧑‍💼 Panel de Administración</h2>
-        </div>
-        <div class="row g-3">
-          <div class="col-md-4">
-            <div class="card card-brand shadow-sm h-100">
-              <div class="card-body">
-                <h5 class="card-title">Usuarios</h5>
-                <p class="card-text text-muted">Crear, editar y gestionar permisos.</p>
-                <a href="Admin.php?view=usuarios" class="btn btn-outline-brand">Gestionar</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card card-brand shadow-sm h-100">
-              <div class="card-body">
-                <h5 class="card-title">Aulas</h5>
-                <p class="card-text text-muted">Alta y mantenimiento de aulas.</p>
-                <a href="Admin.php?view=aulas" class="btn btn-outline-brand">Gestionar</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card card-brand shadow-sm h-100">
-              <div class="card-body">
-                <h5 class="card-title">Equipos</h5>
-                <p class="card-text text-muted">Inventario y préstamos.</p>
-                <a href="Admin.php?view=equipos" class="btn btn-outline-brand">Gestionar</a>
-              </div>
-            </div>
-          </div>
+        <?php
+          $imgWelcome = '../../Public/img/colegio.png';
+          if (!file_exists(__DIR__ . '/../../Public/img/colegio.png') && file_exists(__DIR__ . '/../../Public/img/colegio.jpg')) {
+            $imgWelcome = '../../Public/img/colegio.jpg';
+          }
+        ?>
+        <div class="position-relative" style="margin:-1.5rem -2rem -2rem -2rem; width:auto; height: calc(100vh + 3.5rem); overflow:hidden; pointer-events:none; z-index:0;">
+          <img src="<?= htmlspecialchars($imgWelcome) ?>" alt="Imagen de inicio" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; pointer-events:none;">
         </div>
       <?php
     }

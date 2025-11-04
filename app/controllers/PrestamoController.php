@@ -29,6 +29,34 @@ class PrestamoController {
                 }
             } catch (\Throwable $e) { /* noop */ }
 
+            // Confirmación al profesor: correo + campanita
+            try {
+                if (session_status() === PHP_SESSION_NONE) { session_start(); }
+                $docente = $_SESSION['usuario'] ?? 'Docente';
+                $correoDoc = $_SESSION['correo'] ?? '';
+                // campanita al profesor
+                try {
+                    $titulo = 'Préstamo registrado';
+                    $mensaje = 'Tu préstamo fue registrado. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.';
+                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, 'Public/index.php?view=mis_prestamos');
+                } catch (\Throwable $e) { /* noop */ }
+                // correo al profesor
+                if (!empty($correoDoc)) {
+                    $ns = new NotificationService();
+                    $ns->sendNotification(
+                        ['email' => $correoDoc],
+                        'Confirmación de préstamo de equipos',
+                        nl2br(htmlspecialchars('Hola ' . $docente . ', se registró tu préstamo. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.')),
+                        [
+                            'userName' => $docente,
+                            'type' => 'success',
+                            'sendSms' => false,
+                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/index.php?view=mis_prestamos'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) { /* log suave */ }
+
             // Notificar Admin y Encargado: correo + campanita
             try {
                 $usuarios = $this->model->listarUsuariosPorRol(['Administrador','Encargado']);

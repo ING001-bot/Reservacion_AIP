@@ -175,7 +175,7 @@ $fecha_default = $fecha_min;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
+            z-index: 1100; /* Debajo de la navbar (1105) para no bloquear clics */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -270,7 +270,7 @@ $fecha_default = $fecha_min;
         <div class="mt-3">
             <small class="text-muted">
                 ¿No recibiste el código? 
-                <a href="?reenviar=1" class="text-decoration-none">Reenviar</a>
+                <a href="#" id="otp-reenviar" class="text-decoration-none">Reenviar</a>
             </small>
         </div>
     </div>
@@ -293,6 +293,23 @@ setTimeout(() => {
     document.getElementById('codigoInput').select();
 }, 500);
 <?php endif; ?>
+
+// Reenviar código con enfriamiento (sin recargar)
+(function(){
+  const link = document.getElementById('otp-reenviar');
+  if (!link) return;
+  let locked = false; let timer = null; let secs = 0; const orig = link.textContent;
+  link.addEventListener('click', async function(ev){
+    ev.preventDefault(); if (locked) return;
+    locked = true; secs = 60; link.classList.add('disabled');
+    link.textContent = `Reenviar (${secs}s)`;
+    timer = setInterval(()=>{
+      secs--; link.textContent = `Reenviar (${secs}s)`;
+      if (secs <= 0){ clearInterval(timer); link.classList.remove('disabled'); link.textContent = orig; locked = false; }
+    }, 1000);
+    try { await fetch(window.location.pathname + '?reenviar=1', { credentials:'same-origin' }); } catch(e){}
+  });
+})();
 </script>
 <?php endif; ?>
 

@@ -12,6 +12,11 @@ $pc = new PrestamoController($conexion);
 
 try {
   switch ($action) {
+    case 'pulse': {
+      // Endpoint de salud para autodescubrimiento de ruta desde notifications.js
+      echo json_encode(['ok'=>true]);
+      break;
+    }
     case 'listar': {
       $solo = isset($_GET['soloNoLeidas']) ? (bool)$_GET['soloNoLeidas'] : true;
       $limit = isset($_GET['limit']) ? max(1, min(50, (int)$_GET['limit'])) : 10;

@@ -2,6 +2,8 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../controllers/HistorialGlobalController.php';
+require_once __DIR__ . '/../lib/Mailer.php';
+use App\Lib\Mailer;
 
 // DomPDF
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -157,6 +159,27 @@ try {
     $dompdf->setPaper('A4', 'landscape');
     $dompdf->render();
     $filename = 'reportes_filtros_' . date('Ymd_His') . '.pdf';
+
+    // Enviar por correo al usuario logueado (si se tiene correo en sesión)
+    $toEmail = $_SESSION['correo'] ?? '';
+    if ($toEmail) {
+        try {
+            $mailer = new Mailer();
+            $subject = 'Tu PDF de Reportes y Filtros';
+            $body = '<p>Hola ' . htmlspecialchars($usuario_nombre ?: 'usuario') . ',</p>' .
+                    '<p>Adjuntamos el PDF que acabas de generar.</p>' .
+                    '<p>Fecha de descarga: ' . htmlspecialchars($fecha_descarga) . '</p>' .
+                    '<p>Saludos,<br>Colegio Juan Tomis Stack</p>';
+            $pdfData = $dompdf->output();
+            $mailer->send($toEmail, $subject, $body, [
+                ['data' => $pdfData, 'name' => $filename, 'isString' => true]
+            ]);
+        } catch (\Throwable $e) {
+            error_log('Error enviando PDF por correo: ' . $e->getMessage());
+        }
+    }
+
+    // Descargar en el navegador
     $dompdf->stream($filename, ['Attachment' => 1]);
     exit;
 } catch (\Exception $e) {

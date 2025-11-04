@@ -90,6 +90,13 @@ class ReservaController {
                         $this->model->crearNotificacion((int)$u['id_usuario'], 'Nueva reserva de aula', $msg, 'Admin.php?view=historial_global');
                     }
                 } catch (\Throwable $e) { /* log suave */ }
+
+                // Crear notificación interna para el profesor (campanita)
+                try {
+                    $tituloProf = 'Reserva confirmada';
+                    $msgProf = 'Tu reserva fue registrada. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
+                    $this->model->crearNotificacion((int)$id_usuario, $tituloProf, $msgProf, 'Public/index.php?view=mis_reservas');
+                } catch (\Throwable $e) { /* noop */ }
                 
                 // Enviar notificación al profesor (email y SMS)
                 $userEmail = $_SESSION['correo'] ?? '';
@@ -123,6 +130,30 @@ class ReservaController {
                         }
                     });
                 }
+
+                // Enviar correo a Encargados con detalles de la reserva
+                try {
+                    $notificationService = new NotificationService();
+                    foreach ($encargados as $u) {
+                        if (!empty($u['correo'])) {
+                            $notificationService->sendNotification(
+                                ['email' => $u['correo']],
+                                'Nueva reserva registrada',
+                                'Se registró una nueva reserva:<br><br>' .
+                                '<strong>Profesor:</strong> ' . htmlspecialchars($_SESSION['usuario'] ?? 'Usuario') . '<br>' .
+                                '<strong>Aula:</strong> ' . htmlspecialchars($aulaNombre) . '<br>' .
+                                '<strong>Fecha:</strong> ' . htmlspecialchars($fecha_reserva_str) . '<br>' .
+                                '<strong>Hora:</strong> ' . htmlspecialchars($hora_inicio) . ' - ' . htmlspecialchars($hora_fin),
+                                [
+                                    'userName' => ($u['nombre'] ?? 'Encargado'),
+                                    'type' => 'info',
+                                    'sendSms' => false,
+                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global'
+                                ]
+                            );
+                        }
+                    }
+                } catch (\Throwable $e) { /* noop */ }
                 return true;
             } else {
                 $this->mensaje = "❌ Error al realizar la reserva.";
@@ -218,6 +249,10 @@ class ReservaController {
                         [ 'userName' => $docente, 'type' => 'warning', 'sendSms' => false ]
                     );
                 }
+                // Al docente (campanita)
+                try {
+                    $this->model->crearNotificacion((int)$id_usuario, 'Cancelación de reserva', 'Has cancelado una reserva. Motivo: ' . strip_tags($motivo), 'Public/index.php?view=mis_reservas');
+                } catch (\Throwable $e) { /* noop */ }
                 // A Encargado y Administrador: correo + campanita
                 $destinatarios = $this->model->listarUsuariosPorRol(['Encargado','Administrador']);
                 $subjectEA = 'Cancelación de reserva por ' . $docente;

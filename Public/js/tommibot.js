@@ -8,6 +8,7 @@
   const elMicState = () => qs('#tbm-mic-state');
   const elSpeak = () => qs('#tbm-speak');
   const userName = (window.__tbUserName || '').trim();
+  let lastMode = 'text';
 
   function appendMsg(kind, text){
     const wrap = elMsgs(); if (!wrap) return;
@@ -24,13 +25,13 @@
     const inp = elInput(); if (!inp) return; const text = (inp.value||'').trim(); if (!text) return;
     appendMsg('user', text); inp.value = ''; elSend().disabled = true;
     try{
-      const res = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message:text }) });
+      const res = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message:text, mode:lastMode }) });
       const data = await res.json();
       const reply = data && data.reply ? data.reply : 'No pude procesar tu solicitud por ahora.';
       appendMsg('bot', reply);
       if (elSpeak() && elSpeak().checked) speak(reply);
     }catch(e){ appendMsg('bot','Ocurrió un error al conectar con Tommibot.'); }
-    finally{ elSend().disabled = false; }
+    finally{ elSend().disabled = false; lastMode = 'text'; }
   }
 
   // Voice: Web Speech API
@@ -47,6 +48,7 @@
       try{
         const text = ev.results[0][0].transcript;
         if (elInput()) elInput().value = text;
+        lastMode = 'voice';
         sendText();
       }catch(_){ /* noop */ }
     };

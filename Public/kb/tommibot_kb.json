@@ -1,0 +1,136 @@
+{
+  "metadata": {
+    "kb_version": "1.0.0",
+    "scope": "Sistema de reservas y préstamos - Colegio Juan Tomis Stack",
+    "last_updated": "2025-11-01"
+  },
+  "business_rules": {
+    "cancelacion_plazo": "Solo se puede cancelar hasta el fin del día de la reserva.",
+    "prestamo_devolucion": "La devolución se marca cuando el encargado confirma la inspección física.",
+    "pdf_envio_email": "Todo PDF generado también se envía al correo del docente.",
+    "verificacion_sms": "Antes de crear reserva, préstamo o cambiar contraseña, se requiere verificación por SMS.",
+    "reintentos_sms": 3
+  },
+  "screens": {
+    "reservas": {"images": ["img/reservas.png"]},
+    "prestamo": {"images": ["img/prestamo.png"]},
+    "historial": {"images": ["img/historial.png"]},
+    "cambiar_contrasena": {"images": ["img/cambiar_contrasena.png"]},
+    "devolucion": {"images": ["img/devolucion.png"]}
+  },
+  "intents": {
+    "reservar": {
+      "keywords": ["reserv", "aula", "agendar", "calendario"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Entra a Reservas en tu panel.",
+          "Se enviará automáticamente un código SMS a tu número registrado.",
+          "Ingresa el código de 6 dígitos en la ventana que aparece para verificarte.",
+          "Luego selecciona la fecha (DD/MM/AAAA) y la hora.",
+          "Selecciona el aula correspondiente.",
+          "(Opcional) Agrega una descripción si lo necesitas.",
+          "Confirma para registrar la reserva.",
+          "Consulta tu Historial para ver la reserva registrada."
+        ]
+      }
+    },
+    "prestamo": {
+      "keywords": ["préstamo", "prestamo", "equipo", "proyector", "laptop"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Entra a Préstamo en tu panel.",
+          "Se enviará automáticamente un código SMS a tu número registrado.",
+          "Ingresa el código de 6 dígitos en la ventana que aparece para verificarte.",
+          "Selecciona fecha de préstamo (a partir de mañana).",
+          "Elige el/los equipos necesarios (Laptop, Proyector, Extension, etc.).",
+          "Selecciona el aula y la hora de inicio (y fin si aplica).",
+          "Confirma para registrar el préstamo.",
+          "El Encargado validará la entrega física. Revisa el estado en tu Historial."
+        ]
+      }
+    },
+    "cambiar_contrasena": {
+      "keywords": ["contraseña", "password", "clave", "cambiar"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Abre Cambiar contraseña en tu panel.",
+          "Si eres Profesor, se enviará automáticamente un código SMS a tu número registrado.",
+          "Ingresa el código de 6 dígitos en la ventana para verificarte (solo Profesores).",
+          "Escribe tu contraseña actual y la nueva (mín. 8, con mayúscula, número y carácter especial).",
+          "Confirma para actualizar la contraseña. Verás una confirmación en pantalla."
+        ]
+      }
+    },
+    "historial": {
+      "keywords": ["historial", "descargar", "pdf", "reportes"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Abre Historial en tu panel.",
+          "Filtra por fecha o tipo si lo necesitas.",
+          "Haz clic en Descargar PDF para obtener el reporte.",
+          "El PDF también se envía automáticamente a tu correo institucional."
+        ]
+      }
+    },
+    "cancelar": {
+      "keywords": ["cancelar", "anular"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Ve a Historial y ubica la reserva que quieres cancelar.",
+          "Si aún estás dentro del mismo día de la reserva, verás la opción Cancelar.",
+          "Confirma la cancelación. La reserva se eliminará y quedará registrada la acción.",
+          "Si ya pasó el día, la cancelación no está permitida."
+        ]
+      }
+    },
+    "devolucion": {
+      "keywords": ["devolución", "devolucion", "devolver"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Lleva el equipo al Encargado en el horario acordado.",
+          "El Encargado inspecciona el equipo y registra la devolución en el sistema.",
+          "Verás el estado actualizado en tu Historial."
+        ]
+      }
+    },
+    "notificaciones": {
+      "keywords": ["notificacion", "notificación", "campana", "alerta", "correo"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Haz clic en la campana del encabezado para ver tus notificaciones recientes.",
+          "Revisa la lista y abre el detalle si corresponde.",
+          "Puedes marcar todas como leídas desde el botón del listado.",
+          "También recibirás avisos por correo según tu actividad."
+        ]
+      }
+    },
+    "reenviar_codigo": {
+      "keywords": ["reenviar", "reenvío", "reenviar codigo", "no me llego codigo", "no llegó sms", "no me llego sms", "reenviar sms"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "En la ventana de verificación, haz clic en \"Reenviar\" para solicitar un nuevo código.",
+          "Espera 60 segundos antes de volver a intentar (enlace con contador).",
+          "Si no llega, verifica que tu número esté en formato +51XXXXXXXXX en tu perfil."
+        ]
+      }
+    }
+  },
+  "out_of_scope": {
+    "examples": ["clima", "capital de", "noticias", "música", "juego"],
+    "response": {
+      "summary": "Solo atiendo consultas del sistema.",
+      "steps": [
+        "Puedo ayudarte con reservas, préstamos, historial, contraseñas, devoluciones y notificaciones.",
+        "Dime qué tarea del sistema quieres realizar y te guío paso a paso."
+      ]
+    }
+  }
+}
