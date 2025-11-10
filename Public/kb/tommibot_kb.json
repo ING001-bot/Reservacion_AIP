@@ -121,16 +121,173 @@
           "Si no llega, verifica que tu número esté en formato +51XXXXXXXXX en tu perfil."
         ]
       }
+    },
+    "gestion_usuarios": {
+      "keywords": ["gestionar usuarios", "agregar usuario", "crear profesor", "eliminar usuario", "editar usuario", "administrar usuarios"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Accede al panel de Administrador.",
+          "Selecciona la opción 'Gestionar Usuarios'.",
+          "Puedes agregar nuevos usuarios (Profesores, Administradores, Encargados).",
+          "Editar información de usuarios existentes (nombre, correo, teléfono, contraseña).",
+          "Desactivar o eliminar usuarios que ya no pertenecen al sistema.",
+          "Todos los cambios se reflejan inmediatamente en el sistema."
+        ]
+      }
+    },
+    "reportes_estadisticas": {
+      "keywords": ["reportes", "estadísticas", "gráficos", "filtros", "exportar", "dashboard", "analytics"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Ve a 'Reportes / Filtros' en el menú de Administrador.",
+          "Puedes filtrar por: fecha, profesor, aula, turno, tipo (reserva/préstamo).",
+          "Visualiza los resultados en tabla.",
+          "Descarga reportes en formato PDF con diseño institucional.",
+          "Accede a 'Estadísticas' para ver gráficos, rankings de aulas más usadas, horas pico, etc.",
+          "Todos los PDFs incluyen logo del colegio, tu nombre, rol y fecha de descarga."
+        ]
+      }
+    },
+    "validar_prestamo": {
+      "keywords": ["validar préstamo", "aprobar préstamo", "entregar equipo", "confirmar entrega"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "El Encargado accede al panel de 'Préstamos Pendientes'.",
+          "Verifica la identidad del docente y el equipo solicitado.",
+          "Inspecciona el estado físico del equipo antes de entregarlo.",
+          "Confirma la entrega en el sistema haciendo clic en 'Validar Préstamo'.",
+          "El estado del préstamo cambia a 'Activo' y el docente puede ver esto en su Historial."
+        ]
+      }
+    },
+    "registrar_devolucion": {
+      "keywords": ["registrar devolución", "marcar devuelto", "devolver equipo", "inspeccionar equipo"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "El docente devuelve el equipo al Encargado.",
+          "El Encargado inspecciona el equipo para verificar su estado.",
+          "Accede a 'Devoluciones' en su panel.",
+          "Selecciona el préstamo correspondiente.",
+          "Marca como devuelto y opcionalmente agrega un comentario (si hay daños o incidencias).",
+          "El docente verá la devolución registrada en su Historial."
+        ]
+      }
+    },
+    "perfil": {
+      "keywords": ["mi perfil", "editar perfil", "actualizar datos", "cambiar teléfono", "cambiar correo"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Haz clic en tu nombre de usuario en la esquina superior derecha.",
+          "Selecciona 'Mi Perfil'.",
+          "Puedes actualizar: nombre completo, correo electrónico, número de teléfono.",
+          "El teléfono debe estar en formato +51XXXXXXXXX para recibir SMS.",
+          "Guarda los cambios y verás una confirmación."
+        ]
+      }
+    },
+    "anticipacion": {
+      "keywords": ["anticipación", "1 día", "mañana", "cuándo puedo reservar", "plazo"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "⚠️ IMPORTANTE: Todas las reservas y préstamos requieren mínimo 1 día de anticipación.",
+          "Esto significa que NO puedes reservar para hoy.",
+          "La fecha más próxima disponible es mañana.",
+          "Esta validación se aplica tanto en frontend como en backend.",
+          "Si intentas hacerlo para hoy, el sistema te mostrará un error."
+        ]
+      }
+    },
+    "ayuda_general": {
+      "keywords": ["ayuda", "soporte", "contacto", "problema técnico", "error del sistema"],
+      "template": {
+        "steps_only": true,
+        "steps": [
+          "Si tienes problemas técnicos que no puedo resolver, contacta al administrador del sistema.",
+          "Para dudas sobre políticas internas del colegio, consulta con Dirección.",
+          "Para reportar errores o bugs, envía un correo a soporte con detalles del problema.",
+          "Estoy aquí para ayudarte con preguntas sobre cómo usar el sistema. 😊"
+        ]
+      }
+    }
+  },
+  "voice_commands": {
+    "navigate": {
+      "keywords": ["ir a", "abre", "muéstrame", "llévame a", "navega a"],
+      "actions": {
+        "reservas": {"url": "?view=reservas", "description": "Abrir módulo de Reservas"},
+        "prestamo": {"url": "?view=prestamo", "description": "Abrir módulo de Préstamos"},
+        "historial": {"url": "?view=historial", "description": "Abrir Historial"},
+        "contraseña": {"url": "?view=password", "description": "Cambiar contraseña"},
+        "tommibot": {"url": "?view=tommibot", "description": "Abrir Tommibot"},
+        "usuarios": {"url": "?view=usuarios", "description": "Gestionar usuarios (Admin)"},
+        "reportes": {"url": "?view=reportes", "description": "Ver reportes (Admin)"},
+        "estadisticas": {"url": "?view=estadisticas", "description": "Ver estadísticas (Admin)"},
+        "devolucion": {"url": "?view=devolucion", "description": "Gestionar devoluciones (Encargado)"}
+      }
+    },
+    "download": {
+      "keywords": ["descargar", "descarga", "pdf", "exportar"],
+      "description": "Descarga el PDF del historial actual"
+    },
+    "help": {
+      "keywords": ["ayuda", "comandos", "qué puedes hacer", "opciones"],
+      "description": "Muestra lista de comandos de voz disponibles"
+    }
+  },
+  "faqs": {
+    "sms_no_llega": {
+      "question": "¿Qué hago si no me llega el SMS?",
+      "answer": "Verifica que tu número en el perfil esté en formato +51XXXXXXXXX. Si está correcto, usa el botón 'Reenviar' (espera 60 seg). Si sigue sin llegar, contacta al administrador."
+    },
+    "cancelar_fuera_plazo": {
+      "question": "¿Puedo cancelar una reserva de ayer?",
+      "answer": "No, solo se pueden cancelar reservas el mismo día. Si ya pasó el día, la reserva queda registrada en el historial."
+    },
+    "equipo_danado": {
+      "question": "¿Qué pasa si daño un equipo?",
+      "answer": "Informa inmediatamente al Encargado. Él registrará el incidente en la devolución con un comentario. Luego se aplicarán las políticas del colegio sobre equipos dañados."
+    },
+    "cambiar_reserva": {
+      "question": "¿Puedo modificar una reserva?",
+      "answer": "No hay opción de edición directa. Deberás cancelar la reserva (si estás en el mismo día) y crear una nueva."
     }
   },
   "out_of_scope": {
     "examples": ["clima", "capital de", "noticias", "música", "juego"],
     "response": {
-      "summary": "Solo atiendo consultas del sistema.",
+      "summary": "Puedo responder preguntas generales con IA, pero mi especialidad es el sistema.",
       "steps": [
-        "Puedo ayudarte con reservas, préstamos, historial, contraseñas, devoluciones y notificaciones.",
-        "Dime qué tarea del sistema quieres realizar y te guío paso a paso."
+        "Puedo ayudarte con: reservas, préstamos, historial, contraseñas, devoluciones, reportes, estadísticas, gestión de usuarios.",
+        "Dime qué tarea del sistema quieres realizar y te guío paso a paso.",
+        "También puedo responder preguntas generales como: ¿Qué hora es? ¿Cuál es la capital de Perú? ¿Cuéntame un chiste!"
       ]
+    }
+  },
+  "system_info": {
+    "name": "Sistema de Reservas y Préstamos AIP",
+    "institution": "Colegio Juan Tomis Stack",
+    "version": "2.0",
+    "features": [
+      "Reserva de aulas con verificación SMS",
+      "Préstamo de equipos (Laptop, Proyector, Extensión, etc.)",
+      "Historial completo con descargas PDF",
+      "Gestión de usuarios (Admin)",
+      "Reportes y estadísticas avanzadas (Admin)",
+      "Control de devoluciones (Encargado)",
+      "Notificaciones en tiempo real",
+      "Cambio de contraseña seguro",
+      "Chatbot inteligente (Tommibot) con IA y comandos de voz"
+    ],
+    "roles": {
+      "Profesor": "Puede hacer reservas, préstamos, ver historial, cambiar contraseña.",
+      "Administrador": "Gestión completa de usuarios, reportes, estadísticas, configuración del sistema.",
+      "Encargado": "Validar préstamos, registrar devoluciones, controlar equipos y aulas."
     }
   }
 }

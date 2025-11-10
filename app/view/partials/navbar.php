@@ -417,6 +417,8 @@ body.dark .hamburger-btn{ background: var(--panel); color: var(--brand-color); b
 <script>
 // Exponer nombre del usuario para Tommibot (saludo por voz)
 window.__tbUserName = <?= json_encode($nombre, JSON_UNESCAPED_UNICODE) ?>;
+// Exponer rol del usuario para navegación por voz
+window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
 // Inicialización simple de dropdowns (sin prevenir eventos)
   document.addEventListener('DOMContentLoaded', function(){
     var supportsBootstrap = (typeof bootstrap !== 'undefined' && bootstrap.Dropdown);
@@ -455,7 +457,7 @@ window.__tbUserName = <?= json_encode($nombre, JSON_UNESCAPED_UNICODE) ?>;
   });
 </script>
 
-<?php if ($tipo === 'Profesor' && strtolower($view ?? '') !== 'tommibot'): ?>
+<?php if ($id_usuario > 0 && strtolower($view ?? '') !== 'tommibot'): ?>
   <link rel="stylesheet" href="../../Public/css/tommibot.css?v=<?= time() ?>">
   <button id="tbm-fab" class="tbm-fab" title="Abrir Tommibot"><i class="fas fa-robot"></i></button>
   <div id="tbm-panel" class="tbm-panel">
@@ -464,7 +466,7 @@ window.__tbUserName = <?= json_encode($nombre, JSON_UNESCAPED_UNICODE) ?>;
         <div class="tbm-avatar">T</div>
         <div>
           <h6 class="tbm-title mb-0">Tommibot</h6>
-          <div class="tbm-sub">Asistente para docentes</div>
+          <div class="tbm-sub">Asistente del sistema</div>
         </div>
         <button type="button" id="tbm-close" class="btn btn-sm btn-outline-secondary ms-auto">Cerrar</button>
       </div>
