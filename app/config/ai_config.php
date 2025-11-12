@@ -16,10 +16,10 @@
 return [
     // Google Gemini API Configuration
     'gemini' => [
-        'api_key' => 'TU_API_KEY_AQUI', // Reemplazar con tu API Key de Google AI Studio
+        'api_key' => getenv('GEMINI_API_KEY') ?: 'TU_API_KEY_AQUI', // Reemplazar con tu API Key de Google AI Studio o definir GEMINI_API_KEY en entorno
         'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
         'model' => 'gemini-pro',
-        'enabled' => true, // Cambiar a false para desactivar IA y usar solo KB local
+        'enabled' => (getenv('GEMINI_API_KEY') && getenv('GEMINI_API_KEY') !== '') ? true : false, // Activar solo si hay API Key
         'timeout' => 10, // segundos
         'max_tokens' => 500,
         'temperature' => 0.7, // Creatividad (0.0 = precisa, 1.0 = creativa)

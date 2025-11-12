@@ -14,6 +14,75 @@ class TommibotController {
     $this->ai = new AIService();
     $this->detectUserRole();
   }
+
+  /**
+   * Respuesta con payload de acciones para frontend
+   */
+  public function replyPayload($userId, $message, $mode = 'text'){
+    $replyText = $this->reply($userId, $message, $mode);
+    $lower = mb_strtolower(trim((string)$message), 'UTF-8');
+    $intent = $this->ai->extractIntent($message) ?? $this->detectIntent($lower);
+    $actions = $this->mapIntentToActions($intent, $lower);
+    return [ 'reply' => $replyText, 'actions' => $actions ];
+  }
+
+  /**
+   * Mapea intents a acciones ejecutables según rol
+   */
+  private function mapIntentToActions($intent, string $lower){
+    $role = strtolower((string)$this->userRole);
+    $actions = [];
+    if (!$intent) {
+      // Inferir por texto simple para comandos comunes
+      if (mb_strpos($lower, 'reserv') !== false) $intent = 'reservar';
+      elseif (mb_strpos($lower, 'préstamo') !== false || mb_strpos($lower, 'prestamo') !== false) $intent = 'prestamo';
+      elseif (mb_strpos($lower, 'historial') !== false || mb_strpos($lower, 'mis reservas') !== false || mb_strpos($lower, 'mis préstamos') !== false || mb_strpos($lower, 'mis prestamos') !== false) $intent = 'historial';
+      elseif (mb_strpos($lower, 'contraseña') !== false || mb_strpos($lower, 'password') !== false) $intent = 'cambiar_contrasena';
+      elseif (mb_strpos($lower, 'reporte') !== false || mb_strpos($lower, 'estadíst') !== false) $intent = 'reportes_estadisticas';
+      elseif (mb_strpos($lower, 'devoluc') !== false || mb_strpos($lower, 'validar préstamo') !== false || mb_strpos($lower, 'validar prestamo') !== false) $intent = 'devolucion';
+      elseif (mb_strpos($lower, 'descargar') !== false && (mb_strpos($lower, 'pdf') !== false)) $intent = 'descargar_pdf';
+    }
+
+    switch ($intent){
+      case 'reservar':
+        if ($role === 'profesor') $actions[] = ['type'=>'navigate','target'=>'reservas'];
+        break;
+      case 'prestamo':
+        if ($role === 'profesor') $actions[] = ['type'=>'navigate','target'=>'prestamo'];
+        break;
+      case 'historial':
+      case 'historial_global':
+        if ($role === 'administrador') $actions[] = ['type'=>'navigate','target'=>'historial'];
+        elseif ($role === 'encargado') $actions[] = ['type'=>'navigate','target'=>'historial'];
+        else $actions[] = ['type'=>'navigate','target'=>'historial'];
+        break;
+      case 'cambiar_contrasena':
+        if ($role === 'profesor') $actions[] = ['type'=>'navigate','target'=>'password'];
+        break;
+      case 'gestion_usuarios':
+        if ($role === 'administrador') $actions[] = ['type'=>'navigate','target'=>'usuarios'];
+        break;
+      case 'reportes_estadisticas':
+        if ($role === 'administrador') $actions[] = ['type'=>'navigate','target'=>'reportes'];
+        break;
+      case 'validar_prestamo':
+      case 'registrar_devolucion':
+      case 'devolucion':
+        if ($role === 'encargado') $actions[] = ['type'=>'navigate','target'=>'devolucion'];
+        break;
+      case 'perfil':
+        $actions[] = ['type'=>'navigate','target'=>'perfil'];
+        break;
+      case 'descargar_pdf':
+        $actions[] = ['type'=>'click','selector'=>'[data-action="download-pdf"]'];
+        break;
+      default:
+        // No actions
+        break;
+    }
+
+    return $actions;
+  }
   
   /**
    * Detecta el rol y nombre del usuario desde la sesión

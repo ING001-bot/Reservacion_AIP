@@ -71,6 +71,7 @@ function init(){
     if (cuadroHoras) cuadroHoras.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
+        if (btn.disabled) return; // recreo u otros deshabilitados
         if (btn.classList.contains('btn-danger')) return; // ocupada
         const t = (btn.getAttribute('data-time') || btn.textContent.trim()); // HH:MM
         if (!/^\d{2}:\d{2}$/.test(t)) return;

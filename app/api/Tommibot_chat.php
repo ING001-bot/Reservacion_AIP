@@ -10,6 +10,6 @@ $mode = in_array(($input['mode'] ?? 'text'), ['text','voice'], true) ? $input['m
 $userId = (int)($_SESSION['id_usuario'] ?? 0);
 
 $bot = new TommibotController($conexion);
-$reply = $message ? $bot->reply($userId, $message, $mode) : '¿En qué puedo ayudarte?';
+$payload = $message ? $bot->replyPayload($userId, $message, $mode) : ['reply'=>'¿En qué puedo ayudarte?','actions'=>[]];
 
-echo json_encode(['ok'=>true,'reply'=>$reply]);
+echo json_encode(['ok'=>true,'reply'=>$payload['reply'] ?? '','actions'=>$payload['actions'] ?? []]);

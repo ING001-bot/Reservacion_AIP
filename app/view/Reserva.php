@@ -339,26 +339,34 @@ setTimeout(() => {
                     <div id="cuadro-horas" class="d-flex flex-wrap gap-2">
                         <?php
                         if (!empty($fecha_default) && !empty($id_aula_selected)) {
-                            // Slots: 06:00, 06:45 y desde 07:00 cada 45 minutos hasta 12:45 inclusive
-                            $starts = [];
-                            $starts[] = '06:00';
-                            $starts[] = '06:45';
-                            $s = strtotime('07:00');
+                            $starts = ['06:00','06:45'];
+                            $s = strtotime('07:10');
+                            $pre_recreo_fin = strtotime('10:10');
+                            while ($s < $pre_recreo_fin) { $starts[] = date('H:i', $s); $s += 45*60; }
+                            $starts[] = '10:10';
+                            $s = strtotime('10:30');
                             $endStart = strtotime('12:45');
                             while ($s <= $endStart) { $starts[] = date('H:i', $s); $s += 45*60; }
 
                             foreach ($starts as $inicio_hm) {
                                 $inicio = $inicio_hm . ':00';
-                                // Duración estándar 45 minutos
                                 $fin_ts = strtotime($inicio_hm) + 45*60;
                                 $fin_hm = date('H:i', $fin_ts);
                                 $fin = $fin_hm . ':00';
+                                $isRecreoMarker = ($inicio_hm === '10:10');
                                 $ocupada = false;
-                                foreach ($reservas_existentes as $res) {
-                                    if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
+                                if (!$isRecreoMarker) {
+                                    foreach ($reservas_existentes as $res) {
+                                        if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
+                                    }
                                 }
-                                $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-                                echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+                                if ($isRecreoMarker) {
+                                    echo "<button type='button' class='btn btn-secondary btn-sm mb-1' data-time='{$inicio_hm}' disabled title='Recreo'>{$inicio_hm}</button>";
+                                    echo "<button type='button' class='btn btn-warning btn-sm mb-1' data-time='10:10-10:30' disabled title='Recreo'>10:10 - 10:30</button>";
+                                } else {
+                                    $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+                                    echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+                                }
                             }
                         } else {
                             echo "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
@@ -368,6 +376,7 @@ setTimeout(() => {
                     <div class="mt-3">
                         <span class="badge bg-success">Disponible</span>
                         <span class="badge bg-danger ms-2">Ocupada</span>
+                        <span class="badge bg-warning text-dark ms-2" title="10:10–10:30">Recreo (10:10–10:30)</span>
                     </div>
                     <div class="mt-2 small" id="texto-rango">
                         Hora de inicio: <strong id="txt-inicio">—</strong> · Hora de fin: <strong id="txt-fin">—</strong>

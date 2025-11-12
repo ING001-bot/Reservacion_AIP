@@ -24,31 +24,40 @@ if ($id_aula && $fecha) {
 
             $ocupada = false;
             foreach ($reservas as $res) {
-                if ($inicio >= $res['hora_inicio'] && $inicio <= $res['hora_fin']) { $ocupada = true; break; }
+                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
             }
             $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
             echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
             $t_inicio += $intervalo;
         }
     } else {
-        // mañana: 06:00 y 06:45, luego desde 07:00 cada 45 minutos hasta 12:45
         $morning_starts = ['06:00','06:45'];
-        $s = strtotime('07:00');
+        $s = strtotime('07:10');
+        $pre_recreo_fin = strtotime('10:10');
+        while ($s < $pre_recreo_fin) { $morning_starts[] = date('H:i', $s); $s += 45*60; }
+        $morning_starts[] = '10:10';
+        $s = strtotime('10:30');
         $last = strtotime('12:45');
-        while ($s <= $last) { $morning_starts[] = date('H:i',$s); $s += 45*60; }
-        // Asegurar 12:45 explícitamente
-        if (!in_array('12:45', $morning_starts, true)) { $morning_starts[] = '12:45'; }
+        while ($s <= $last) { $morning_starts[] = date('H:i', $s); $s += 45*60; }
 
         foreach ($morning_starts as $inicio_hm) {
             $inicio = $inicio_hm . ":00";
             $fin_hm = date('H:i', strtotime($inicio_hm) + 45*60);
             $fin    = $fin_hm . ":00";
+            $isRecreoMarker = ($inicio_hm === '10:10');
             $ocupada = false;
-            foreach ($reservas as $res) {
-                if ($inicio >= $res['hora_inicio'] && $inicio <= $res['hora_fin']) { $ocupada = true; break; }
+            if (!$isRecreoMarker) {
+                foreach ($reservas as $res) {
+                    if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
+                }
             }
-            $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-            echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            if ($isRecreoMarker) {
+                echo "<button type='button' class='btn btn-secondary btn-sm mb-1' data-time='{$inicio_hm}' disabled title='Recreo'>{$inicio_hm}</button>";
+                echo "<button type='button' class='btn btn-warning btn-sm mb-1' data-time='10:10-10:30' disabled title='Recreo'>10:10 - 10:30</button>";
+            } else {
+                $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+                echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            }
         }
     }
     // Agregar casilla de las 19:00 como punto final cuando es turno tarde

@@ -125,7 +125,7 @@
         appendMsg('bot', `📦 Navegando a ${dest.charAt(0).toUpperCase() + dest.slice(1)}...`);
         speak(`Abriendo ${dest}`);
         setTimeout(() => {
-          // 1) Intentar clic en UI visible
+          // 1) Intentar clic en UI visible (mantener dentro del panel actual)
           const clicked = tryClickByText(dest === 'historial' ? ['Historial','Mis reservas','Mis préstamos','Mis prestamos']
                                    : dest === 'reservas' ? ['Reservas','Reservar aula']
                                    : dest === 'prestamo' ? ['Préstamos','Prestamos','Solicitar préstamo']
@@ -136,8 +136,8 @@
                                    : dest === 'devolucion' ? ['Devolución','Devoluciones']
                                    : []);
           if (!clicked){
-            // 2) Redirigir por URL por rol
-            window.location.href = targetUrl(dest);
+            // Mantener navegación embebida: no redirigir toda la página
+            appendMsg('bot', '⚠️ No encontré el control para abrir "' + dest + '" dentro del panel actual. Intenta usar el menú lateral.');
           }
         }, 350);
         return true;
@@ -180,12 +180,14 @@
     const inp = elInput(); if (!inp) return; const text = (inp.value||'').trim(); if (!text) return;
     appendMsg('user', text); inp.value = ''; elSend().disabled = true;
     
-    // Intentar ejecutar comando de voz primero
-    if (lastMode === 'voice' && executeVoiceCommand(text)) {
-      elSend().disabled = false;
-      lastMode = 'text';
-      return;
-    }
+    // Intentar ejecutar comando (voz o texto) primero
+    try {
+      if (executeVoiceCommand(text)) {
+        elSend().disabled = false;
+        lastMode = 'text';
+        return;
+      }
+    } catch(_) { /* noop */ }
     
     try{
       const res = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message:text, mode:lastMode }) });
@@ -193,6 +195,9 @@
       const reply = data && data.reply ? data.reply : 'No pude procesar tu solicitud por ahora.';
       appendMsg('bot', reply);
       if (elSpeak() && elSpeak().checked) speak(reply);
+      if (data && Array.isArray(data.actions) && data.actions.length){
+        executeActions(data.actions);
+      }
     }catch(e){ appendMsg('bot','Ocurrió un error al conectar con Tommibot.'); }
     finally{ elSend().disabled = false; lastMode = 'text'; }
   }

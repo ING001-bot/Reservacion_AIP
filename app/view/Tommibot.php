@@ -1,7 +1,9 @@
 <?php
 if (session_status()===PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['usuario']) || ($_SESSION['tipo'] ?? '') !== 'Profesor') { header('Location: ../../Public/index.php'); exit; }
+// Permitir acceso a Tommibot a cualquier usuario autenticado (Profesor, Administrador, Encargado)
+if (!isset($_SESSION['usuario'])) { header('Location: ../../Public/index.php'); exit; }
 $nombre = htmlspecialchars($_SESSION['usuario']);
+$rol = htmlspecialchars($_SESSION['tipo'] ?? '');
 ?>
 <link rel="stylesheet" href="../../Public/css/tommibot.css?v=<?=time()?>">
 <div class="tbm-wrap">
@@ -52,6 +54,11 @@ $nombre = htmlspecialchars($_SESSION['usuario']);
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+<script>
+  // Exponer datos de sesión al frontend para personalizar comportamiento por rol
+  window.__tbUserName = '<?= $nombre ?>';
+  window.__tbUserRole = '<?= $rol ?>';
+</script>
 <script src="../../Public/js/tommibot.js?v=<?=time()?>"></script>
 <script>
   document.addEventListener('click', function(e){
