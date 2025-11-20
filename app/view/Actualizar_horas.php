@@ -13,29 +13,61 @@ $reservas = $controller->obtenerReservasPorFecha($id_aula, $fecha);
 if ($id_aula && $fecha) {
     $intervalo = 45 * 60;
     if ($turno === 'tarde') {
-        // 13:00 hasta 18:15 (para que el fin sea 19:00)
-        $t_inicio = strtotime('13:00');
-        $t_ult_inicio = strtotime('18:15');
-        while ($t_inicio <= $t_ult_inicio) {
-            $inicio_hm = date('H:i', $t_inicio);
-            $fin_hm    = date('H:i', $t_inicio + $intervalo);
+        // Turno tarde específico
+        // Antes del recreo (todos habilitados si están disponibles, incluyendo 16:00)
+        $tarde_pre = ['13:00','13:45','14:30','15:15','16:00'];
+        foreach ($tarde_pre as $inicio_hm) {
             $inicio = $inicio_hm . ":00";
+            $fin_hm = date('H:i', strtotime($inicio_hm) + 45*60);
             $fin    = $fin_hm . ":00";
-
-            $ocupada = false;
+            $ocupada = false; $half_end = false; $starts_here = false;
             foreach ($reservas as $res) {
-                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
+                $res_ini = substr($res['hora_inicio'],0,5);
+                $res_fin = substr($res['hora_fin'],0,5);
+                if ($res_ini === $inicio_hm) { $starts_here = true; }
+                if ($res_fin === $inicio_hm) { $half_end = true; }
+                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
             }
-            $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-            echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
-            $t_inicio += $intervalo;
+            $fin_especiales = ['16:00','18:35'];
+            if ($starts_here || $ocupada || ($half_end && in_array($inicio_hm, $fin_especiales, true))) {
+                echo "<button type='button' class='btn btn-danger btn-sm mb-1' data-time='{$inicio_hm}' disabled>{$inicio_hm}</button>";
+            } elseif ($half_end) {
+                echo "<button type='button' class='btn btn-success btn-sm btn-half-danger mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            } else {
+                echo "<button type='button' class='btn btn-success btn-sm mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            }
+        }
+        // Botón de recreo de la tarde (no seleccionable)
+        echo "<button type='button' class='btn btn-warning btn-sm mb-1' data-time='16:00-16:20' disabled title='Recreo'>16:00 - 16:20</button>";
+        // Después del recreo
+        $tarde_post = ['16:20','17:05','17:50','18:35'];
+        foreach ($tarde_post as $inicio_hm) {
+            $inicio = $inicio_hm . ":00";
+            $fin_hm = date('H:i', strtotime($inicio_hm) + 45*60);
+            $fin    = $fin_hm . ":00";
+            $ocupada = false; $half_end = false; $starts_here = false;
+            foreach ($reservas as $res) {
+                $res_ini = substr($res['hora_inicio'],0,5);
+                $res_fin = substr($res['hora_fin'],0,5);
+                if ($res_ini === $inicio_hm) { $starts_here = true; }
+                if ($res_fin === $inicio_hm) { $half_end = true; }
+                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
+            }
+            $fin_especiales = ['16:00','18:35'];
+            if ($starts_here || $ocupada || ($half_end && in_array($inicio_hm, $fin_especiales, true))) {
+                echo "<button type='button' class='btn btn-danger btn-sm mb-1' data-time='{$inicio_hm}' disabled>{$inicio_hm}</button>";
+            } elseif ($half_end) {
+                echo "<button type='button' class='btn btn-success btn-sm btn-half-danger mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            } else {
+                echo "<button type='button' class='btn btn-success btn-sm mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            }
         }
     } else {
         $morning_starts = ['06:00','06:45'];
         $s = strtotime('07:10');
         $pre_recreo_fin = strtotime('10:10');
         while ($s < $pre_recreo_fin) { $morning_starts[] = date('H:i', $s); $s += 45*60; }
-        $morning_starts[] = '10:10';
+        $morning_starts[] = '10:10'; // 10:10 debe ser seleccionable
         $s = strtotime('10:30');
         $last = strtotime('12:45');
         while ($s <= $last) { $morning_starts[] = date('H:i', $s); $s += 45*60; }
@@ -44,31 +76,29 @@ if ($id_aula && $fecha) {
             $inicio = $inicio_hm . ":00";
             $fin_hm = date('H:i', strtotime($inicio_hm) + 45*60);
             $fin    = $fin_hm . ":00";
-            $isRecreoMarker = ($inicio_hm === '10:10');
-            $ocupada = false;
-            if (!$isRecreoMarker) {
-                foreach ($reservas as $res) {
-                    if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
-                }
+            $ocupada = false; $half_end = false; $starts_here = false;
+            foreach ($reservas as $res) {
+                $res_ini = substr($res['hora_inicio'],0,5);
+                $res_fin = substr($res['hora_fin'],0,5);
+                if ($res_ini === $inicio_hm) { $starts_here = true; }
+                if ($res_fin === $inicio_hm) { $half_end = true; }
+                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
             }
-            if ($isRecreoMarker) {
-                echo "<button type='button' class='btn btn-secondary btn-sm mb-1' data-time='{$inicio_hm}' disabled title='Recreo'>{$inicio_hm}</button>";
-                echo "<button type='button' class='btn btn-warning btn-sm mb-1' data-time='10:10-10:30' disabled title='Recreo'>10:10 - 10:30</button>";
+            $fin_especiales = ['10:10','12:45'];
+            if ($starts_here || $ocupada || ($half_end && in_array($inicio_hm, $fin_especiales, true))) {
+                echo "<button type='button' class='btn btn-danger btn-sm mb-1' data-time='{$inicio_hm}' disabled>{$inicio_hm}</button>";
+            } elseif ($half_end) {
+                echo "<button type='button' class='btn btn-success btn-sm btn-half-danger mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
             } else {
-                $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-                echo "<button type='button' class='{$clase} mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+                echo "<button type='button' class='btn btn-success btn-sm mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
+            }
+            if ($inicio_hm === '10:10') {
+                // Botón de recreo de la mañana (no seleccionable), colocado inmediatamente después de 10:10
+                echo "<button type='button' class='btn btn-warning btn-sm mb-1' data-time='10:10-10:30' disabled title='Recreo'>10:10 - 10:30</button>";
             }
         }
     }
-    // Agregar casilla de las 19:00 como punto final cuando es turno tarde
-    if ($turno === 'tarde') {
-        $ocupada19 = false;
-        foreach ($reservas as $res) {
-            if ('19:00:00' >= $res['hora_inicio'] && '19:00:00' <= $res['hora_fin']) { $ocupada19 = true; break; }
-        }
-        $cls19 = $ocupada19 ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-        echo "<button type='button' class='{$cls19} mb-1' data-time='19:00'>19:00</button>";
-    }
+    // Sin botón adicional de fin en turno tarde
 } else {
     echo "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
 }

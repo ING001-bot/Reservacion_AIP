@@ -18,138 +18,292 @@ function init(){
     let turno = sessionStorage.getItem('turno_reserva') || 'manana';
     let selInicio = sessionStorage.getItem('sel_inicio') || '';
     let selFin = sessionStorage.getItem('sel_fin') || '';
+    let allowSubmit = false; // Flag para permitir el envío programático
+    let userTriggered = false; // Marca si la acción viene del usuario (click/teclado)
 
-    function actualizarHoras() {
-        const fecha = fechaInput.value;
-        const aula = aulaSelect.value;
-        if (!fecha || !aula) {
-            cuadroHoras.innerHTML = "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
-            return;
-        }
-        fechaBadge.textContent = fecha;
-        fetch(`actualizar_horas.php?id_aula=${encodeURIComponent(aula)}&fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}`)
-            .then(res => res.ok ? res.text() : Promise.reject(new Error('No se pudo cargar disponibilidad')))
-            .then(html => {
-                cuadroHoras.innerHTML = html;
-                // Restaurar resaltado si aplica
-                aplicarResaltado();
-            })
-
-        function actualizarHoras() {
-            const fecha = fechaInput.value;
-            const aula = aulaSelect.value;
-            if (!fecha || !aula) {
-                cuadroHoras.innerHTML = "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
-                return;
-            }
-            fechaBadge.textContent = fecha;
-            fetch(`actualizar_horas.php?id_aula=${encodeURIComponent(aula)}&fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}`)
-                .then(res => res.ok ? res.text() : Promise.reject(new Error('No se pudo cargar disponibilidad')))
-                .then(html => {
-                    cuadroHoras.innerHTML = html;
-                    // Restaurar resaltado si aplica
-                    aplicarResaltado();
-                })
-                .catch(error => {
-                    console.error(error);
-                    // Si no existe el endpoint, dejamos el contenido actual o mensaje
-                    if (!cuadroHoras.innerHTML.trim()) {
-                        cuadroHoras.innerHTML = "<small class='text-muted'>No se pudo cargar disponibilidad. Ingresa horas manualmente.</small>";
-                    }
-                });
-            btnTurnoTarde.classList.toggle('active', turno === 'tarde');
-        }
-    }
-
+    // Estado inicial: reflejar turno y cargar disponibilidad apenas se entra
     actualizarBotonesTurno();
     actualizarHoras();
 
-    fechaInput.addEventListener('change', actualizarHoras);
-    aulaSelect.addEventListener('change', actualizarHoras);
+    // Cargar botones desde el servidor (HTML)
+    function bindCuadroHoras() {
+        if (!cuadroHoras) return;
+        const botones = cuadroHoras.querySelectorAll('button[data-time]');
+        botones.forEach(b => {
+            b.removeEventListener('click', manejarClickHora);
+            b.addEventListener('click', manejarClickHora);
+        });
+    }
 
-    // Selección de franja horaria: botones individuales HH:MM
-    if (cuadroHoras) cuadroHoras.addEventListener('click', (e) => {
+    function actualizarHoras() {
+        const fecha = fechaInput ? fechaInput.value : '';
+        const aula = aulaSelect ? aulaSelect.value : '';
+
+        
+        if (!fecha || !aula) {
+            if (cuadroHoras) {
+                cuadroHoras.innerHTML = "<small class='text-muted'>Selecciona aula y fecha para ver disponibilidad</small>";
+            }
+            return;
+        }
+        
+        if (fechaBadge) fechaBadge.textContent = fecha;
+        
+        // Cargar HTML con los botones y estados
+        fetch(`actualizar_horas.php?id_aula=${encodeURIComponent(aula)}&fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}`)
+            .then(res => res.ok ? res.text() : Promise.reject('No se pudo cargar disponibilidad'))
+            .then(html => {
+                cuadroHoras.innerHTML = html;
+                bindCuadroHoras();
+                aplicarResaltado(false);
+            })
+            .catch(err => {
+                console.error(err);
+                if (!cuadroHoras.innerHTML.trim()) {
+                    cuadroHoras.innerHTML = "<small class='text-muted'>No se pudo cargar disponibilidad. Ingresa horas manualmente.</small>";
+                }
+            });
+        
+        // Actualizar estado de los botones de turno
+        actualizarBotonesTurno();
+    }
+
+    function actualizarBotonesTurno() {
+        if (btnTurnoManana) btnTurnoManana.classList.toggle('active', turno === 'manana');
+        if (btnTurnoTarde) btnTurnoTarde.classList.toggle('active', turno === 'tarde');
+    }
+
+    // Configurar manejadores de eventos para los botones de hora
+    function configurarBotonesHoras() {
+        const botonesHora = document.querySelectorAll('#cuadro-horas button[data-time]');
+        botonesHora.forEach(boton => {
+            // Eliminar eventos anteriores para evitar duplicados
+            boton.removeEventListener('click', manejarClickHora);
+            // Agregar nuevo manejador
+            boton.addEventListener('click', manejarClickHora);
+        });
+    }
+
+    // Manejador de clic en los botones de hora
+    function manejarClickHora(e) {
         const btn = e.target.closest('button');
-        if (!btn) return;
-        if (btn.disabled) return; // recreo u otros deshabilitados
-        if (btn.classList.contains('btn-danger')) return; // ocupada
-        const t = (btn.getAttribute('data-time') || btn.textContent.trim()); // HH:MM
-        if (!/^\d{2}:\d{2}$/.test(t)) return;
+        if (!btn || btn.disabled || btn.classList.contains('btn-danger')) return;
+        
+        const t = btn.dataset.time || btn.textContent.trim();
+        if (!/^\d{1,2}:\d{2}(-\d{1,2}:\d{2})?$/.test(t)) return;
 
-        // Primer click: establece inicio; segundo click: fin (>= inicio)
+        // Si ya hay una selección completa o no hay inicio, comenzar una nueva
         if (!selInicio || (selInicio && selFin)) {
             selInicio = t;
             selFin = '';
-        } else {
-            // Validar que fin sea >= inicio y múltiplos de 45m implícitos por la grilla
-            if (compararHora(t, selInicio) < 0) {
-                // si se hace click en un bloque previo, reinicia inicio
+            
+            // Actualizar campo de inicio en el formulario
+            if (horaInicioInput) horaInicioInput.value = t;
+            if (txtInicio) txtInicio.textContent = t;
+            
+            // Limpiar fin de selección anterior
+            if (horaFinInput) horaFinInput.value = '';
+            if (txtFin) txtFin.textContent = '—';
+            
+            // Guardar en sessionStorage
+            sessionStorage.setItem('sel_inicio', selInicio);
+            sessionStorage.removeItem('sel_fin');
+            userTriggered = true;
+        } 
+        // Si hay un inicio pero no un fin, establecer el fin si es válido
+        else if (selInicio && !selFin) {
+            // Verificar que no se esté seleccionando un horario anterior al inicio
+            if (compararHora(t, selInicio) <= 0) {
+                // Si se hace clic en un horario anterior al inicio, reiniciar selección
                 selInicio = t;
                 selFin = '';
+                
+                // Actualizar campo de inicio
+                if (horaInicioInput) horaInicioInput.value = t;
+                if (txtInicio) txtInicio.textContent = t;
+                
+                // Limpiar fin
+                if (horaFinInput) horaFinInput.value = '';
+                if (txtFin) txtFin.textContent = '—';
+                
+                // Guardar en sessionStorage
+                sessionStorage.setItem('sel_inicio', selInicio);
+                sessionStorage.removeItem('sel_fin');
+                userTriggered = true;
             } else {
-                // Verificar continuidad sin bloques ocupados entre inicio y t
+                // Verificar que no haya horarios ocupados en el rango
                 const lista = obtenerTiemposDisponiblesOrdenados();
                 const idxIni = lista.findIndex(x => x.time === selInicio);
                 const idxEnd = lista.findIndex(x => x.time === t);
-                if (idxIni === -1 || idxEnd === -1 || idxEnd < idxIni) {
-                    selInicio = t; selFin = '';
-                } else {
-                    const hayOcupada = lista.slice(idxIni, idxEnd + 1).some(x => x.danger);
-                    if (hayOcupada) {
-                        // No permitir saltar sobre ocupadas
-                        selInicio = t; selFin = '';
-                    } else {
+                
+                if (idxIni !== -1 && idxEnd !== -1 && idxEnd > idxIni) {
+                    // Verificar si hay horarios ocupados o recreo en el rango
+                    const rango = lista.slice(idxIni, idxEnd + 1);
+                    const hayOcupados = rango.some(x => x.danger || x.disabled || x.el.disabled || x.el.classList.contains('btn-warning'));
+                    
+                    if (!hayOcupados) {
                         selFin = t;
+                    } else {
+                        // Mostrar mensaje de error y mantener el inicio seleccionado
+                        Swal.fire({
+                            title: 'Horario no disponible',
+                            text: 'No puedes seleccionar un rango que incluya horarios ocupados o de recreo.',
+                            icon: 'warning',
+                            confirmButtonText: 'Entendido'
+                        });
+                        selFin = '';
                     }
+                } else {
+                    // Si no es un rango válido, establecer como nuevo inicio
+                    selInicio = t;
                 }
             }
+        } 
+        // Si no hay inicio, establecer el inicio
+        else {
+            selInicio = t;
+            selFin = '';
         }
 
-        // Persistir temporalmente
+        // Actualizar la interfaz
         sessionStorage.setItem('sel_inicio', selInicio);
         sessionStorage.setItem('sel_fin', selFin);
-
-        aplicarResaltado();
-    });
-
-    function compararHora(a, b) {
-        // a y b en formato HH:MM
-        return a.localeCompare(b);
-    }
-
-    function aplicarResaltado() {
-        // Actualizar inputs y texto
+        userTriggered = true;
+        aplicarResaltado(true);
+        
+        // Actualizar los campos de formulario
         if (horaInicioInput) horaInicioInput.value = selInicio || '';
         if (horaFinInput) horaFinInput.value = selFin || '';
+    }
+
+    // Función para convertir hora en formato HH:MM a minutos
+    function horaAMinutos(horaStr) {
+        if (!horaStr) return 0;
+        const [h, m] = horaStr.split(':').map(Number);
+        return h * 60 + (m || 0);
+    }
+
+    // Función para verificar si un horario está dentro de un rango
+    function estaEnRango(hora, inicio, fin) {
+        if (!hora || !inicio || !fin) return false;
+        
+        const minutosHora = horaAMinutos(hora);
+        const minutosInicio = horaAMinutos(inicio);
+        const minutosFin = horaAMinutos(fin);
+        
+        return minutosHora >= minutosInicio && minutosHora <= minutosFin;
+    }
+
+    // Comparar hora en formato HH:MM. Devuelve -1 si a<b, 0 si igual, 1 si a>b
+    function compararHora(a, b) {
+        if (!a || !b) return 0;
+        const [ah, am] = a.split(':').map(Number);
+        const [bh, bm] = b.split(':').map(Number);
+        if (ah !== bh) return ah < bh ? -1 : 1;
+        if (am !== bm) return am < bm ? -1 : 1;
+        return 0;
+    }
+
+    function aplicarResaltado(fromUser = false) {
+        // Actualizar inputs y texto
+        if (horaInicioInput && !horaInicioInput.value) horaInicioInput.value = selInicio || '';
+        if (horaFinInput && !horaFinInput.value) horaFinInput.value = selFin || '';
         if (txtInicio) txtInicio.textContent = selInicio || '—';
         if (txtFin) txtFin.textContent = selFin || '—';
 
         // Quitar resaltado previo
-        cuadroHoras.querySelectorAll('button.btn-success').forEach(b => b.classList.remove('active', 'btn-outline-primary'));
+        if (cuadroHoras) {
+            const botones = cuadroHoras.querySelectorAll('button');
+            
+            botones.forEach(btn => {
+                // No tocar botones deshabilitados (recreo o marcadores) ni ocupados
+                if (btn.disabled) return;
+                btn.classList.remove('active', 'btn-outline-primary', 'btn-half-primary');
+                if (!btn.classList.contains('btn-danger')) {
+                    btn.classList.add('btn-success');
+                }
+            });
 
-        if (!selInicio) return;
-        const lista = obtenerTiemposDisponiblesOrdenados();
-        if (!selFin) {
-            // Solo marcar el inicio
-            const item = lista.find(x => x.time === selInicio);
-            if (item && item.el && !item.danger) item.el.classList.add('active', 'btn-outline-primary');
-            return;
-        }
-        for (const x of lista) {
-            if (compararHora(x.time, selInicio) >= 0 && compararHora(x.time, selFin) <= 0 && !x.danger) {
-                x.el.classList.add('active', 'btn-outline-primary');
+            if (!selInicio) return;
+            
+            const lista = obtenerTiemposDisponiblesOrdenados();
+            
+            // Si solo hay inicio seleccionado
+            if (!selFin) {
+                const item = lista.find(x => x.time === selInicio);
+                if (item && item.el && !item.danger) {
+                    item.el.classList.add('active', 'btn-outline-primary');
+                    item.el.classList.remove('btn-success');
+                }
+                return;
+            }
+
+            // Si hay inicio y fin seleccionados
+            const inicioIdx = lista.findIndex(x => x.time === selInicio);
+            const finIdx = lista.findIndex(x => x.time === selFin);
+            
+            if (inicioIdx === -1 || finIdx === -1) return;
+            
+            // Verificar si hay horarios ocupados en el rango
+            const rango = lista.slice(
+                Math.min(inicioIdx, finIdx),
+                Math.max(inicioIdx, finIdx) + 1
+            );
+            
+            const hayOcupados = rango.some(x => x.danger || x.disabled || x.el.disabled || x.el.classList.contains('btn-warning'));
+
+            if (hayOcupados) {
+                if (fromUser) {
+                    Swal.fire({
+                        title: 'Horario no disponible',
+                        text: 'No puedes seleccionar un rango que incluya horarios ocupados o de recreo.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                }
+                // No pintar ni alterar si no viene del usuario
+                return;
+            }
+
+            // Resaltar el rango seleccionado
+            for (let i = Math.min(inicioIdx, finIdx); i <= Math.max(inicioIdx, finIdx); i++) {
+                const x = lista[i];
+                if (x && !x.danger && !x.disabled && !x.el.disabled && !x.el.classList.contains('btn-warning')) {
+                    x.el.classList.add('active', 'btn-outline-primary');
+                    x.el.classList.remove('btn-success');
+                }
+            }
+
+            // Pintar medio botón en el fin si NO es fin especial (para indicar que después puede iniciar otra reserva)
+            const finesEspeciales = ['10:10','12:45','16:00','18:35'];
+            const finItem = lista[finIdx];
+            if (finItem && !finesEspeciales.includes(finItem.time)) {
+                finItem.el.classList.add('btn-half-primary');
             }
         }
     }
 
     function obtenerTiemposDisponiblesOrdenados() {
+        if (!cuadroHoras) return [];
+        
         const nodes = Array.from(cuadroHoras.querySelectorAll('button'));
-        const arr = nodes.map(el => ({
-            time: el.getAttribute('data-time') || el.textContent.trim(),
-            danger: el.classList.contains('btn-danger'),
-            el
-        })).filter(x => /^\d{2}:\d{2}$/.test(x.time));
-        arr.sort((a,b) => a.time.localeCompare(b.time));
+        const arr = nodes
+            .map(el => ({
+                time: el.dataset.time || el.textContent.trim(),
+                danger: el.classList.contains('btn-danger'),
+                disabled: el.disabled,
+                el
+            }))
+            .filter(x => /^\d{1,2}:\d{2}(-\d{1,2}:\d{2})?$/.test(x.time));
+            
+        // Ordenar por hora
+        arr.sort((a, b) => {
+            // Extraer solo la primera parte de la hora para la comparación
+            const horaA = a.time.split('-')[0];
+            const horaB = b.time.split('-')[0];
+            return horaA.localeCompare(horaB);
+        });
+        
         return arr;
     }
 
@@ -173,6 +327,11 @@ function init(){
         selFin = '';
         sessionStorage.removeItem('sel_inicio');
         sessionStorage.removeItem('sel_fin');
+        // Limpiar inputs del formulario y textos visibles
+        if (horaInicioInput) horaInicioInput.value = '';
+        if (horaFinInput) horaFinInput.value = '';
+        if (txtInicio) txtInicio.textContent = '—';
+        if (txtFin) txtFin.textContent = '—';
         aplicarResaltado();
     });
 
@@ -225,8 +384,6 @@ function init(){
         e.preventDefault();
         confirmarYEnviar();
     });
-    // Flag para permitir el envío programático después de confirmar
-    let allowSubmit = false;
     // Interceptar submit del formulario (Enter o envíos programáticos)
     if (formReserva) formReserva.addEventListener('submit', (e) => {
         if (!allowSubmit) {
@@ -284,4 +441,12 @@ function init(){
             });
         });
     });
-});
+}
+
+// Inicializar la aplicación cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+})(); 

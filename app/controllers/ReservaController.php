@@ -87,7 +87,7 @@ class ReservaController {
                 try {
                     $msg = 'Nueva reserva de aula por '.($_SESSION['usuario'] ?? 'Usuario').'. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
                     foreach ($encargados as $u) {
-                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Nueva reserva de aula', $msg, 'Admin.php?view=historial_global');
+                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Nueva reserva de aula', $msg, '/Reservacion_AIP/Admin.php?view=historial_global');
                     }
                 } catch (\Throwable $e) { /* log suave */ }
 
@@ -95,7 +95,7 @@ class ReservaController {
                 try {
                     $tituloProf = 'Reserva confirmada';
                     $msgProf = 'Tu reserva fue registrada. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
-                    $this->model->crearNotificacion((int)$id_usuario, $tituloProf, $msgProf, 'Public/index.php?view=mis_reservas');
+                    $this->model->crearNotificacion((int)$id_usuario, $tituloProf, $msgProf, '/Reservacion_AIP/Public/index.php?view=mis_reservas');
                 } catch (\Throwable $e) { /* noop */ }
                 
                 // Enviar notificación al profesor (email y SMS)
@@ -121,7 +121,7 @@ class ReservaController {
                                 [
                                     'userName' => $userName,
                                     'type' => 'success',
-                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/index.php?view=mis_reservas',
+                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/index.php?view=mis_reservas',
                                     'sendSms' => !empty($userPhone)
                                 ]
                             );
@@ -148,7 +148,7 @@ class ReservaController {
                                     'userName' => ($u['nombre'] ?? 'Encargado'),
                                     'type' => 'info',
                                     'sendSms' => false,
-                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global'
+                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global'
                                 ]
                             );
                         }
@@ -268,12 +268,12 @@ class ReservaController {
                             $subjectEA,
                             $messageEA,
                             [ 'userName' => ($u['nombre'] ?? 'Usuario'), 'type' => 'warning', 'sendSms' => false,
-                              'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global' ]
+                              'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global' ]
                         );
                     }
                     // campanita
                     try {
-                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Cancelación de reserva', strip_tags($messageEA), 'Admin.php?view=historial_global');
+                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Cancelación de reserva', strip_tags($messageEA), '/Reservacion_AIP/Admin.php?view=historial_global');
                     } catch (\Throwable $e) { /*noop*/ }
                 }
             } catch (\Throwable $e) {

@@ -48,11 +48,11 @@ class DevolucionController {
                             $subjectAdmin,
                             $msgAdmin,
                             [ 'userName' => ($u['nombre'] ?? 'Administrador'), 'type' => 'info', 'sendSms' => false,
-                              'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global' ]
+                              'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global' ]
                         );
                     }
                     // campanita
-                    $this->model->crearNotificacion((int)$u['id_usuario'], 'Devolución confirmada', strip_tags($msgAdmin), 'Admin.php?view=historial_global');
+                    $this->model->crearNotificacion((int)$u['id_usuario'], 'Devolución confirmada', strip_tags($msgAdmin), '/Reservacion_AIP/Admin.php?view=historial_global');
                 }
 
                 // Docente: correo + campanita
@@ -69,7 +69,7 @@ class DevolucionController {
                         );
                     }
                     // campanita al docente
-                    $this->model->crearNotificacion((int)$idProfesor, 'Devolución registrada', 'Se confirmó la devolución de tu equipo. Observación: ' . $obs, 'Historial.php');
+                    $this->model->crearNotificacion((int)$idProfesor, 'Devolución registrada', 'Se confirmó la devolución de tu equipo. Observación: ' . $obs, '/Reservacion_AIP/Public/index.php?view=mis_prestamos');
                 }
             } catch (\Throwable $e) { /* noop */ }
             return true;

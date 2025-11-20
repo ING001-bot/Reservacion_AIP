@@ -143,7 +143,7 @@ class NotificationService {
             [
                 'userName' => $userName,
                 'type' => 'success',
-                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/index.php?view=mis_reservas'
+                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/index.php?view=mis_reservas'
             ]
         );
     }
@@ -163,7 +163,7 @@ class NotificationService {
             [
                 'userName' => $userName,
                 'type' => 'success',
-                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/index.php?view=mis_prestamos'
+                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/index.php?view=mis_prestamos'
             ]
         );
     }
@@ -172,7 +172,7 @@ class NotificationService {
      * Notificación de recuperación de contraseña
      */
     public function sendPasswordReset($userEmail, $userPhone, $userName, $resetToken) {
-        $resetUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/restablecer.php?token=' . urlencode($resetToken);
+        $resetUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/restablecer.php?token=' . urlencode($resetToken);
         $subject = "Restablecimiento de contraseña";
         $message = "Para restablecer tu contraseña, haz clic en el siguiente enlace: " . 
                   "<a href='{$resetUrl}'>{$resetUrl}</a><br><br>" .

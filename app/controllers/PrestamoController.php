@@ -38,7 +38,7 @@ class PrestamoController {
                 try {
                     $titulo = 'Préstamo registrado';
                     $mensaje = 'Tu préstamo fue registrado. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.';
-                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, 'Public/index.php?view=mis_prestamos');
+                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, '/Reservacion_AIP/Public/index.php?view=mis_prestamos');
                 } catch (\Throwable $e) { /* noop */ }
                 // correo al profesor
                 if (!empty($correoDoc)) {
@@ -51,7 +51,7 @@ class PrestamoController {
                             'userName' => $docente,
                             'type' => 'success',
                             'sendSms' => false,
-                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Public/index.php?view=mis_prestamos'
+                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/index.php?view=mis_prestamos'
                         ]
                     );
                 }
@@ -64,7 +64,7 @@ class PrestamoController {
                 $mensaje = 'Nuevo préstamo registrado por ' . $docente . '. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.';
                 foreach ($usuarios as $u) {
                     // Campanita
-                    $this->model->crearNotificacion((int)$u['id_usuario'], 'Nuevo préstamo de equipos', $mensaje, 'Admin.php?view=historial_global');
+                    $this->model->crearNotificacion((int)$u['id_usuario'], 'Nuevo préstamo de equipos', $mensaje, '/Reservacion_AIP/Admin.php?view=historial_global');
                     // Correo
                     if (!empty($u['correo'])) {
                         $ns = new NotificationService();
@@ -76,7 +76,7 @@ class PrestamoController {
                                 'userName' => ($u['nombre'] ?? 'Usuario'),
                                 'type' => 'info',
                                 'sendSms' => false,
-                                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Sistema_reserva_AIP/Admin.php?view=historial_global'
+                                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global'
                             ]
                         );
                     }

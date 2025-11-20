@@ -50,7 +50,7 @@ class VerificationController {
                     $this->redirectAfterVerification($result['action_type']);
                 } else {
                     $error = urlencode($result['error'] ?? 'Error desconocido');
-                    header("Location: /Sistema_reserva_AIP/Public/verificar.php?action={$result['action_type']}&error=$error");
+                    header("Location: /Reservacion_AIP/Public/verificar.php?action={$result['action_type']}&error=$error");
                     exit;
                 }
             }
@@ -65,7 +65,7 @@ class VerificationController {
             } else {
                 $error = urlencode($e->getMessage());
                 $actionType = $_POST['action_type'] ?? $_GET['action_type'] ?? 'reserva';
-                header("Location: /Sistema_reserva_AIP/Public/verificar.php?action=$actionType&error=$error");
+                header("Location: /Reservacion_AIP/Public/verificar.php?action=$actionType&error=$error");
             }
             exit;
         }
@@ -89,22 +89,22 @@ class VerificationController {
                         'hora_fin' => $reserva['hora_fin']
                     ]);
                     
-                    header("Location: /Sistema_reserva_AIP/Public/reservar.php?$params");
+                    header("Location: /Reservacion_AIP/Public/reservar.php?$params");
                 } else {
-                    header('Location: /Sistema_reserva_AIP/Public/reservar.php');
+                    header('Location: /Reservacion_AIP/Public/reservar.php');
                 }
                 break;
                 
             case 'prestamo':
-                header('Location: /Sistema_reserva_AIP/Public/prestamos.php');
+                header('Location: /Reservacion_AIP/Public/prestamos.php');
                 break;
                 
             case 'cambio_clave':
-                header('Location: /Sistema_reserva_AIP/Public/cambiar_contrasena.php');
+                header('Location: /Reservacion_AIP/Public/cambiar_contrasena.php');
                 break;
                 
             default:
-                header('Location: /Sistema_reserva_AIP/Public/index.php');
+                header('Location: /Reservacion_AIP/Public/index.php');
                 break;
         }
         exit;
@@ -123,7 +123,7 @@ class VerificationController {
         $_SESSION['pending_action'] = $actionType;
         
         // Redirigir al formulario de verificación
-        header("Location: /Sistema_reserva_AIP/Public/verificar.php?action=$actionType");
+        header("Location: /Reservacion_AIP/Public/verificar.php?action=$actionType");
         exit;
     }
     

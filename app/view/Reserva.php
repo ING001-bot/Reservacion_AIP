@@ -110,7 +110,7 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../Public/css/brand.css">
-    <style>#cuadro-horas .btn { min-width: 110px; }</style>
+    <style>#cuadro-horas .btn { min-width: 110px; position: relative; overflow: hidden; }</style>
     <style>
         .verification-overlay {
             position: fixed;
@@ -165,6 +165,28 @@ if (!empty($fecha_default) && !empty($id_aula_selected)) {
             filter: blur(5px);
             pointer-events: none;
             user-select: none;
+        }
+        /* Medio botón ocupado (izquierda roja) */
+        .btn-half-danger::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: rgba(220,53,69,0.85); /* red */
+            pointer-events: none;
+        }
+        /* Medio botón seleccionado (derecha azul para indicar que el fin también está incluido) */
+        .btn-half-primary::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: rgba(13,110,253,0.6); /* primary */
+            pointer-events: none;
         }
     </style>
 </head>
@@ -361,7 +383,7 @@ setTimeout(() => {
                                     }
                                 }
                                 if ($isRecreoMarker) {
-                                    echo "<button type='button' class='btn btn-secondary btn-sm mb-1' data-time='{$inicio_hm}' disabled title='Recreo'>{$inicio_hm}</button>";
+                                    echo "<button type='button' class='btn btn-success btn-sm mb-1' data-time='{$inicio_hm}' disabled title='Recreo'>{$inicio_hm}</button>";
                                     echo "<button type='button' class='btn btn-warning btn-sm mb-1' data-time='10:10-10:30' disabled title='Recreo'>10:10 - 10:30</button>";
                                 } else {
                                     $clase = $ocupada ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
@@ -543,24 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Flujo OTP duplicado eliminado; se mantiene solo el modal del servidor
 
-    // Validación y envío de la reserva
-    const btnReservar = document.getElementById('btn-reservar');
-    if (btnReservar && formReserva) {
-        btnReservar.addEventListener('click', function(){
-            // Validar fecha >= mañana
-            if (fechaInput) {
-                const hoy = new Date(); hoy.setHours(0,0,0,0);
-                const mañana = new Date(hoy); mañana.setDate(mañana.getDate()+1);
-                const f = new Date((fechaInput.value||'')+'T00:00:00');
-                if (!(fechaInput.value) || f < mañana) {
-                    Swal.fire({ icon:'error', title:'⚠️ Fecha no permitida', text:'Solo puedes reservar a partir del día siguiente.' });
-                    return;
-                }
-            }
-            // La verificación OTP la gestiona el modal del servidor
-            formReserva.submit();
-        });
-    }
+    // La confirmación y el envío se gestionan en Public/js/Reservas.js (SweetAlert)
 });
 </script>
 </body>
