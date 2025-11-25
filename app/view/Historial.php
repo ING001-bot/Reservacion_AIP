@@ -144,5 +144,6 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
     // Sincronización ya no necesaria: solo hay un botón PDF (arriba)
   });
   </script>
+  <script src="../../Public/js/theme.js"></script>
 </body>
 </html>

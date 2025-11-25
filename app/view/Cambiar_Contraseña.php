@@ -263,5 +263,6 @@ setTimeout(() => {
 // Flujo OTP duplicado eliminado; el modal del servidor maneja la verificación.
 </script>
 <script src="../../Public/js/cambiar_contraseña.js"></script>
+<script src="../../Public/js/theme.js"></script>
 </body>
 </html>

@@ -265,6 +265,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
 
 <?php if (!defined('EMBEDDED_VIEW')): ?>
   </main>
+  <script src="../../Public/js/theme.js"></script>
 </body>
 </html>
 <?php endif; ?>

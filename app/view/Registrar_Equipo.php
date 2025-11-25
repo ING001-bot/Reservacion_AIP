@@ -195,6 +195,7 @@ Swal.fire({
 });
 </script>
 <?php endif; ?>
+<script src="../../Public/js/theme.js"></script>
 </body>
 </html>
 <?php endif; ?>

@@ -129,6 +129,7 @@ $mensaje_tipo = $data['mensaje_tipo'];
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../../Public/js/tipos_equipo.js?v=<?= time() ?>"></script>
+  <script src="../../Public/js/theme.js"></script>
 </main>
 </body>
 </html>

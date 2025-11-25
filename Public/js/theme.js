@@ -6,8 +6,9 @@
       var saved = localStorage.getItem('theme');
       if (saved === 'dark') { 
         document.body.classList.add('dark');
-        updateThemeIcon(true);
       }
+      // Intentar actualizar el icono si el botón ya existe
+      setTimeout(function() { updateThemeIcon(saved === 'dark'); }, 100);
     } catch(e) {}
   }
   
@@ -27,7 +28,11 @@
   
   function bindToggle(){
     var btn = document.getElementById('theme-toggle-navbar');
-    if (!btn) return;
+    if (!btn) {
+      // Reintentar en 500ms si el navbar aún no se ha cargado
+      setTimeout(bindToggle, 500);
+      return;
+    }
     
     btn.addEventListener('click', function(){
       document.body.classList.toggle('dark');
@@ -35,6 +40,10 @@
       try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
       updateThemeIcon(isDark);
     });
+    
+    // Actualizar icono inicial
+    var isDark = document.body.classList.contains('dark');
+    updateThemeIcon(isDark);
   }
   function ensureTableScrollWrappers(){
     try{
