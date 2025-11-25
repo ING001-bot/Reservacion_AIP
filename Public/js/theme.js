@@ -1,25 +1,40 @@
 // Public/js/theme.js
-// Injects a floating dark-mode toggle and persists user choice across pages
+// Theme toggle - ahora integrado en navbar
 (function(){
   function applySavedTheme(){
     try {
       var saved = localStorage.getItem('theme');
-      if (saved === 'dark') { document.body.classList.add('dark'); }
+      if (saved === 'dark') { 
+        document.body.classList.add('dark');
+        updateThemeIcon(true);
+      }
     } catch(e) {}
   }
-  function buildToggle(){
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'theme-fab';
-    btn.title = 'Cambiar tema';
-    btn.setAttribute('aria-label', 'Cambiar tema');
-    btn.textContent = '🌓';
+  
+  function updateThemeIcon(isDark){
+    var btn = document.getElementById('theme-toggle-navbar');
+    if (!btn) return;
+    var icon = btn.querySelector('i');
+    if (!icon) return;
+    if (isDark) {
+      icon.className = 'fas fa-sun fa-lg';
+      btn.title = 'Cambiar a modo claro';
+    } else {
+      icon.className = 'fas fa-moon fa-lg';
+      btn.title = 'Cambiar a modo oscuro';
+    }
+  }
+  
+  function bindToggle(){
+    var btn = document.getElementById('theme-toggle-navbar');
+    if (!btn) return;
+    
     btn.addEventListener('click', function(){
       document.body.classList.toggle('dark');
       var isDark = document.body.classList.contains('dark');
       try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
+      updateThemeIcon(isDark);
     });
-    document.body.appendChild(btn);
   }
   function ensureTableScrollWrappers(){
     try{
@@ -91,7 +106,7 @@
   }
   document.addEventListener('DOMContentLoaded', function(){
     applySavedTheme();
-    buildToggle();
+    bindToggle();
     ensureTableScrollWrappers();
     observeDynamicTables();
     bindConfirmations();

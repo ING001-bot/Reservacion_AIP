@@ -154,21 +154,24 @@ $todosUsuarios = $usuarioModel->obtenerUsuarios();
                               placeholder="Información adicional sobre ti..."><?= htmlspecialchars($perfil['bio'] ?? '') ?></textarea>
                 </div>
             </div>
-            <div class="mt-3 d-flex gap-2">
+            <div class="mt-3">
                 <button type="submit" name="actualizar_datos" class="btn btn-brand">
                     💾 Guardar Cambios
                 </button>
-                <?php if (!empty($perfil['foto_perfil'])): ?>
-                    <button type="button" class="btn btn-outline-danger"
-                            onclick="confirmarEliminarFoto()">
-                        🗑️ Eliminar Foto
-                    </button>
-                    <form method="POST" id="formEliminarFoto" style="display:none;">
-                        <input type="hidden" name="eliminar_foto" value="1">
-                    </form>
-                <?php endif; ?>
             </div>
         </form>
+        
+        <?php if (!empty($perfil['foto_perfil'])): ?>
+            <div class="mt-2">
+                <button type="button" class="btn btn-outline-danger"
+                        onclick="confirmarEliminarFoto()">
+                    🗑️ Eliminar Foto
+                </button>
+            </div>
+            <form method="POST" id="formEliminarFoto" style="display:none;">
+                <input type="hidden" name="eliminar_foto" value="1">
+            </form>
+        <?php endif; ?>
     </div>
 
     <!-- Estadísticas del Sistema -->
@@ -353,9 +356,9 @@ function cargarEstadisticas() {
                     </div>
                     <div class="col-md-4">
                         <div class="stat-card">
-                            <div class="stat-icon">📱</div>
-                            <div class="stat-value">${stats.telefono_verificado}</div>
-                            <div class="stat-label">Teléfono Verificado</div>
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-value">${stats.reservas_activas || 0}</div>
+                            <div class="stat-label">Reservas Activas</div>
                         </div>
                     </div>
                     <div class="col-md-4">

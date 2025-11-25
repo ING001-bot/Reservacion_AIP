@@ -44,13 +44,13 @@ $vista = $_GET['view'] ?? 'inicio';
       <h4 class="text-white mb-4 fw-bold" style="font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase;">Panel Admin</h4>
       <nav class="nav flex-column" style="gap: 0.5rem;">
         <a class="nav-link link-sidebar <?= $vista==='inicio'?'active':'' ?>" href="Admin.php?view=inicio">🏠 Inicio</a>
-        <a class="nav-link link-sidebar <?= $vista==='usuarios'?'active':'' ?>" href="Admin.php?view=usuarios">👤 Usuarios</a>
-        <a class="nav-link link-sidebar <?= $vista==='aulas'?'active':'' ?>" href="Admin.php?view=aulas">🏫 Aulas</a>
-        <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos">💻 Equipos</a>
-        <a class="nav-link link-sidebar <?= $vista==='tipos_equipo'?'active':'' ?>" href="Admin.php?view=tipos_equipo">⚙ Tipos</a>
-        <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial</a>
-        <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes</a>
-        <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Contraseña</a>
+        <a class="nav-link link-sidebar <?= $vista==='usuarios'?'active':'' ?>" href="Admin.php?view=usuarios">👤 Gestión de Usuarios</a>
+        <a class="nav-link link-sidebar <?= $vista==='aulas'?'active':'' ?>" href="Admin.php?view=aulas">🏫 Gestión de Aulas</a>
+        <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos">💻 Gestión de Equipos</a>
+        <a class="nav-link link-sidebar <?= $vista==='tipos_equipo'?'active':'' ?>" href="Admin.php?view=tipos_equipo">⚙ Tipos de Equipo</a>
+        <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial General</a>
+        <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes y Estadísticas</a>
+        <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
         <a class="nav-link link-sidebar <?= $vista==='configuracion'?'active':'' ?>" href="Admin.php?view=configuracion">⚙️ Configuración</a>
       </nav>
       <div class="mt-auto pt-4 border-top border-white border-opacity-25">

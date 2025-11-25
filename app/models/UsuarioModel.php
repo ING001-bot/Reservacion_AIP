@@ -313,9 +313,9 @@ class UsuarioModel {
         $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE activo = 1 AND verificado = 1");
         $stats['verificados'] = (int)$stmt->fetchColumn();
         
-        // Usuarios con teléfono verificado
-        $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE activo = 1 AND telefono_verificado = 1");
-        $stats['telefono_verificado'] = (int)$stmt->fetchColumn();
+        // Reservas activas (estado pendiente o confirmado)
+        $stmt = $this->db->query("SELECT COUNT(*) FROM reservas WHERE estado IN ('Pendiente', 'Confirmada')");
+        $stats['reservas_activas'] = (int)$stmt->fetchColumn();
         
         return $stats;
     }

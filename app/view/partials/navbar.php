@@ -127,6 +127,11 @@ $badge = count($no_leidas);
     </a>
     
     <div class="d-flex align-items-center ms-auto">
+      <!-- Botón de tema -->
+      <button type="button" class="btn btn-link nav-link text-white p-2 border-0 me-2" id="theme-toggle-navbar" title="Cambiar tema" aria-label="Cambiar tema oscuro/claro">
+        <i class="fas fa-moon fa-lg"></i>
+      </button>
+      
       <!-- Notificaciones (Admin, Encargado y Profesor) -->
       <?php if ($id_usuario > 0): ?>
       <div class="dropdown me-3">

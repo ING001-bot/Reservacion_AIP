@@ -141,21 +141,24 @@ $perfil = $configController->obtenerPerfil($id_usuario);
                               placeholder="Información adicional sobre ti, especialidad, etc..."><?= htmlspecialchars($perfil['bio'] ?? '') ?></textarea>
                 </div>
             </div>
-            <div class="mt-3 d-flex gap-2">
+            <div class="mt-3">
                 <button type="submit" name="actualizar_datos" class="btn btn-brand">
                     💾 Guardar Cambios
                 </button>
-                <?php if (!empty($perfil['foto_perfil'])): ?>
-                    <button type="button" class="btn btn-outline-danger"
-                            onclick="confirmarEliminarFoto()">
-                        🗑️ Eliminar Foto
-                    </button>
-                    <form method="POST" id="formEliminarFoto" style="display:none;">
-                        <input type="hidden" name="eliminar_foto" value="1">
-                    </form>
-                <?php endif; ?>
             </div>
         </form>
+        
+        <?php if (!empty($perfil['foto_perfil'])): ?>
+            <div class="mt-2">
+                <button type="button" class="btn btn-outline-danger"
+                        onclick="confirmarEliminarFoto()">
+                    🗑️ Eliminar Foto
+                </button>
+            </div>
+            <form method="POST" id="formEliminarFoto" style="display:none;">
+                <input type="hidden" name="eliminar_foto" value="1">
+            </form>
+        <?php endif; ?>
     </div>
 
     <!-- Datos de la cuenta -->
