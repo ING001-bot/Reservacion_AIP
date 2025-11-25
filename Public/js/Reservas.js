@@ -21,6 +21,44 @@ function init(){
     let allowSubmit = false; // Flag para permitir el envío programático
     let userTriggered = false; // Marca si la acción viene del usuario (click/teclado)
 
+    // Actualizar disponibilidad cuando cambie el aula
+    if (aulaSelect) {
+        aulaSelect.addEventListener('change', () => {
+            console.log('Aula cambiada a:', aulaSelect.value);
+            // Limpiar selección de horas al cambiar de aula
+            selInicio = '';
+            selFin = '';
+            sessionStorage.removeItem('sel_inicio');
+            sessionStorage.removeItem('sel_fin');
+            if (horaInicioInput) horaInicioInput.value = '';
+            if (horaFinInput) horaFinInput.value = '';
+            if (txtInicio) txtInicio.textContent = '—';
+            if (txtFin) txtFin.textContent = '—';
+            
+            // Actualizar disponibilidad de horas
+            actualizarHoras();
+        });
+    }
+
+    // Actualizar disponibilidad cuando cambie la fecha
+    if (fechaInput) {
+        fechaInput.addEventListener('change', () => {
+            console.log('Fecha cambiada a:', fechaInput.value);
+            // Limpiar selección de horas al cambiar de fecha
+            selInicio = '';
+            selFin = '';
+            sessionStorage.removeItem('sel_inicio');
+            sessionStorage.removeItem('sel_fin');
+            if (horaInicioInput) horaInicioInput.value = '';
+            if (horaFinInput) horaFinInput.value = '';
+            if (txtInicio) txtInicio.textContent = '—';
+            if (txtFin) txtFin.textContent = '—';
+            
+            // Actualizar disponibilidad de horas
+            actualizarHoras();
+        });
+    }
+
     // Estado inicial: reflejar turno y cargar disponibilidad apenas se entra
     actualizarBotonesTurno();
     actualizarHoras();
@@ -39,6 +77,7 @@ function init(){
         const fecha = fechaInput ? fechaInput.value : '';
         const aula = aulaSelect ? aulaSelect.value : '';
 
+        console.log('actualizarHoras() llamado - Aula:', aula, 'Fecha:', fecha, 'Turno:', turno);
         
         if (!fecha || !aula) {
             if (cuadroHoras) {
@@ -49,17 +88,29 @@ function init(){
         
         if (fechaBadge) fechaBadge.textContent = fecha;
         
+        // Mostrar indicador de carga
+        if (cuadroHoras) {
+            cuadroHoras.innerHTML = "<div class='text-center'><div class='spinner-border spinner-border-sm text-primary' role='status'><span class='visually-hidden'>Cargando...</span></div> Actualizando disponibilidad...</div>";
+        }
+        
         // Cargar HTML con los botones y estados
-        fetch(`actualizar_horas.php?id_aula=${encodeURIComponent(aula)}&fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}`)
-            .then(res => res.ok ? res.text() : Promise.reject('No se pudo cargar disponibilidad'))
+        const url = `Actualizar_horas.php?id_aula=${encodeURIComponent(aula)}&fecha=${encodeURIComponent(fecha)}&turno=${encodeURIComponent(turno)}`;
+        console.log('Fetch URL:', url);
+        
+        fetch(url)
+            .then(res => {
+                console.log('Response status:', res.status, res.ok);
+                return res.ok ? res.text() : Promise.reject('No se pudo cargar disponibilidad');
+            })
             .then(html => {
+                console.log('HTML recibido, longitud:', html.length);
                 cuadroHoras.innerHTML = html;
                 bindCuadroHoras();
                 aplicarResaltado(false);
             })
             .catch(err => {
-                console.error(err);
-                if (!cuadroHoras.innerHTML.trim()) {
+                console.error('Error en actualizarHoras:', err);
+                if (cuadroHoras && !cuadroHoras.innerHTML.trim()) {
                     cuadroHoras.innerHTML = "<small class='text-muted'>No se pudo cargar disponibilidad. Ingresa horas manualmente.</small>";
                 }
             });

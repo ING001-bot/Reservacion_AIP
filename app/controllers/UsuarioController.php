@@ -175,33 +175,53 @@ class UsuarioController {
 
     /** Eliminar usuario */
     public function eliminarUsuario($id_usuario) {
+        // Verificar si se puede eliminar
+        $validacion = $this->usuarioModel->puedeEliminar((int)$id_usuario);
+        
+        if (!$validacion['puede']) {
+            return [
+                'error' => true,
+                'mensaje' => $validacion['razon']
+            ];
+        }
+        
         $ok = $this->usuarioModel->eliminarUsuario($id_usuario);
         return [
             'error' => !$ok,
             'mensaje' => $ok ? "✅ Usuario eliminado correctamente." : "❌ Error al eliminar."
         ];
     }
+    
+    /** Obtener estadísticas de usuarios */
+    public function obtenerEstadisticas(): array {
+        return $this->usuarioModel->obtenerEstadisticas();
+    }
+    
+    /** Obtener usuarios por tipo */
+    public function obtenerUsuariosPorTipo(string $tipo): array {
+        return $this->usuarioModel->obtenerUsuariosPorTipo($tipo);
+    }
 
     /** Editar usuario */
     public function editarUsuario($id_usuario, $nombre, $correo, $tipo_usuario, ?string $telefono = null) {
-        if (!$nombre || !$correo || !$tipo_usuario) {
+        if (!$nombre || !$correo) {
             return ['error' => true, 'mensaje' => '⚠️ Todos los campos son obligatorios.'];
         }
         // Normalizar entradas
         $nombre = trim($nombre);
         $correo = trim(strtolower($correo));
-        $tipo_usuario = trim($tipo_usuario);
 
         // Validar nombre (letras y espacios)
         if (!preg_match('/^[\p{L}\s]+$/u', $nombre)) {
             return ['error' => true, 'mensaje' => '⚠️ El nombre solo puede contener letras y espacios.'];
         }
 
-        // Validar tipo permitido
-        $permitidos = ['Profesor','Encargado','Administrador'];
-        if (!in_array($tipo_usuario, $permitidos, true)) {
-            return ['error' => true, 'mensaje' => '⚠️ Tipo de usuario inválido.'];
+        // OBTENER EL TIPO ACTUAL DEL USUARIO (NO SE PERMITE CAMBIAR DESDE EDICIÓN)
+        $actual = $this->usuarioModel->obtenerPorId((int)$id_usuario);
+        if (!$actual) {
+            return ['error' => true, 'mensaje' => '⚠️ Usuario no encontrado.'];
         }
+        $tipo_usuario = $actual['tipo']; // Mantener el rol actual
 
         // Validar correo (formato, etc.)
         $val = $this->validarCorreoEstricto($correo);
@@ -219,7 +239,6 @@ class UsuarioController {
         }
 
         // Detectar cambio de correo
-        $actual = $this->usuarioModel->obtenerPorId((int)$id_usuario);
         $correoAnterior = strtolower(trim($actual['correo'] ?? ''));
         $correoNuevo = $correo;
 

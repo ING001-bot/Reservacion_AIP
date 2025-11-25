@@ -276,5 +276,98 @@ class UsuarioModel {
         }
         return null;
     }
+    
+    /**
+     * Obtener estadísticas de usuarios
+     */
+    public function obtenerEstadisticas(): array {
+        $stats = [];
+        
+        // Total de usuarios activos
+        $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE activo = 1");
+        $stats['total'] = (int)$stmt->fetchColumn();
+        
+        // Por tipo
+        $stmt = $this->db->query("SELECT tipo_usuario, COUNT(*) as cantidad FROM usuarios WHERE activo = 1 GROUP BY tipo_usuario");
+        $porTipo = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        $stats['administradores'] = 0;
+        $stats['encargados'] = 0;
+        $stats['profesores'] = 0;
+        
+        foreach ($porTipo as $row) {
+            switch ($row['tipo_usuario']) {
+                case 'Administrador':
+                    $stats['administradores'] = (int)$row['cantidad'];
+                    break;
+                case 'Encargado':
+                    $stats['encargados'] = (int)$row['cantidad'];
+                    break;
+                case 'Profesor':
+                    $stats['profesores'] = (int)$row['cantidad'];
+                    break;
+            }
+        }
+        
+        // Usuarios verificados
+        $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE activo = 1 AND verificado = 1");
+        $stats['verificados'] = (int)$stmt->fetchColumn();
+        
+        // Usuarios con teléfono verificado
+        $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE activo = 1 AND telefono_verificado = 1");
+        $stats['telefono_verificado'] = (int)$stmt->fetchColumn();
+        
+        return $stats;
+    }
+    
+    /**
+     * Obtener lista de usuarios por tipo
+     */
+    public function obtenerUsuariosPorTipo(string $tipo): array {
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, telefono, verificado, telefono_verificado FROM usuarios WHERE tipo_usuario = ? AND activo = 1 ORDER BY nombre ASC");
+        $stmt->execute([$tipo]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Verificar si un usuario es administrador
+     */
+    public function esAdministrador(int $id_usuario): bool {
+        $stmt = $this->db->prepare("SELECT tipo_usuario FROM usuarios WHERE id_usuario = ? AND activo = 1");
+        $stmt->execute([$id_usuario]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row && $row['tipo_usuario'] === 'Administrador';
+    }
+    
+    /**
+     * Contar administradores activos
+     */
+    public function contarAdministradores(): int {
+        $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'Administrador' AND activo = 1");
+        return (int)$stmt->fetchColumn();
+    }
+    
+    /**
+     * Verificar si se puede eliminar un usuario
+     * No se puede eliminar si es el último administrador
+     */
+    public function puedeEliminar(int $id_usuario): array {
+        // Verificar si es administrador
+        if (!$this->esAdministrador($id_usuario)) {
+            return ['puede' => true];
+        }
+        
+        // Si es administrador, verificar que no sea el último
+        $totalAdmins = $this->contarAdministradores();
+        
+        if ($totalAdmins <= 1) {
+            return [
+                'puede' => false,
+                'razon' => '⚠️ No se puede eliminar el último administrador del sistema'
+            ];
+        }
+        
+        return ['puede' => true];
+    }
 }
 ?>

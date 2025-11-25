@@ -4,6 +4,15 @@ if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo'])) {
   header('Location: ../../Public/index.php');
   exit;
 }
+
+// Prevenir caché del navegador (solo si no es vista embebida)
+if (!defined('EMBEDDED_VIEW')) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Cache-Control: post-check=0, pre-check=0', false);
+    header('Pragma: no-cache');
+    header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+}
+
 $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
 ?>
 <?php if (!defined('EMBEDDED_VIEW')): ?>

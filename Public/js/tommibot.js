@@ -191,14 +191,33 @@
     
     try{
       const res = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message:text, mode:lastMode }) });
+      
+      if (!res.ok) {
+        throw new Error(`Error HTTP: ${res.status}`);
+      }
+      
       const data = await res.json();
+      
+      // Verificar si hay error en la respuesta
+      if (data && data.ok === false) {
+        const errorMsg = data.error || 'Ocurrió un error al procesar tu mensaje.';
+        appendMsg('bot', '❌ ' + errorMsg);
+        console.error('Error de Tommibot:', data.details || errorMsg);
+        elSend().disabled = false;
+        lastMode = 'text';
+        return;
+      }
+      
       const reply = data && data.reply ? data.reply : 'No pude procesar tu solicitud por ahora.';
       appendMsg('bot', reply);
       if (elSpeak() && elSpeak().checked) speak(reply);
       if (data && Array.isArray(data.actions) && data.actions.length){
         executeActions(data.actions);
       }
-    }catch(e){ appendMsg('bot','Ocurrió un error al conectar con Tommibot.'); }
+    }catch(e){ 
+      console.error('Error en Tommibot:', e);
+      appendMsg('bot','❌ Ocurrió un error al conectar con Tommibot. Por favor, verifica tu conexión e intenta nuevamente.');
+    }
     finally{ elSend().disabled = false; lastMode = 'text'; }
   }
 
@@ -241,7 +260,11 @@
     if(!recog){ 
       initVoice(); 
       if(!recog){ 
-        alert('Reconocimiento de voz no soportado en este navegador. Usa Chrome, Edge o Safari.'); 
+        if (typeof showWarning === 'function') {
+          showWarning('Navegador no compatible', 'El reconocimiento de voz no está disponible. Usa Chrome, Edge o Safari.');
+        } else {
+          alert('Reconocimiento de voz no soportado en este navegador. Usa Chrome, Edge o Safari.');
+        }
         return; 
       } 
     }

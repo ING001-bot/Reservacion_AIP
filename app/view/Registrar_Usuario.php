@@ -14,6 +14,14 @@ try {
 } catch (\Throwable $e) { error_log('setup_completed read failed: ' . $e->getMessage()); }
 if (!$esAdmin && $setupCompleted === '1') { header('Location: ../../Public/index.php'); exit(); }
 
+// Prevenir caché del navegador (solo si no es vista embebida)
+if (!defined('EMBEDDED_VIEW')) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Cache-Control: post-check=0, pre-check=0', false);
+    header('Pragma: no-cache');
+    header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+}
+
 require '../controllers/UsuarioController.php';
 $controller = new UsuarioController();
 $data = $controller->handleRequest();
@@ -82,8 +90,8 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                     <option value="">-- Selecciona un tipo --</option>
                     <option value="Profesor">Profesor</option>
                     <option value="Encargado">Encargado</option>
-                    <option value="Administrador">Administrador</option>
                 </select>
+                <small class="form-text text-muted">Los administradores se gestionan desde <strong>Configuración</strong></small>
             </div>
             <div class="col-12">
                 <button type="submit" name="registrar_usuario_admin" class="btn btn-brand w-100">Registrar Usuario</button>
@@ -110,6 +118,7 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                 </thead>
                 <tbody>
                 <?php $i = 1; foreach ($usuarios as $user): ?>
+                    <?php if ($user['tipo_usuario'] === 'Administrador') continue; // No mostrar administradores ?>
                     <?php if ($id_editar == $user['id_usuario']): ?>
                         <form method="post">
                         <tr>
@@ -187,11 +196,14 @@ $id_editar = $_GET['editar'] ?? null; // Para edición inline
                     </div>
                     <div class="mb-3">
                         <label for="edit_tipo" class="form-label">Tipo de Usuario</label>
-                        <select class="form-select" id="edit_tipo" name="tipo" required>
+                        <select class="form-select" id="edit_tipo" name="tipo" disabled>
                             <option value="Profesor">Profesor</option>
                             <option value="Encargado">Encargado</option>
                             <option value="Administrador">Administrador</option>
                         </select>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> Para cambiar el rol del usuario, use el módulo de <strong>Configuración</strong>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

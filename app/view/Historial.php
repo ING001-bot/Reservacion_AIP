@@ -6,6 +6,14 @@ if (!isset($_SESSION['id_usuario'])) {
     echo 'Acceso denegado'; exit;
 }
 
+// Prevenir caché del navegador (solo si no es vista embebida)
+if (!defined('EMBEDDED_VIEW')) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Cache-Control: post-check=0, pre-check=0', false);
+    header('Pragma: no-cache');
+    header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+}
+
 require '../controllers/HistorialController.php';
 require '../config/conexion.php';
 

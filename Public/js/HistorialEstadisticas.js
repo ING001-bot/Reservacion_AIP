@@ -170,7 +170,11 @@
       console.log('✅ Estadísticas cargadas exitosamente');
     }catch(e){
       console.error('❌ Error al cargar estadísticas:', e);
-      alert('Error al cargar estadísticas: ' + e.message);
+      if (typeof showError === 'function') {
+        showError('Error al cargar estadísticas', e.message);
+      } else {
+        alert('Error al cargar estadísticas: ' + e.message);
+      }
       setCard(statReservas, 0); setCard(statCancel, 0); setCard(statPrestamos, 0); setCard(statHoras, 0);
       if (listTopProfRes) listTopProfRes.innerHTML = '<li class="text-danger">Error al cargar</li>';
       if (listTopProfPrest) listTopProfPrest.innerHTML = '<li class="text-danger">Error al cargar</li>';

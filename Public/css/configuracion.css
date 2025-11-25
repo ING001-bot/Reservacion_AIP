@@ -1,0 +1,280 @@
+/* Public/css/configuracion.css */
+
+/* ==============================
+   🎨 CONFIGURACIÓN DE PERFIL
+   ============================== */
+   
+.config-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  background: linear-gradient(135deg, var(--brand-color) 0%, var(--accent-green) 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  color: white;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-brand);
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05);
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+  border: 3px dashed rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.avatar-placeholder:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%);
+  border-color: rgba(255,255,255,0.8);
+}
+
+.config-section {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-soft);
+}
+
+.config-section h4 {
+  color: var(--brand-color);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--brand-light);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.config-section h4::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--brand-color) 0%, var(--accent-green) 100%);
+  border-radius: 2px;
+}
+
+.info-row {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.info-value {
+  color: var(--text-dark);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.badge-role {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.badge-admin {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.badge-encargado {
+  background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+  color: white;
+}
+
+.badge-profesor {
+  background: linear-gradient(135deg, var(--brand-color) 0%, var(--accent-green) 100%);
+  color: white;
+}
+
+.upload-area {
+  border: 2px dashed var(--border-soft);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background: var(--brand-light);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-area:hover {
+  border-color: var(--brand-color);
+  background: rgba(30, 107, 214, 0.05);
+}
+
+.upload-area input[type="file"] {
+  display: none;
+}
+
+.admin-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.action-card {
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--text-dark);
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-color: var(--brand-color);
+}
+
+.action-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.action-card-title {
+  font-weight: 700;
+  color: var(--brand-color);
+  margin-bottom: 0.5rem;
+}
+
+.action-card-desc {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-header {
+    padding: 1.5rem;
+  }
+  
+  .profile-avatar, .avatar-placeholder {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .avatar-placeholder {
+    font-size: 2rem;
+  }
+  
+  .admin-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modo oscuro */
+body.dark .config-section {
+  background: var(--panel);
+  border-color: var(--border-soft);
+}
+
+body.dark .info-value {
+  color: var(--text-dark);
+}
+
+body.dark .upload-area {
+  background: var(--brand-light);
+  border-color: var(--border-soft);
+}
+
+body.dark .upload-area:hover {
+  border-color: var(--brand-color);
+  background: rgba(96, 165, 250, 0.1);
+}
+
+body.dark .action-card {
+  background: var(--panel);
+  border-color: var(--border-soft);
+}
+
+/* ==============================
+   📊 ESTADÍSTICAS
+   ============================== */
+.stat-card {
+  background: linear-gradient(135deg, var(--panel) 0%, var(--brand-light) 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--border-soft);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-brand);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--brand-color);
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, var(--brand-color) 0%, var(--accent-green) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+body.dark .stat-card {
+  background: linear-gradient(135deg, var(--panel) 0%, var(--brand-light) 100%);
+}

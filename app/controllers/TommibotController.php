@@ -156,7 +156,7 @@ class TommibotController {
    * Maneja preguntas generales (fuera del sistema)
    */
   private function handleGeneralQuestion($message, $mode) {
-    $aiResponse = $this->ai->answerGeneralQuestion($message);
+    $aiResponse = $this->ai->answerGeneralQuestion($message, $this->userRole);
     
     if ($aiResponse) {
       // Añadir contexto por rol aunque sea pregunta general
@@ -165,9 +165,9 @@ class TommibotController {
     
     // Si la IA no está disponible, fallback específico por rol
     $fallbackByRole = [
-      'Profesor' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. ¿Te ayudo con reservas, préstamos, historial o cambio de contraseña?',
-      'Administrador' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. ¿Te ayudo con gestión de usuarios, reportes, estadísticas o historial global?',
-      'Encargado' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. ¿Te ayudo con devoluciones, validación de préstamos o historial?'
+      'Profesor' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. 😊 ¿Te ayudo con reservas, préstamos, historial o cambio de contraseña?',
+      'Administrador' => 'Puedo responder preguntas generales breves, pero mi especialidad es el sistema. 🎯 ¿Te ayudo con gestión de usuarios, reportes, estadísticas o historial global?',
+      'Encargado' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. 🧰 ¿Te ayudo con devoluciones, validación de préstamos o historial?'
     ];
     $base = $fallbackByRole[$this->userRole] ?? '¿En qué te ayudo dentro del sistema?';
     return $base;

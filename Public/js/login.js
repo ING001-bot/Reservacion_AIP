@@ -1,4 +1,16 @@
 // Public/js/login.js
+// Prevenir acceso a login si ya hay sesión activa (validación extra)
+(function() {
+  // Detectar si venimos de un logout usando performance navigation
+  if (window.performance) {
+    var navType = window.performance.navigation.type;
+    // Si es navegación hacia atrás (type 2), recargar forzadamente desde servidor
+    if (navType === 2) {
+      window.location.reload(true);
+    }
+  }
+})();
+
 // Toggle mostrar/ocultar contraseña en login (mismo comportamiento que Cambiar_Contraseña)
 function togglePassword(fieldId) {
   var field = document.getElementById(fieldId);

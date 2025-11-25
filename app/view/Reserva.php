@@ -1,5 +1,14 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// Prevenir caché del navegador (solo si no es vista embebida)
+if (!defined('EMBEDDED_VIEW')) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Cache-Control: post-check=0, pre-check=0', false);
+    header('Pragma: no-cache');
+    header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+}
+
 require "../config/conexion.php";
 require '../controllers/ReservaController.php';
 require_once '../middleware/VerifyMiddleware.php';
@@ -69,7 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && !$necesi
 
 $nombreProfesor = $_SESSION['usuario'] ?? 'Invitado';
 $controller = new ReservaController($conexion);
+
+// SOLO obtener aulas de tipo AIP
 $aulas = $controller->obtenerAulas('AIP');
+
+// Verificar si hay aulas disponibles
+if (empty($aulas)) {
+    $errorAulas = '⚠️ No hay aulas de tipo AIP disponibles en este momento. Contacta al administrador.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     if ($_POST['accion'] === 'guardar') {
@@ -313,14 +329,23 @@ setTimeout(() => {
                             <input type="text" class="form-control" value="<?= htmlspecialchars($nombreProfesor) ?>" readonly>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Seleccionar Aula (Solo AIP)</label>
-                            <select name="id_aula" class="form-select" required id="aula-select">
-                                <?php foreach ($aulas as $aula): ?>
-                                    <option value="<?= $aula['id_aula'] ?>" <?= ($id_aula_selected == $aula['id_aula']) ? 'selected' : '' ?>>
-                                        <?= $aula['nombre_aula'] ?> (Cap: <?= $aula['capacidad'] ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="form-label fw-bold">Aula AIP Disponible</label>
+                            <?php if (isset($errorAulas)): ?>
+                                <div class="alert alert-warning"><?= $errorAulas ?></div>
+                            <?php else: ?>
+                                <select name="id_aula" class="form-select" required id="aula-select">
+                                    <?php if (empty($aulas)): ?>
+                                        <option value="">No hay aulas AIP disponibles</option>
+                                    <?php else: ?>
+                                        <?php foreach ($aulas as $aula): ?>
+                                            <option value="<?= $aula['id_aula'] ?>" <?= ($id_aula_selected == $aula['id_aula']) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($aula['nombre_aula']) ?> - Capacidad: <?= $aula['capacidad'] ?> personas (<?= strtoupper($aula['tipo']) ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <small class="text-muted">Solo se muestran aulas de tipo AIP activas</small>
+                            <?php endif; ?>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Fecha</label>

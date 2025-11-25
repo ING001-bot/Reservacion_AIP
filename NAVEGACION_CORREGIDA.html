@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Navegación - Sistema AIP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; margin-top: 0; }
+        .success { color: #27ae60; font-weight: bold; }
+        .info { color: #3498db; }
+        .warning { color: #e74c3c; }
+        ul { line-height: 1.8; }
+        code {
+            background: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .step {
+            background: #e8f4f8;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ Correcciones Implementadas - Sistema de Navegación</h1>
+
+    <div class="test-box">
+        <h2>🎯 Problema Resuelto</h2>
+        <p class="success">✓ Usuario logueado NO verá el login al hacer click en flecha atrás</p>
+        <p class="success">✓ Usuario que cerró sesión NO podrá volver al sistema con flecha atrás</p>
+    </div>
+
+    <div class="test-box">
+        <h2>🔧 Cambios Implementados</h2>
+        
+        <h3>1. Redirección Automática en Login (index.php)</h3>
+        <ul>
+            <li>✅ Si el usuario YA está logueado y accede al login → Se redirige automáticamente al Dashboard</li>
+            <li>✅ Previene ver la página de login cuando ya hay sesión activa</li>
+        </ul>
+
+        <h3>2. Headers de Caché en TODAS las páginas</h3>
+        <ul>
+            <li>✅ <code>index.php</code> - Login</li>
+            <li>✅ <code>Dashboard.php</code> - Selector de rol</li>
+            <li>✅ <code>Profesor.php</code>, <code>Admin.php</code>, <code>Encargado.php</code> - Páginas principales</li>
+            <li>✅ 13 páginas autenticadas adicionales (Reserva, Préstamo, Devolución, Historial, etc.)</li>
+        </ul>
+        <p class="info">📌 Headers implementados:</p>
+        <ul>
+            <li><code>Cache-Control: no-store, no-cache, must-revalidate, max-age=0</code></li>
+            <li><code>Pragma: no-cache</code></li>
+            <li><code>Expires: Sat, 26 Jul 1997 05:00:00 GMT</code></li>
+        </ul>
+
+        <h3>3. Script de Protección JavaScript (auth-guard.js)</h3>
+        <ul>
+            <li>✅ Detecta navegación hacia atrás usando <code>window.performance.navigation.type</code></li>
+            <li>✅ Detecta caché del navegador con evento <code>pageshow</code></li>
+            <li>✅ Recarga la página desde el servidor para validar sesión PHP</li>
+            <li>✅ Validación periódica de sesión cada 30 segundos</li>
+            <li>✅ Limpia el historial al hacer logout</li>
+        </ul>
+
+        <h3>4. Mejoras en login.js</h3>
+        <ul>
+            <li>✅ Detecta navegación hacia atrás y fuerza recarga desde servidor</li>
+            <li>✅ Previene acceso a login si hay sesión activa</li>
+        </ul>
+    </div>
+
+    <div class="test-box">
+        <h2>🧪 Cómo Probar</h2>
+        
+        <div class="step">
+            <strong>Prueba 1: Usuario Logueado</strong>
+            <ol>
+                <li>Inicia sesión como Profesor/Admin/Encargado</li>
+                <li>Navega por el sistema (Dashboard → Reservas, etc.)</li>
+                <li>Haz click en la flecha ATRÁS del navegador</li>
+                <li><span class="success">✓ Resultado esperado:</span> Te mantienes en el sistema, NO ves el login</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <strong>Prueba 2: Usuario que Cerró Sesión</strong>
+            <ol>
+                <li>Inicia sesión en el sistema</li>
+                <li>Navega a cualquier módulo (Reservas, Préstamos, etc.)</li>
+                <li>Haz click en "Cerrar Sesión"</li>
+                <li>Haz click en la flecha ATRÁS del navegador</li>
+                <li><span class="success">✓ Resultado esperado:</span> La página recarga y te redirige al login (NO muestra el sistema)</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <strong>Prueba 3: Acceso Directo al Login con Sesión Activa</strong>
+            <ol>
+                <li>Inicia sesión en el sistema</li>
+                <li>En la barra de direcciones, escribe manualmente la URL del login: <code>http://localhost/Reservacion_AIP/Public/index.php</code></li>
+                <li><span class="success">✓ Resultado esperado:</span> Te redirige automáticamente al Dashboard</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-box">
+        <h2>⚙️ Archivos Modificados</h2>
+        <ul>
+            <li>✅ <code>Public/index.php</code> - Validación de sesión activa + headers de caché</li>
+            <li>✅ <code>app/view/Dashboard.php</code> - Headers de caché</li>
+            <li>✅ <code>app/view/Profesor.php</code> - Headers de caché + auth-guard.js</li>
+            <li>✅ <code>app/view/Admin.php</code> - Headers de caché + auth-guard.js</li>
+            <li>✅ <code>app/view/Encargado.php</code> - Headers de caché + auth-guard.js</li>
+            <li>✅ <code>app/controllers/LogoutController.php</code> - Headers de caché (ya estaba)</li>
+            <li>✅ 13 páginas autenticadas - Headers de caché agregados</li>
+            <li>✅ <code>Public/js/auth-guard.js</code> - Nuevo script de protección</li>
+            <li>✅ <code>Public/js/login.js</code> - Mejoras de validación</li>
+        </ul>
+    </div>
+
+    <div class="test-box">
+        <h2>🔒 Niveles de Protección</h2>
+        <ol>
+            <li><strong>Nivel 1 - PHP:</strong> Validación de sesión en servidor</li>
+            <li><strong>Nivel 2 - HTTP Headers:</strong> Prevención de caché del navegador</li>
+            <li><strong>Nivel 3 - JavaScript:</strong> Detección de navegación hacia atrás y recarga forzada</li>
+            <li><strong>Nivel 4 - Redirección automática:</strong> Si estás logueado y accedes al login → Dashboard</li>
+            <li><strong>Nivel 5 - Validación periódica:</strong> Verificación de sesión cada 30 segundos</li>
+        </ol>
+    </div>
+
+    <div class="test-box">
+        <h2>📝 Notas Importantes</h2>
+        <ul>
+            <li class="warning">⚠️ Asegúrate de que el servidor esté corriendo (XAMPP/Apache)</li>
+            <li class="info">💡 Los headers de caché previenen que el navegador guarde páginas autenticadas</li>
+            <li class="info">💡 El script auth-guard.js añade protección adicional en el navegador</li>
+            <li class="info">💡 La validación de sesión en PHP es la protección principal</li>
+            <li class="success">✓ Compatible con Chrome, Firefox, Edge, Safari</li>
+        </ul>
+    </div>
+
+</body>
+</html>

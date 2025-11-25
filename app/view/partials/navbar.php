@@ -111,12 +111,7 @@ $badge = count($no_leidas);
 <nav class="navbar navbar-expand-lg navbar-dark bg-brand shadow-sm mb-0 sticky-top">
   <div class="container-fluid">
     <!-- Hamburguesa: solo móvil -->
-    <?php
-      $scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
-      $hamburgerTarget = ($es_admin && strtolower($scriptName) === 'admin.php') ? '#sidebarAdmin' : '#mobileMenu';
-      $hamburgerControls = ltrim($hamburgerTarget, '#');
-    ?>
-    <button class="hamburger-btn d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="<?= $hamburgerTarget ?>" aria-controls="<?= $hamburgerControls ?>" title="Menú">
+    <button class="hamburger-btn d-lg-none me-2" type="button" data-sidebar-toggle title="Menú">
       <i class="fas fa-bars"></i>
     </button>
     <!-- Botón Atrás: visible en PC y móvil solo en Devolución/Historial -->

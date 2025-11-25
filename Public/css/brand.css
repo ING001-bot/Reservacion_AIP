@@ -178,15 +178,92 @@ label {
    📚 SIDEBAR Y NAV
    ============================== */
 .sidebar {
-  min-width: 240px;
-  min-height: 100vh;
+  width: 260px;
+  height: 100vh;
   background: linear-gradient(180deg, var(--brand-color), var(--brand-dark));
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1040;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Scrollbar de la sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Firefox */
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.7) rgba(255, 255, 255, 0.15);
+}
+
+/* Ajuste del contenido cuando hay sidebar */
+.content-with-sidebar {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  transition: margin-left 0.3s ease-in-out;
+}
+
+/* Overlay para cerrar sidebar en móvil */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1030;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.sidebar-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+/* Responsive: En móvil la sidebar se oculta por defecto */
+@media (max-width: 991.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+  }
+  
+  .content-with-sidebar {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 .link-sidebar {
   color: #ffffffcc;
   display: block;
-  padding: .5rem 1rem;
-  border-radius: .5rem;
+  padding: .6rem .9rem;
+  border-radius: .4rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 .link-sidebar:hover,
 .link-sidebar.active {
@@ -300,17 +377,52 @@ label {
   position: fixed;
   right: 16px;
   bottom: 16px;
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
   border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: var(--panel);
-  color: var(--text-dark);
+  border: 2px solid var(--brand-color);
+  background: linear-gradient(135deg, var(--brand-color), var(--accent-green));
+  color: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-brand);
+  box-shadow: 0 8px 24px rgba(30, 107, 214, 0.3);
   cursor: pointer;
   z-index: 1040;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
 }
-.theme-fab:hover { transform: translateY(-1px); }
+.theme-fab:hover { 
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 32px rgba(30, 107, 214, 0.4);
+}
+
+body.dark .theme-fab {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  border-color: #60a5fa;
+  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.3);
+}
+
+body.dark .theme-fab:hover {
+  box-shadow: 0 12px 32px rgba(96, 165, 250, 0.4);
+}
+
+/* ==============================
+   📝 FORMULARIOS - SELECT DESHABILITADO
+   ============================== */
+.form-select:disabled,
+.form-select[disabled] {
+  background-color: #f0f4f8;
+  opacity: 0.8;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+.form-text.text-muted {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.form-text.text-muted i {
+  margin-right: 4px;
+}

@@ -1,6 +1,13 @@
 <?php
 // Iniciar sesión para leer mensajes desde el controlador de login
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// Si el usuario YA está logueado, redirigir al Dashboard (evita ver login con botón atrás)
+if (isset($_SESSION['usuario']) && isset($_SESSION['tipo'])) {
+    header('Location: ../app/view/Dashboard.php');
+    exit;
+}
+
 $mensaje = $_SESSION['login_msg'] ?? '';
 $mensajeClase = $_SESSION['login_msg_type'] ?? 'error';
 // limpiar para evitar que persista al refrescar
@@ -36,6 +43,13 @@ try {
     // Ignorar: dejar $ocultarCrearCuenta=false
 }
 ?>
+<?php
+// Prevenir caché de la página de login para que no se muestre después de logout
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -56,7 +70,6 @@ try {
                 <h1 class="title">Aulas de Innovación</h1>
                 <p class="subtitle">Accede a tu cuenta para gestionar reservas y préstamos</p>
             </div>
-            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cambiar tema">🌓</button>
         </div>
 
         <?php if (!empty($mensaje)): ?>

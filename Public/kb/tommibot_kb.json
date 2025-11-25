@@ -5,10 +5,11 @@
     "last_updated": "2025-11-01"
   },
   "business_rules": {
+    "separacion_aulas": "IMPORTANTE: Las aulas AIP (AIP1, AIP2) son EXCLUSIVAS para reservas de aula. Las aulas REGULARES son EXCLUSIVAS para préstamos de equipos. En el módulo de Reservas solo aparecerán aulas tipo AIP. En el módulo de Préstamos solo aparecerán aulas tipo REGULAR.",
     "cancelacion_plazo": "Solo se puede cancelar hasta el fin del día de la reserva.",
     "prestamo_devolucion": "La devolución se marca cuando el encargado confirma la inspección física.",
     "pdf_envio_email": "Todo PDF generado también se envía al correo del docente.",
-    "verificacion_sms": "Antes de crear reserva, préstamo o cambiar contraseña, se requiere verificación por SMS.",
+    "verificacion_sms": "Antes de crear reserva, préstamo o cambiar contraseña, se requiere verificación por SMS (solo Profesores).",
     "reintentos_sms": 3
   },
   "screens": {
@@ -24,14 +25,16 @@
       "template": {
         "steps_only": true,
         "steps": [
-          "Entra a Reservas en tu panel.",
-          "Se enviará automáticamente un código SMS a tu número registrado.",
-          "Ingresa el código de 6 dígitos en la ventana que aparece para verificarte.",
-          "Luego selecciona la fecha (DD/MM/AAAA) y la hora.",
-          "Selecciona el aula correspondiente.",
-          "(Opcional) Agrega una descripción si lo necesitas.",
+          "Haz clic en 'Reservar Aula' en tu panel de Profesor.",
+          "🔐 AUTOMÁTICAMENTE se enviará un código SMS de 6 dígitos a tu teléfono registrado.",
+          "Ingresa el código en la ventana emergente para verificarte (tienes 10 minutos).",
+          "✅ Una vez verificado, podrás ver el calendario de disponibilidad.",
+          "Selecciona la fecha (DD/MM/AAAA) - recuerda que debe ser a partir de MAÑANA (mínimo 1 día de anticipación).",
+          "Elige el horario (entre 06:00-19:00 hrs).",
+          "Selecciona el aula AIP disponible - IMPORTANTE: Solo verás aulas tipo AIP (AIP1, AIP2, etc.). Las aulas REGULARES NO aparecen aquí porque son exclusivas para préstamos de equipos.",
           "Confirma para registrar la reserva.",
-          "Consulta tu Historial para ver la reserva registrada."
+          "📧 Recibirás confirmación por correo y campanita de notificación.",
+          "Puedes ver tu reserva en 'Mi Historial'."
         ]
       }
     },
@@ -40,14 +43,19 @@
       "template": {
         "steps_only": true,
         "steps": [
-          "Entra a Préstamo en tu panel.",
-          "Se enviará automáticamente un código SMS a tu número registrado.",
-          "Ingresa el código de 6 dígitos en la ventana que aparece para verificarte.",
-          "Selecciona fecha de préstamo (a partir de mañana).",
-          "Elige el/los equipos necesarios (Laptop, Proyector, Extension, etc.).",
-          "Selecciona el aula y la hora de inicio (y fin si aplica).",
+          "Haz clic en 'Préstamo de Equipos' en tu panel de Profesor.",
+          "🔐 AUTOMÁTICAMENTE se enviará un código SMS de 6 dígitos a tu teléfono registrado.",
+          "Ingresa el código en la ventana emergente para verificarte (tienes 10 minutos).",
+          "✅ Una vez verificado, podrás seleccionar equipos.",
+          "Selecciona la fecha de préstamo (a partir de MAÑANA - mínimo 1 día de anticipación).",
+          "Elige el tipo de equipo (Laptop, Proyector, Extensión, etc.) según stock disponible.",
+          "Selecciona los equipos específicos que necesites.",
+          "Define el aula REGULAR donde usarás los equipos - IMPORTANTE: Solo verás aulas tipo REGULAR. Las aulas AIP NO aparecen aquí porque se reservan por separado.",
+          "Define el horario de uso (hora inicio y fin).",
           "Confirma para registrar el préstamo.",
-          "El Encargado validará la entrega física. Revisa el estado en tu Historial."
+          "📧 Recibirás confirmación por correo y campanita de notificación.",
+          "El Encargado validará la entrega física del equipo.",
+          "Revisa el estado en 'Mi Historial'."
         ]
       }
     },
@@ -56,11 +64,15 @@
       "template": {
         "steps_only": true,
         "steps": [
-          "Abre Cambiar contraseña en tu panel.",
-          "Si eres Profesor, se enviará automáticamente un código SMS a tu número registrado.",
-          "Ingresa el código de 6 dígitos en la ventana para verificarte (solo Profesores).",
-          "Escribe tu contraseña actual y la nueva (mín. 8, con mayúscula, número y carácter especial).",
-          "Confirma para actualizar la contraseña. Verás una confirmación en pantalla."
+          "Haz clic en 'Cambiar Contraseña' en tu panel.",
+          "🔐 Si eres PROFESOR: AUTOMÁTICAMENTE se enviará un código SMS de 6 dígitos a tu teléfono.",
+          "Ingresa el código en la ventana emergente para verificarte (solo Profesores).",
+          "✅ Una vez verificado, ingresa tu contraseña actual.",
+          "Escribe tu nueva contraseña (mínimo 6 caracteres).",
+          "Confirma la nueva contraseña.",
+          "Haz clic en 'Actualizar contraseña'.",
+          "Verás una confirmación en pantalla.",
+          "⚠️ IMPORTANTE: Admin y Encargado NO requieren SMS para cambiar contraseña."
         ]
       }
     },
@@ -127,12 +139,15 @@
       "template": {
         "steps_only": true,
         "steps": [
-          "Accede al panel de Administrador.",
-          "Selecciona la opción 'Gestionar Usuarios'.",
-          "Puedes agregar nuevos usuarios (Profesores, Administradores, Encargados).",
-          "Editar información de usuarios existentes (nombre, correo, teléfono, contraseña).",
-          "Desactivar o eliminar usuarios que ya no pertenecen al sistema.",
-          "Todos los cambios se reflejan inmediatamente en el sistema."
+          "Accede al panel de Administrador (solo disponible para Administradores).",
+          "Haz clic en 'Usuarios' en el menú lateral.",
+          "Para AGREGAR: Clic en 'Nuevo Usuario' → completa nombre, correo, teléfono, tipo (Profesor/Admin/Encargado) → Guardar.",
+          "Para EDITAR: Clic en el ícono de lápiz → modifica los campos → Guardar cambios.",
+          "Para ELIMINAR: Clic en el ícono de basura → confirma la eliminación (soft delete).",
+          "⚠️ El correo debe ser único y válido (se verifica por SMTP).",
+          "⚠️ El teléfono debe estar en formato +51XXXXXXXXX.",
+          "Todos los cambios se reflejan inmediatamente en el sistema.",
+          "Los nuevos usuarios recibirán un correo de verificación."
         ]
       }
     },
@@ -142,11 +157,13 @@
         "steps_only": true,
         "steps": [
           "Ve a 'Reportes / Filtros' en el menú de Administrador.",
-          "Puedes filtrar por: fecha, profesor, aula, turno, tipo (reserva/préstamo).",
-          "Visualiza los resultados en tabla.",
+          "Selecciona los filtros que necesites: fecha (desde-hasta), profesor, aula, turno, tipo (reserva/préstamo).",
+          "Haz clic en 'Aplicar Filtros' para ver los resultados en tabla.",
+          "Para ver ESTADÍSTICAS: Haz clic en 'Estadísticas' en el menú.",
+          "Verás gráficos interactivos con: total de reservas/préstamos, equipos más solicitados, profesores más activos, aulas más usadas, etc.",
           "Descarga reportes en formato PDF con diseño institucional.",
-          "Accede a 'Estadísticas' para ver gráficos, rankings de aulas más usadas, horas pico, etc.",
-          "Todos los PDFs incluyen logo del colegio, tu nombre, rol y fecha de descarga."
+          "Los PDFs incluyen logo del colegio, tu nombre, rol y fecha de descarga.",
+          "También puedes exportar los datos para análisis externo."
         ]
       }
     },
@@ -155,11 +172,14 @@
       "template": {
         "steps_only": true,
         "steps": [
-          "El Encargado accede al panel de 'Préstamos Pendientes'.",
-          "Verifica la identidad del docente y el equipo solicitado.",
-          "Inspecciona el estado físico del equipo antes de entregarlo.",
+          "Como Encargado, accede a tu panel.",
+          "Ve a 'Préstamos Pendientes' (o similar en tu menú).",
+          "Verifica la identidad del docente que solicita el equipo.",
+          "Inspecciona físicamente el equipo antes de entregarlo (estado, funcionamiento).",
           "Confirma la entrega en el sistema haciendo clic en 'Validar Préstamo'.",
-          "El estado del préstamo cambia a 'Activo' y el docente puede ver esto en su Historial."
+          "El estado del préstamo cambia a 'Activo'.",
+          "El docente verá esto actualizado en su Historial.",
+          "📧 Se enviarán notificaciones al profesor y administrador."
         ]
       }
     },
@@ -168,12 +188,16 @@
       "template": {
         "steps_only": true,
         "steps": [
-          "El docente devuelve el equipo al Encargado.",
-          "El Encargado inspecciona el equipo para verificar su estado.",
-          "Accede a 'Devoluciones' en su panel.",
-          "Selecciona el préstamo correspondiente.",
-          "Marca como devuelto y opcionalmente agrega un comentario (si hay daños o incidencias).",
-          "El docente verá la devolución registrada en su Historial."
+          "El docente te devuelve el equipo en el horario acordado.",
+          "Como Encargado, inspecciona FÍSICAMENTE el equipo (estado, daños, funcionamiento).",
+          "Accede a 'Devoluciones' en tu panel de Encargado.",
+          "Selecciona el préstamo correspondiente en la lista.",
+          "Marca como 'Devuelto'.",
+          "OPCIONAL: Agrega un comentario si hay daños o incidencias (Ej: 'Rayón en pantalla', 'Todo OK').",
+          "Confirma la devolución.",
+          "El stock del equipo se incrementa automáticamente.",
+          "El docente verá la devolución registrada en su Historial.",
+          "📧 Se enviarán notificaciones al profesor y administrador con tu observación."
         ]
       }
     },
@@ -241,6 +265,18 @@
     }
   },
   "faqs": {
+    "diferencia_aulas": {
+      "question": "¿Cuál es la diferencia entre aulas AIP y REGULARES?",
+      "answer": "Las aulas AIP (Aula de Innovación Pedagógica) como AIP1 y AIP2 son espacios especiales que se RESERVAN completas para dar clases. Las aulas REGULARES son salones normales donde solo solicitas PRÉSTAMOS de equipos (laptop, proyector, etc.) para llevar a tu clase. En Reservas solo ves aulas AIP. En Préstamos solo ves aulas REGULARES."
+    },
+    "por_que_no_veo_aula_regular_reserva": {
+      "question": "¿Por qué no veo aulas REGULARES cuando quiero hacer una reserva?",
+      "answer": "Porque las aulas REGULARES NO se reservan. Solo puedes solicitar préstamos de equipos para usar en esas aulas. Si quieres reservar un aula completa, usa las aulas AIP (AIP1, AIP2) que aparecen en el módulo de Reservas."
+    },
+    "por_que_no_veo_aula_aip_prestamo": {
+      "question": "¿Por qué no veo aulas AIP cuando pido un préstamo?",
+      "answer": "Porque las aulas AIP se reservan completas, no se prestan equipos individuales para ellas. Para préstamos de equipos (laptop, proyector, etc.) solo puedes seleccionar aulas REGULARES, que son salones normales donde llevarás los equipos."
+    },
     "sms_no_llega": {
       "question": "¿Qué hago si no me llega el SMS?",
       "answer": "Verifica que tu número en el perfil esté en formato +51XXXXXXXXX. Si está correcto, usa el botón 'Reenviar' (espera 60 seg). Si sigue sin llegar, contacta al administrador."
@@ -274,20 +310,26 @@
     "institution": "Colegio Juan Tomis Stack",
     "version": "2.0",
     "features": [
-      "Reserva de aulas con verificación SMS",
-      "Préstamo de equipos (Laptop, Proyector, Extensión, etc.)",
+      "Reserva de aulas AIP con verificación SMS automática (solo Profesores)",
+      "Préstamo de equipos para aulas REGULARES (Laptop, Proyector, Extensión, etc.) con SMS",
+      "Separación clara: Aulas AIP solo para reservas, Aulas REGULARES solo para préstamos",
       "Historial completo con descargas PDF",
       "Gestión de usuarios (Admin)",
-      "Reportes y estadísticas avanzadas (Admin)",
-      "Control de devoluciones (Encargado)",
-      "Notificaciones en tiempo real",
-      "Cambio de contraseña seguro",
-      "Chatbot inteligente (Tommibot) con IA y comandos de voz"
+      "Reportes y estadísticas avanzadas con gráficos (Admin)",
+      "Control de devoluciones con inspección física (Encargado)",
+      "Notificaciones en tiempo real (correo + campanita)",
+      "Cambio de contraseña seguro con SMS (Profesores)",
+      "Chatbot inteligente (Tommibot) con IA Google Gemini y comandos de voz"
     ],
+    "tipos_aulas": {
+      "AIP": "Aulas de Innovación Pedagógica (AIP1, AIP2). Se RESERVAN completas para dar clases. Solo aparecen en el módulo de RESERVAS.",
+      "REGULAR": "Aulas normales. NO se reservan completas. Solo se solicitan PRÉSTAMOS de equipos para usar en ellas. Solo aparecen en el módulo de PRÉSTAMOS."
+    },
     "roles": {
-      "Profesor": "Puede hacer reservas, préstamos, ver historial, cambiar contraseña.",
-      "Administrador": "Gestión completa de usuarios, reportes, estadísticas, configuración del sistema.",
-      "Encargado": "Validar préstamos, registrar devoluciones, controlar equipos y aulas."
-    }
+      "Profesor": "Puede hacer reservas de aulas AIP, solicitar préstamos de equipos (con aulas REGULARES), ver su historial personal, cancelar reservas (mismo día), cambiar contraseña. SIEMPRE requiere verificación SMS al entrar a Reservas, Préstamos o Cambiar Contraseña. El SMS se envía AUTOMÁTICAMENTE al abrir el módulo.",
+      "Administrador": "Gestión COMPLETA: usuarios, reportes, estadísticas, aulas (AIP y REGULAR), equipos, tipos de equipo, historial global de todos los usuarios. NO requiere SMS. Puede ver gráficos, rankings, exportar PDFs filtrados, y configurar el sistema.",
+      "Encargado": "Controla las devoluciones físicas de equipos, valida préstamos, inspecciona estado de equipos, registra incidencias, y puede ver historial global. NO requiere SMS. Es responsable del inventario físico."
+    },
+    "sms_flow": "IMPORTANTE: Al entrar a Reservas, Préstamos o Cambiar Contraseña, el PROFESOR recibe AUTOMÁTICAMENTE un código SMS de 6 dígitos. Debe ingresar ese código en la ventana emergente para poder continuar. Sin el código correcto, no podrá realizar ninguna acción. El código expira en 10 minutos."
   }
 }

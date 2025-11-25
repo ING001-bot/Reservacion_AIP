@@ -1,0 +1,17 @@
+# Directorio de Backups
+
+Este directorio almacena las copias de seguridad de la base de datos.
+
+## Seguridad
+- Protegido por .htaccess
+- Solo accesible desde PHP
+- No indexable por navegadores
+
+## Tipos de Backup
+- `backup_completo_*.sql.zip`: Backup completo de todas las tablas
+- `backup_auto_*.sql`: Backup automático de tablas críticas
+
+## Retención
+- Se mantienen automáticamente los últimos 10 backups
+- Los antiguos se eliminan automáticamente
+

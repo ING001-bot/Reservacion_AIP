@@ -30,6 +30,9 @@ $usuario = $usuarioModel->obtenerPorId($_SESSION['usuario_id']);
     <title>Verificación por SMS - Sistema de Reservas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/swal-custom.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/alerts.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -332,8 +335,15 @@ $usuario = $usuarioModel->obtenerPorId($_SESSION['usuario_id']);
                 .then(data => {
                     if (data.success) {
                         startCountdown();
+                        if (typeof toastSuccess === 'function') {
+                            toastSuccess('Código reenviado exitosamente');
+                        }
                     } else {
-                        alert('Error al reenviar el código: ' + (data.error || 'Error desconocido'));
+                        if (typeof showError === 'function') {
+                            showError('Error al reenviar código', data.error || 'Error desconocido');
+                        } else {
+                            alert('Error al reenviar el código: ' + (data.error || 'Error desconocido'));
+                        }
                         this.style.pointerEvents = 'auto';
                     }
                 })
