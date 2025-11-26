@@ -42,8 +42,8 @@ class AulaModel {
     }
 
     public function eliminarAula($id) {
-        // Baja lógica para evitar conflictos de clave foránea
-        $sql = "UPDATE aulas SET activo = 0 WHERE id_aula = :id";
+        // Eliminación física permanente
+        $sql = "DELETE FROM aulas WHERE id_aula = :id";
         $stmt = $this->conexion->prepare($sql);
         return $stmt->execute([':id' => $id]);
     }

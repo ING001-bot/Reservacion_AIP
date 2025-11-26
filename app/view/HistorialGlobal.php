@@ -5,6 +5,17 @@ if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo'])) {
   exit;
 }
 
+// Marcar notificación como leída si viene desde una notificación
+if (isset($_GET['notif_read']) && is_numeric($_GET['notif_read'])) {
+    try {
+        require_once '../config/conexion.php';
+        $stmt = $conexion->prepare("UPDATE notificaciones SET leida = 1 WHERE id_notificacion = ? AND id_usuario = ?");
+        $stmt->execute([(int)$_GET['notif_read'], (int)$_SESSION['id_usuario']]);
+    } catch (\Throwable $e) {
+        // Ignorar errores silenciosamente
+    }
+}
+
 // Prevenir caché del navegador (solo si no es vista embebida)
 if (!defined('EMBEDDED_VIEW')) {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -187,8 +198,15 @@ $rol = $_SESSION['tipo']; // 'Administrador' | 'Encargado' | ...
     if (eqPrevWeek) eqPrevWeek.addEventListener('click', function(){ setTimeout(syncEquiposParams, 0); });
     if (eqNextWeek) eqNextWeek.addEventListener('click', function(){ setTimeout(syncEquiposParams, 0); });
 
-    // Inicial: vista reserva
-    syncReservaParams();
+    // Detectar hash en URL para abrir pestaña específica
+    const hash = window.location.hash;
+    if (hash === '#equipos') {
+      // Abrir pestaña de equipos
+      tabEquipos.click();
+    } else {
+      // Inicial: vista reserva por defecto
+      syncReservaParams();
+    }
   })();
   (function(){
     var bm = document.getElementById('btn-manana');

@@ -307,12 +307,18 @@ cargarEstadisticas();
 cargarBackups();
 
 function cargarEstadisticas() {
-    fetch('../api/estadisticas.php')
+    fetch('../api/estadisticas.php', {
+        credentials: 'same-origin',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
         .then(r => r.json())
         .then(data => {
             if (data.error) {
+                console.error('Error del servidor:', data.mensaje);
                 document.getElementById('estadisticas-container').innerHTML = 
-                    '<div class="alert alert-danger">Error al cargar estadísticas</div>';
+                    '<div class="alert alert-danger">Error al cargar estadísticas: ' + (data.mensaje || 'Desconocido') + '</div>';
                 return;
             }
             

@@ -108,8 +108,8 @@ class UsuarioModel {
     }
 
     public function eliminarUsuario($id_usuario) {
-        // Baja lógica para evitar violación de FK (reservas, préstamos, etc.)
-        $stmt = $this->db->prepare("UPDATE usuarios SET activo = 0 WHERE id_usuario = ?");
+        // Eliminación física permanente
+        $stmt = $this->db->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
         return $stmt->execute([$id_usuario]);
     }
 
@@ -313,8 +313,8 @@ class UsuarioModel {
         $stmt = $this->db->query("SELECT COUNT(*) FROM usuarios WHERE activo = 1 AND verificado = 1");
         $stats['verificados'] = (int)$stmt->fetchColumn();
         
-        // Reservas activas (estado pendiente o confirmado)
-        $stmt = $this->db->query("SELECT COUNT(*) FROM reservas WHERE estado IN ('Pendiente', 'Confirmada')");
+        // Reservas activas (futuras o de hoy)
+        $stmt = $this->db->query("SELECT COUNT(*) FROM reservas WHERE fecha >= CURDATE()");
         $stats['reservas_activas'] = (int)$stmt->fetchColumn();
         
         return $stats;

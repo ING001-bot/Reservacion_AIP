@@ -13,7 +13,7 @@ class PrestamoModel {
     }
     
 
-    public function guardarPrestamosMultiple($id_usuario, $equipos, $fecha_prestamo, $hora_inicio, $id_aula, $hora_fin = null) {
+    public function guardarPrestamosMultiple($id_usuario, $equipos, $fecha_prestamo, $hora_inicio, $hora_fin = null, $id_aula) {
         if (!$id_usuario || empty($equipos) || !$id_aula) {
             return ['mensaje'=>'⚠ No se proporcionó usuario, equipos o aula.','tipo'=>'error'];
         }
@@ -32,13 +32,47 @@ class PrestamoModel {
         $checkAula = $this->db->prepare("SELECT id_aula FROM aulas WHERE id_aula = ? AND activo = 1");
         $checkAula->execute([$id_aula]);
         if (!$checkAula->fetch()) {
-            return ['mensaje'=>' El aula seleccionada no existe o está inactiva. Por favor, selecciona otra aula.','tipo'=>'error'];
+            return ['mensaje'=>'❌ El aula seleccionada no existe o está inactiva. Por favor, selecciona otra aula.','tipo'=>'error'];
+        }
+        
+        // VALIDAR CONFLICTO: Verificar que no haya otro préstamo para la misma aula/fecha/hora
+        $checkConflicto = $this->db->prepare("
+            SELECT COUNT(*) as total 
+            FROM prestamos 
+            WHERE id_aula = ? 
+            AND fecha_prestamo = ? 
+            AND id_usuario = ?
+            AND (
+                (hora_inicio <= ? AND (hora_fin >= ? OR hora_fin IS NULL))
+                OR (hora_inicio >= ? AND hora_inicio < ?)
+            )
+            AND estado = 'Prestado'
+        ");
+        $checkConflicto->execute([
+            $id_aula, 
+            $fecha_prestamo, 
+            $id_usuario,
+            $hora_inicio, 
+            $hora_inicio,
+            $hora_inicio,
+            $hora_fin ?? '23:59:59'
+        ]);
+        $conflicto = $checkConflicto->fetch(\PDO::FETCH_ASSOC);
+        
+        if ($conflicto && (int)$conflicto['total'] > 0) {
+            return [
+                'mensaje' => '❌ Ya tienes un préstamo registrado para esta aula en el mismo horario. No puedes hacer múltiples préstamos para la misma aula y hora.',
+                'tipo' => 'error'
+            ];
         }
         
         $this->db->beginTransaction();
         try {
             // Preparar consultas
-            $stmtInsert = $this->db->prepare("\n                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)\n                VALUES (?, ?, ?, ?, 'Prestado', ?, ?)\n            ");
+            $stmtInsert = $this->db->prepare("
+                INSERT INTO prestamos (id_usuario, id_equipo, id_aula, fecha_prestamo, estado, hora_inicio, hora_fin)
+                VALUES (?, ?, ?, ?, 'Prestado', ?, ?)
+            ");
             $stmtSelStock = $this->db->prepare("SELECT stock FROM equipos WHERE id_equipo = ? AND activo = 1 FOR UPDATE");
             $stmtDecStock = $this->db->prepare("UPDATE equipos SET stock = stock - 1 WHERE id_equipo = ? AND stock > 0");
 
@@ -50,7 +84,7 @@ class PrestamoModel {
                 $stk = isset($row['stock']) ? (int)$row['stock'] : 0;
                 if ($stk <= 0) {
                     $this->db->rollBack();
-                    return ['mensaje' => ' El equipo seleccionado (ID '.(int)$val.') no tiene stock disponible.', 'tipo' => 'error'];
+                    return ['mensaje' => '❌ El equipo seleccionado (ID '.(int)$val.') no tiene stock disponible.', 'tipo' => 'error'];
                 }
                 // Registrar préstamo individual
                 $stmtInsert->execute([$id_usuario, $val, $id_aula, $fecha_prestamo, $hora_inicio, $hora_fin ?? null]);
@@ -58,10 +92,10 @@ class PrestamoModel {
                 $stmtDecStock->execute([$val]);
             }
             $this->db->commit();
-            return ['mensaje'=>' Préstamos registrados correctamente.','tipo'=>'success'];
+            return ['mensaje'=>'✅ Préstamos registrados correctamente.','tipo'=>'success'];
         } catch (\PDOException $e) {
             $this->db->rollBack();
-            return ['mensaje'=>' Error al registrar préstamos: '.$e->getMessage(),'tipo'=>'error'];
+            return ['mensaje'=>'❌ Error al registrar préstamos: '.$e->getMessage(),'tipo'=>'error'];
         }
     }
 
@@ -129,14 +163,22 @@ class PrestamoModel {
         $this->db->beginTransaction();
         try {
             // Marcar devolución
-            $stmt = $this->db->prepare("\n                UPDATE prestamos \n                SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :comentario \n                WHERE id_prestamo=:id\n            ");
+            $stmt = $this->db->prepare("
+                UPDATE prestamos 
+                SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :comentario 
+                WHERE id_prestamo=:id
+            ");
             $stmt->bindValue(':comentario', $comentario, PDO::PARAM_STR);
             $stmt->bindValue(':id', $id_prestamo, PDO::PARAM_INT);
             $stmt->execute();
 
-            // Incrementar stock si aplica
+            // Incrementar stock solo si no supera el máximo
             if ($id_equipo) {
-                $stmtInc = $this->db->prepare("UPDATE equipos SET stock = stock + 1 WHERE id_equipo = ?");
+                $stmtInc = $this->db->prepare("
+                    UPDATE equipos 
+                    SET stock = LEAST(stock + 1, stock_maximo) 
+                    WHERE id_equipo = ?
+                ");
                 $stmtInc->execute([$id_equipo]);
             }
 
@@ -195,6 +237,19 @@ class PrestamoModel {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    // Obtener el último préstamo creado por un usuario
+    public function obtenerUltimoPrestamoPorUsuario(int $id_usuario): ?array {
+        $stmt = $this->db->prepare("
+            SELECT id_prestamo, id_equipo, fecha_prestamo, hora_inicio, hora_fin, estado 
+            FROM prestamos 
+            WHERE id_usuario = ? 
+            ORDER BY id_prestamo DESC 
+            LIMIT 1
+        ");
+        $stmt->execute([$id_usuario]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     // Listar notificaciones de un usuario
     public function listarNotificacionesUsuario(int $id_usuario, bool $soloNoLeidas = false, int $limit = 50): array {
         if (!$id_usuario) return [];
@@ -221,6 +276,17 @@ class PrestamoModel {
         $stmt = $this->db->prepare("UPDATE notificaciones SET leida = 1 WHERE id_usuario = :u AND leida = 0");
         $stmt->bindValue(':u', $id_usuario, PDO::PARAM_INT);
         return $stmt->execute();
+    }
+
+    // Crear notificación con metadata
+    public function crearNotificacionConMetadata(int $id_usuario, string $titulo, string $mensaje, string $url, string $metadata = null): bool {
+        try {
+            $stmt = $this->db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url, metadata) VALUES (?, ?, ?, ?, ?)");
+            return $stmt->execute([$id_usuario, $titulo, $mensaje, $url, $metadata]);
+        } catch (PDOException $e) {
+            error_log("Error al crear notificación con metadata: " . $e->getMessage());
+            return false;
+        }
     }
 
     // Helpers para notificaciones por correo

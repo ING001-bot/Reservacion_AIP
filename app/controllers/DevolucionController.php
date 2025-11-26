@@ -94,7 +94,12 @@ class DevolucionController {
                             ['email' => $u['correo']],
                             $subjectAdmin,
                             $msgAdmin,
-                            [ 'userName' => ($u['nombre'] ?? 'Administrador'), 'type' => 'info', 'sendSms' => false ]
+                            [ 
+                                'userName' => ($u['nombre'] ?? 'Administrador'), 
+                                'type' => 'info', 
+                                'sendSms' => false,
+                                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/app/view/Admin.php?view=notificaciones'
+                            ]
                         );
                     }
                 }

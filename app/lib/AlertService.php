@@ -2,7 +2,9 @@
 namespace App\Lib;
 
 use PDO;
-use App\Lib\NotificationService;
+
+// Cargar NotificationService
+require_once __DIR__ . '/NotificationService.php';
 
 class AlertService {
     private $db;
@@ -10,7 +12,17 @@ class AlertService {
 
     public function __construct(PDO $db) {
         $this->db = $db;
-        $this->notificationService = new NotificationService();
+        $this->notificationService = null; // Lazy loading
+    }
+    
+    /**
+     * Obtener instancia de NotificationService (lazy loading)
+     */
+    private function getNotificationService() {
+        if ($this->notificationService === null) {
+            $this->notificationService = new NotificationService();
+        }
+        return $this->notificationService;
     }
 
     /**
@@ -115,7 +127,7 @@ class AlertService {
 
                 // Enviar notificación a cada encargado y admin
                 foreach ($usuarios as $usuario) {
-                    $resultado = $this->notificationService->crearNotificacionPrestamoVencido(
+                    $resultado = $this->getNotificationService()->crearNotificacionPrestamoVencido(
                         $this->db,
                         $usuario['id_usuario'],
                         $usuario['tipo_usuario'],
@@ -137,7 +149,7 @@ class AlertService {
                 ];
 
                 foreach ($usuarios as $usuario) {
-                    $resultado = $this->notificationService->crearNotificacionPrestamoVencido(
+                    $resultado = $this->getNotificationService()->crearNotificacionPrestamoVencido(
                         $this->db,
                         $usuario['id_usuario'],
                         $usuario['tipo_usuario'],

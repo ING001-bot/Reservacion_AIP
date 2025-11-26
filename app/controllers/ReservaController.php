@@ -78,6 +78,10 @@ class ReservaController {
                 $this->mensaje = "✅ Reserva realizada correctamente.";
                 $this->tipo = "success";
                 
+                // Obtener el ID de la reserva recién creada
+                $conexion = $this->model->getDb();
+                $id_reserva = $conexion->lastInsertId();
+                
                 // Obtener datos del aula
                 $aula = $this->model->obtenerAulaPorId($id_aula);
                 $aulaNombre = $aula['nombre_aula'] ?? ('Aula #' . $id_aula);
@@ -85,9 +89,9 @@ class ReservaController {
                 // NUEVO SISTEMA DE NOTIFICACIONES IN-APP
                 try {
                     $notifService = new NotificationService();
-                    $conexion = $this->model->getDb();
                     
                     $datosReserva = [
+                        'id_reserva' => $id_reserva,
                         'aula' => $aulaNombre,
                         'fecha' => $fecha_reserva_str,
                         'hora_inicio' => $hora_inicio,
@@ -113,8 +117,16 @@ class ReservaController {
                         );
                     }
                     
-                    // Obtener encargados para emails
+                    // Notificar a todos los encargados (campanita)
                     $encargados = $this->model->listarUsuariosPorRol(['Encargado']);
+                    foreach ($encargados as $encargado) {
+                        $notifService->crearNotificacionReserva(
+                            $conexion,
+                            (int)$encargado['id_usuario'],
+                            'Encargado',
+                            $datosReserva
+                        );
+                    }
                 } catch (\Exception $e) {
                     error_log("Error al crear notificaciones in-app de reserva: " . $e->getMessage());
                     $encargados = []; // Inicializar vacío en caso de error
@@ -143,7 +155,7 @@ class ReservaController {
                                 [
                                     'userName' => $userName,
                                     'type' => 'success',
-                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/index.php?view=mis_reservas',
+                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/app/view/Profesor.php?view=notificaciones',
                                     'sendSms' => !empty($userPhone)
                                 ]
                             );
@@ -170,7 +182,7 @@ class ReservaController {
                                     'userName' => ($u['nombre'] ?? 'Encargado'),
                                     'type' => 'info',
                                     'sendSms' => false,
-                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global'
+                                    'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/app/view/Encargado.php?view=notificaciones'
                                 ]
                             );
                         }

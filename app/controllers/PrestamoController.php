@@ -38,7 +38,7 @@ class PrestamoController {
                 try {
                     $titulo = 'Préstamo registrado';
                     $mensaje = 'Tu préstamo fue registrado. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.';
-                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, 'Historial.php');
+                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, 'Profesor.php?view=notificaciones');
                 } catch (\Throwable $e) { /* noop */ }
                 // correo al profesor
                 if (!empty($correoDoc)) {
@@ -51,7 +51,7 @@ class PrestamoController {
                             'userName' => $docente,
                             'type' => 'success',
                             'sendSms' => false,
-                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Public/index.php?view=mis_prestamos'
+                            'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/app/view/Profesor.php?view=notificaciones'
                         ]
                     );
                 }
@@ -59,15 +59,33 @@ class PrestamoController {
 
             // Notificar Admin y Encargado: correo + campanita
             try {
+                // Obtener el último préstamo creado para obtener su ID
+                $ultimoPrestamo = $this->model->obtenerUltimoPrestamoPorUsuario($id_usuario);
+                $id_prestamo = $ultimoPrestamo['id_prestamo'] ?? null;
+                
                 $usuarios = $this->model->listarUsuariosPorRol(['Administrador','Encargado']);
                 $docente = $_SESSION['usuario'] ?? 'Docente';
                 $mensaje = 'Nuevo préstamo registrado por ' . $docente . '. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.';
                 foreach ($usuarios as $u) {
-                    // Campanita
-                    $this->model->crearNotificacion((int)$u['id_usuario'], 'Nuevo préstamo de equipos', $mensaje, '/Reservacion_AIP/Admin.php?view=historial_global');
+                    // Determinar URL según el rol
+            $urlNotif = ($u['tipo_usuario'] === 'Administrador') 
+                ? 'Admin.php?view=notificaciones' 
+                : 'Encargado.php?view=notificaciones';
+                    
+                    // Metadata con id_prestamo
+                    $metadata = json_encode(['id_prestamo' => $id_prestamo]);
+                    
+                    // Campanita con metadata
+                    $this->model->crearNotificacionConMetadata((int)$u['id_usuario'], 'Nuevo préstamo de equipos', $mensaje, $urlNotif, $metadata);
+                    
                     // Correo
                     if (!empty($u['correo'])) {
                         $ns = new NotificationService();
+                        // URL correcta según el rol
+                        $emailUrl = ($u['tipo_usuario'] === 'Administrador') 
+                            ? 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/app/view/Admin.php?view=notificaciones'
+                            : 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/app/view/Encargado.php?view=notificaciones';
+                        
                         $ns->sendNotification(
                             ['email' => $u['correo']],
                             'Nuevo préstamo de equipos',
@@ -76,7 +94,7 @@ class PrestamoController {
                                 'userName' => ($u['nombre'] ?? 'Usuario'),
                                 'type' => 'info',
                                 'sendSms' => false,
-                                'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global'
+                                'url' => $emailUrl
                             ]
                         );
                     }
@@ -106,20 +124,33 @@ class PrestamoController {
         return $this->model->listarPrestamosPorUsuario($id_usuario);
     }
 
-    public function devolverEquipo($id_prestamo, ?string $comentario = null) {
+    public function devolverEquipo($id_prestamo, ?string $comentario = null, $enviarNotificacion = false) {
         $ok = $this->model->devolverEquipo($id_prestamo, $comentario);
-        if ($ok) {
-            // Notificación interna mínima al profesor; sin correos ni consultas extra
+        if ($ok && $enviarNotificacion) {
+            // Solo enviar notificación si se solicita explícitamente
+            // Por defecto no envía para permitir notificaciones agrupadas
             try {
                 $idProfesor = $this->model->obtenerUsuarioPorPrestamo((int)$id_prestamo);
                 if ($idProfesor) {
                     $titulo = 'Devolución registrada';
                     $mensaje = 'Tu préstamo #'.(int)$id_prestamo.' fue marcado como devuelto.' . ($comentario ? (' Observación: '.$comentario) : '');
-                    $this->model->crearNotificacion($idProfesor, $titulo, $mensaje, 'Historial.php');
+                    $this->model->crearNotificacion($idProfesor, $titulo, $mensaje, 'Profesor.php?view=notificaciones');
                 }
             } catch (\Throwable $e) { /* log suave */ }
         }
         return $ok;
+    }
+    
+    public function obtenerPrestamoPorId($id_prestamo) {
+        return $this->model->obtenerPrestamoPorId($id_prestamo);
+    }
+    
+    public function getDb() {
+        return $this->model->getDb();
+    }
+    
+    public function listarUsuariosPorRol($roles) {
+        return $this->model->listarUsuariosPorRol($roles);
     }
 
     public function obtenerPrestamosFiltrados(?string $estado, ?string $desde, ?string $hasta, ?string $q): array {

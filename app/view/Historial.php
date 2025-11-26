@@ -17,6 +17,16 @@ if (!defined('EMBEDDED_VIEW')) {
 require '../controllers/HistorialController.php';
 require '../config/conexion.php';
 
+// Marcar notificación como leída si viene desde una notificación
+if (isset($_GET['notif_read']) && is_numeric($_GET['notif_read'])) {
+    try {
+        $stmt = $conexion->prepare("UPDATE notificaciones SET leida = 1 WHERE id_notificacion = ? AND id_usuario = ?");
+        $stmt->execute([(int)$_GET['notif_read'], (int)$_SESSION['id_usuario']]);
+    } catch (\Throwable $e) {
+        // Ignorar errores silenciosamente
+    }
+}
+
 $controller = new HistorialController($conexion);
 $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Controller)
 ?>
@@ -138,8 +148,15 @@ $startOfWeek = date('Y-m-d'); // referencia inicial (lunes calculado en JS/Contr
     }
     tabRes.addEventListener('click', showRes);
     tabEq.addEventListener('click', showEq);
-    // default
-    showRes();
+    
+    // Detectar hash en URL para abrir pestaña específica
+    const hash = window.location.hash;
+    if (hash === '#equipos') {
+      showEq();
+    } else {
+      // default: mostrar reservas
+      showRes();
+    }
 
     // Sincronización ya no necesaria: solo hay un botón PDF (arriba)
   });

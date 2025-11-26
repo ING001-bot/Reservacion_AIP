@@ -127,11 +127,6 @@ $badge = count($no_leidas);
     </a>
     
     <div class="d-flex align-items-center ms-auto">
-      <!-- Botón de tema -->
-      <button type="button" class="btn btn-link nav-link text-white p-2 border-0 me-2" id="theme-toggle-navbar" title="Cambiar tema" aria-label="Cambiar tema oscuro/claro">
-        <i class="fas fa-moon fa-lg"></i>
-      </button>
-      
       <!-- Notificaciones (Admin, Encargado y Profesor) -->
       <?php if ($id_usuario > 0): ?>
       <div class="dropdown me-3">
@@ -161,16 +156,14 @@ $badge = count($no_leidas);
                   elseif (stripos($tituloN, 'devolución') !== false || stripos($tituloN, 'devolucion') !== false) { $icon = 'fa-undo text-info'; }
                   elseif (stripos($tituloN, 'cancelación') !== false || stripos($tituloN, 'cancelacion') !== false) { $icon = 'fa-ban text-warning'; }
                   
-                  // Procesar URL para hacerla funcional desde cualquier ubicación
+                  // Procesar URL - Todas las notificaciones ahora van a la página de Notificaciones
                   $urlNotif = $n['url'] ?? '#';
-                  // Si la URL no es absoluta (no empieza con http o /), agregar ruta relativa
-                  if ($urlNotif !== '#' && !preg_match('/^(https?:\/\/|\/)/i', $urlNotif)) {
-                    // Es una URL relativa como "Historial.php", agregar prefijo
-                    $urlNotif = '../view/' . $urlNotif;
-                  }
+                  // Las URLs ya vienen en el formato correcto desde NotificationService
+                  // No necesitamos procesarlas
                 ?>
                 <a class="list-group-item list-group-item-action d-flex align-items-start gap-3" 
-                   href="<?= htmlspecialchars($urlNotif) ?>" 
+                   href="#" 
+                   data-url="<?= htmlspecialchars($urlNotif) ?>"
                    data-notif-id="<?= (int)$n['id_notificacion'] ?>">
                   <div class="pt-1" style="width:22px; text-align:center;">
                     <i class="fas <?= $icon ?>"></i>
@@ -519,40 +512,32 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
   document.addEventListener('DOMContentLoaded', function(){
     // Manejar click en notificaciones individuales
     var notifItems = document.querySelectorAll('#notif-list .list-group-item');
+    console.log('📋 Notificaciones encontradas:', notifItems.length);
+    
     notifItems.forEach(function(item){
       item.addEventListener('click', function(e){
         e.preventDefault();
         e.stopPropagation();
         
-        var url = this.getAttribute('href');
+        var url = this.dataset.url || '#';
         var idNotif = this.dataset.notifId;
         
-        // Marcar como leída y luego redirigir
+        console.log('🔔 Click en campanita - Redirigiendo a Notificaciones');
+        
+        // Marcar como leída en background
         if (idNotif) {
           fetch('../../app/api/notificaciones.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=marcar&id=' + idNotif
-          }).then(function(response){ 
-            return response.json();
-          }).then(function(data){
-            console.log('✅ Notificación marcada como leída');
-            // Redirigir después de marcar
-            if (url && url !== '#') {
-              window.location.href = url;
-            }
-          }).catch(function(err){ 
-            console.error('Error al marcar notificación:', err);
-            // Redirigir aunque falle marcar
-            if (url && url !== '#') {
-              window.location.href = url;
-            }
+            body: 'action=marcar&id=' + idNotif,
+            keepalive: true
           });
-        } else {
-          // Si no hay ID, redirigir directamente
-          if (url && url !== '#') {
-            window.location.href = url;
-          }
+        }
+        
+        // Siempre redirigir a la página de notificaciones
+        if (url && url !== '#') {
+          console.log('🚀 Navegando a:', url);
+          window.location.href = url;
         }
       });
     });

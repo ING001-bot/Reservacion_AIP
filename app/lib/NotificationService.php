@@ -230,6 +230,7 @@ class NotificationService {
      */
     public function crearNotificacionReserva($db, $idUsuario, $tipoUsuario, $datosReserva) {
         try {
+            $idReserva = $datosReserva['id_reserva'] ?? null;
             $aula = $datosReserva['aula'] ?? 'N/A';
             $fecha = $datosReserva['fecha'] ?? date('Y-m-d');
             $horaInicio = $datosReserva['hora_inicio'] ?? '';
@@ -238,19 +239,26 @@ class NotificationService {
             // URL de redirección según el rol
             $url = '';
             if ($tipoUsuario === 'Profesor') {
-                $url = 'Historial.php';
+                $url = 'Profesor.php?view=notificaciones';
                 $titulo = '✅ Reserva creada exitosamente';
                 $mensaje = "Tu reserva ha sido registrada. Aula: {$aula}, Fecha: {$fecha}, Hora: {$horaInicio} - {$horaFin}";
             } elseif ($tipoUsuario === 'Administrador') {
-                $url = 'HistorialGlobal.php';
+                $url = 'Admin.php?view=notificaciones';
+                $titulo = '🔔 Nueva reserva registrada';
+                $mensaje = "Se ha creado una reserva. Aula: {$aula}, Fecha: {$fecha}, Hora: {$horaInicio} - {$horaFin}";
+            } elseif ($tipoUsuario === 'Encargado') {
+                $url = 'Encargado.php?view=notificaciones';
                 $titulo = '🔔 Nueva reserva registrada';
                 $mensaje = "Se ha creado una reserva. Aula: {$aula}, Fecha: {$fecha}, Hora: {$horaInicio} - {$horaFin}";
             } else {
                 return false; // No enviar notificación a otros roles
             }
             
-            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
-            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url]);
+            // Metadata con información adicional
+            $metadata = json_encode(['id_reserva' => $idReserva]);
+            
+            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url, metadata) VALUES (?, ?, ?, ?, ?)");
+            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url, $metadata]);
         } catch (\Exception $e) {
             error_log("Error al crear notificación de reserva: " . $e->getMessage());
             return false;
@@ -275,19 +283,22 @@ class NotificationService {
             // URL de redirección según el rol
             $url = '';
             if ($tipoUsuario === 'Encargado') {
-                $url = 'Devolucion.php';
+                $url = 'Encargado.php?view=notificaciones';
                 $titulo = '⚠️ Préstamo sin devolver';
                 $mensaje = "El préstamo #{$idPrestamo} venció hace {$minutosRetraso} minutos. Solicitado por: {$solicitante}. Hora fin: {$horaFin}";
             } elseif ($tipoUsuario === 'Administrador') {
-                $url = 'HistorialGlobal.php';
+                $url = 'Admin.php?view=notificaciones';
                 $titulo = '🔔 Alerta: Préstamo vencido sin devolución';
                 $mensaje = "Préstamo #{$idPrestamo} sin devolución desde {$horaFin}. Solicitante: {$solicitante}. Retraso: {$minutosRetraso} min";
             } else {
                 return false;
             }
             
-            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
-            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url]);
+            // Metadata con información adicional
+            $metadata = json_encode(['id_prestamo' => $idPrestamo]);
+            
+            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url, metadata) VALUES (?, ?, ?, ?, ?)");
+            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url, $metadata]);
         } catch (\Exception $e) {
             error_log("Error al crear notificación de préstamo vencido: " . $e->getMessage());
             return false;
@@ -308,36 +319,42 @@ class NotificationService {
             $equipos = $datosDev['equipos'] ?? [];
             $encargado = $datosDev['encargado'] ?? 'Encargado';
             $horaConfirmacion = $datosDev['hora_confirmacion'] ?? date('H:i');
+            $comentario = isset($datosDev['comentario']) && !empty($datosDev['comentario']) 
+                ? ' Observación: ' . $datosDev['comentario'] 
+                : '';
             
             $cantidadEquipos = count($equipos);
-            $listaEquipos = implode(', ', array_map(function($eq) {
+            $listaEquipos = implode(' - ', array_map(function($eq) {
                 return $eq['nombre'] ?? 'Equipo';
             }, $equipos));
             
             // URL de redirección según el rol
             $url = '';
             if ($tipoUsuario === 'Profesor') {
-                $url = 'Historial.php';
+                $url = 'Profesor.php?view=notificaciones';
                 $titulo = '✅ Devolución confirmada';
                 if ($cantidadEquipos > 1) {
-                    $mensaje = "{$cantidadEquipos} equipos devueltos: {$listaEquipos}. Confirmado a las {$horaConfirmacion}";
+                    $mensaje = "{$listaEquipos}.{$comentario}";
                 } else {
-                    $mensaje = "Equipo devuelto: {$listaEquipos}. Confirmado a las {$horaConfirmacion}";
+                    $mensaje = "{$listaEquipos}.{$comentario}";
                 }
             } elseif ($tipoUsuario === 'Administrador') {
-                $url = 'HistorialGlobal.php';
+                $url = 'Admin.php?view=notificaciones';
                 $titulo = '📦 Devolución registrada';
                 if ($cantidadEquipos > 1) {
-                    $mensaje = "Préstamo #{$idPrestamo} - {$cantidadEquipos} equipos devueltos ({$listaEquipos}) - Confirmado por {$encargado} a las {$horaConfirmacion}";
+                    $mensaje = "Préstamo #{$idPrestamo} - {$listaEquipos} - Confirmado por {$encargado} a las {$horaConfirmacion}.{$comentario}";
                 } else {
-                    $mensaje = "Préstamo #{$idPrestamo} - Equipo devuelto: {$listaEquipos} - Confirmado por {$encargado} a las {$horaConfirmacion}";
+                    $mensaje = "Préstamo #{$idPrestamo} - {$listaEquipos} - Confirmado por {$encargado} a las {$horaConfirmacion}.{$comentario}";
                 }
             } else {
                 return false;
             }
             
-            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
-            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url]);
+            // Metadata con información adicional
+            $metadata = json_encode(['id_prestamo' => $idPrestamo]);
+            
+            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url, metadata) VALUES (?, ?, ?, ?, ?)");
+            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url, $metadata]);
         } catch (\Exception $e) {
             error_log("Error al crear notificación de devolución: " . $e->getMessage());
             return false;

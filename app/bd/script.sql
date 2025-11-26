@@ -35,6 +35,7 @@ CREATE TABLE equipos (
   nombre_equipo VARCHAR(100) NOT NULL,
   tipo_equipo VARCHAR(50) NOT NULL,
   stock INT NOT NULL DEFAULT 0,
+  stock_maximo INT NOT NULL DEFAULT 0,
   activo TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

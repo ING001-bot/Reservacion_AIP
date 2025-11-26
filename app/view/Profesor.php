@@ -50,6 +50,9 @@ $vista = $_GET['view'] ?? 'inicio';
       case 'historial':
           include 'historial.php';
           break;
+      case 'notificaciones':
+          include 'Notificaciones.php';
+          break;
       case 'password':
           include 'Cambiar_Contraseña.php';
           break;
@@ -118,6 +121,16 @@ $vista = $_GET['view'] ?? 'inicio';
                           <h5 class="card-title mb-2">🔑 Cambiar Contraseña</h5>
                           <p class="card-text text-muted mb-4">Actualice su contraseña de acceso.</p>
                           <a href="?view=password" class="btn btn-outline-brand mt-auto">Abrir</a>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="col-sm-6 col-md-4">
+                  <div class="card card-brand shadow-sm h-100">
+                      <div class="card-body d-flex flex-column text-center">
+                          <h5 class="card-title mb-2">🔔 Notificaciones</h5>
+                          <p class="card-text text-muted mb-4">Consulta tu historial de notificaciones.</p>
+                          <a href="?view=notificaciones" class="btn btn-outline-brand mt-auto">Abrir</a>
                       </div>
                   </div>
               </div>

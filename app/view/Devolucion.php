@@ -9,6 +9,16 @@ if (!isset($_SESSION['usuario']) || $_SESSION['tipo']!=='Encargado') {
     die("Acceso denegado");
 }
 
+// Marcar notificación como leída si viene desde una notificación
+if (isset($_GET['notif_read']) && is_numeric($_GET['notif_read'])) {
+    try {
+        $stmt = $conexion->prepare("UPDATE notificaciones SET leida = 1 WHERE id_notificacion = ? AND id_usuario = ?");
+        $stmt->execute([(int)$_GET['notif_read'], (int)$_SESSION['id_usuario']]);
+    } catch (\Throwable $e) {
+        // Ignorar errores silenciosamente
+    }
+}
+
 // Prevenir caché del navegador (solo si no es vista embebida)
 if (!defined('EMBEDDED_VIEW')) {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -19,15 +29,59 @@ if (!defined('EMBEDDED_VIEW')) {
 
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Devolución individual
     if (isset($_POST['devolver_id'])) {
         $id = intval($_POST['devolver_id']);
         $coment = isset($_POST['comentario']) ? trim($_POST['comentario']) : null;
-        if ($controller->devolverEquipo($id, $coment)) {
+        
+        if ($controller->devolverEquipo($id, $coment, false)) { // false = no enviar notificación automática
+            // Crear notificación agrupada
+            try {
+                $prestamo = $controller->obtenerPrestamoPorId($id);
+                if ($prestamo && $prestamo['id_usuario']) {
+                    require_once __DIR__ . '/../lib/NotificationService.php';
+                    $notifService = new \App\Lib\NotificationService();
+                    $db = $controller->getDb();
+                    
+                    $equiposDevueltos = [['nombre' => $prestamo['nombre_equipo'] ?? 'Equipo']];
+                    $datosDev = [
+                        'id_prestamo' => $id,
+                        'equipos' => $equiposDevueltos,
+                        'encargado' => $_SESSION['usuario'] ?? 'Encargado',
+                        'hora_confirmacion' => date('H:i'),
+                        'comentario' => $coment
+                    ];
+                    
+                    // Notificar al profesor
+                    $notifService->crearNotificacionDevolucionPack(
+                        $db,
+                        (int)$prestamo['id_usuario'],
+                        'Profesor',
+                        $datosDev
+                    );
+                    
+                    // Notificar administradores
+                    $admins = $controller->listarUsuariosPorRol(['Administrador']);
+                    foreach ($admins as $admin) {
+                        $notifService->crearNotificacionDevolucionPack(
+                            $db,
+                            (int)$admin['id_usuario'],
+                            'Administrador',
+                            $datosDev
+                        );
+                    }
+                }
+            } catch (\Exception $e) {
+                error_log("Error al crear notificación de devolución: " . $e->getMessage());
+            }
+            
             $mensaje = '✅ Devolución registrada correctamente.';
         } else {
             $mensaje = '❌ No se pudo registrar la devolución.';
         }
     }
+    
+    // Devolución grupal
     if (isset($_POST['devolver_grupo_ids'])) {
         $idsJson = $_POST['devolver_grupo_ids'] ?? '[]';
         $ids = json_decode($idsJson, true);
@@ -44,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Obtener datos del equipo para la notificación
                     try {
-                        $prestamo = $controller->model->obtenerPrestamoPorId(intval($id));
+                        $prestamo = $controller->obtenerPrestamoPorId(intval($id));
                         if ($prestamo && $prestamo['nombre_equipo']) {
                             $equiposDevueltos[] = ['nombre' => $prestamo['nombre_equipo']];
                             if (!$idUsuarioPrestamo && $prestamo['id_usuario']) {
@@ -62,13 +116,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     require_once __DIR__ . '/../lib/NotificationService.php';
                     $notifService = new \App\Lib\NotificationService();
-                    $db = $controller->model->getDb();
+                    $db = $controller->getDb();
                     
                     $datosDev = [
                         'id_prestamo' => $ids[0], // ID del primer préstamo como referencia
                         'equipos' => $equiposDevueltos,
                         'encargado' => $_SESSION['usuario'] ?? 'Encargado',
-                        'hora_confirmacion' => date('H:i')
+                        'hora_confirmacion' => date('H:i'),
+                        'comentario' => $coment
                     ];
                     
                     // Notificar al profesor
@@ -82,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Notificar a todos los administradores
-                    $admins = $controller->model->listarUsuariosPorRol(['Administrador']);
+                    $admins = $controller->listarUsuariosPorRol(['Administrador']);
                     foreach ($admins as $admin) {
                         $notifService->crearNotificacionDevolucionPack(
                             $db,

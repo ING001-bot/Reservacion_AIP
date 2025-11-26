@@ -386,13 +386,14 @@ setTimeout(() => {
                     <div id="cuadro-horas" class="d-flex flex-wrap gap-2">
                         <?php
                         if (!empty($fecha_default) && !empty($id_aula_selected)) {
+                            // Horario turno mañana: 06:00 - 12:45 (incluye hora de culminación)
                             $starts = ['06:00','06:45'];
                             $s = strtotime('07:10');
                             $pre_recreo_fin = strtotime('10:10');
                             while ($s < $pre_recreo_fin) { $starts[] = date('H:i', $s); $s += 45*60; }
                             $starts[] = '10:10';
                             $s = strtotime('10:30');
-                            $endStart = strtotime('12:45');
+                            $endStart = strtotime('12:45'); // Incluir 12:45
                             while ($s <= $endStart) { $starts[] = date('H:i', $s); $s += 45*60; }
 
                             foreach ($starts as $inicio_hm) {
@@ -404,7 +405,11 @@ setTimeout(() => {
                                 $ocupada = false;
                                 if (!$isRecreoMarker) {
                                     foreach ($reservas_existentes as $res) {
-                                        if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; break; }
+                                        // Verificar si hay solapamiento real de horarios
+                                        if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { 
+                                            $ocupada = true; 
+                                            break; 
+                                        }
                                     }
                                 }
                                 if ($isRecreoMarker) {

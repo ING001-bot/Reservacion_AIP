@@ -145,8 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['verificar_codigo']))
                 $equipos,
                 $fecha_prestamo,
                 $hora_inicio,
-                $id_aula,
-                $hora_fin ?: null
+                $hora_fin ?: null,
+                $id_aula
             );
             $mensaje = $resultado['mensaje'] ?? '';
             $mensaje_tipo = ($resultado['tipo'] ?? '') === 'error' ? 'danger' : 'success';

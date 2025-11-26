@@ -78,6 +78,7 @@ if ($id_aula && $fecha) {
         while ($s < $pre_recreo_fin) { $morning_starts[] = date('H:i', $s); $s += 45*60; }
         $morning_starts[] = '10:10'; // 10:10 debe ser seleccionable
         $s = strtotime('10:30');
+        // Incluir hasta 12:45 (hora de culminación de clases)
         $last = strtotime('12:45');
         while ($s <= $last) { $morning_starts[] = date('H:i', $s); $s += 45*60; }
 
@@ -91,14 +92,22 @@ if ($id_aula && $fecha) {
                 $res_fin = substr($res['hora_fin'],0,5);
                 if ($res_ini === $inicio_hm) { $starts_here = true; }
                 if ($res_fin === $inicio_hm) { $half_end = true; }
+                // Un botón está ocupado si hay solapamiento de horarios
                 if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
             }
-            $fin_especiales = ['10:10','12:45'];
-            if ($starts_here || $ocupada || ($half_end && in_array($inicio_hm, $fin_especiales, true))) {
+            
+            // Solo 10:10 es especial (marca como ocupada si termina ahí)
+            $fin_especiales = ['10:10'];
+            $es_fin_especial = $half_end && in_array($inicio_hm, $fin_especiales, true);
+            
+            if ($starts_here || $ocupada || $es_fin_especial) {
+                // Botón rojo: ocupado o no disponible
                 echo "<button type='button' class='btn btn-danger btn-sm mb-1' data-time='{$inicio_hm}' disabled>{$inicio_hm}</button>";
             } elseif ($half_end) {
+                // Botón verde con efecto especial: una reserva termina aquí (disponible pero advertencia visual)
                 echo "<button type='button' class='btn btn-success btn-sm btn-half-danger mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
             } else {
+                // Botón verde: completamente disponible
                 echo "<button type='button' class='btn btn-success btn-sm mb-1' data-time='{$inicio_hm}'>{$inicio_hm}</button>";
             }
             if ($inicio_hm === '10:10') {

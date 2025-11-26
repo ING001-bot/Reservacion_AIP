@@ -50,6 +50,7 @@ $vista = $_GET['view'] ?? 'inicio';
         <a class="nav-link link-sidebar <?= $vista==='tipos_equipo'?'active':'' ?>" href="Admin.php?view=tipos_equipo">⚙ Tipos de Equipo</a>
         <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial General</a>
         <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes y Estadísticas</a>
+        <a class="nav-link link-sidebar <?= $vista==='notificaciones'?'active':'' ?>" href="Admin.php?view=notificaciones">🔔 Notificaciones</a>
         <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
         <a class="nav-link link-sidebar <?= $vista==='configuracion'?'active':'' ?>" href="Admin.php?view=configuracion">⚙️ Configuración</a>
       </nav>
@@ -85,6 +86,9 @@ $vista = $_GET['view'] ?? 'inicio';
         break;
       case 'reportes':
         include 'HistorialReportes.php';
+        break;
+      case 'notificaciones':
+        include 'Notificaciones.php';
         break;
       case 'password':
         include 'cambiar_contraseña.php';
