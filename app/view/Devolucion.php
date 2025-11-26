@@ -35,11 +35,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (is_array($ids) && !empty($ids)) {
             $exitosos = 0;
+            $equiposDevueltos = [];
+            $idUsuarioPrestamo = null;
+            
             foreach ($ids as $id) {
                 if ($controller->devolverEquipo(intval($id), $coment)) {
                     $exitosos++;
+                    
+                    // Obtener datos del equipo para la notificación
+                    try {
+                        $prestamo = $controller->model->obtenerPrestamoPorId(intval($id));
+                        if ($prestamo && $prestamo['nombre_equipo']) {
+                            $equiposDevueltos[] = ['nombre' => $prestamo['nombre_equipo']];
+                            if (!$idUsuarioPrestamo && $prestamo['id_usuario']) {
+                                $idUsuarioPrestamo = $prestamo['id_usuario'];
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Error al obtener datos del préstamo: " . $e->getMessage());
+                    }
                 }
             }
+            
+            // Crear notificaciones agrupadas al finalizar todas las devoluciones
+            if ($exitosos > 0 && !empty($equiposDevueltos)) {
+                try {
+                    require_once __DIR__ . '/../lib/NotificationService.php';
+                    $notifService = new \App\Lib\NotificationService();
+                    $db = $controller->model->getDb();
+                    
+                    $datosDev = [
+                        'id_prestamo' => $ids[0], // ID del primer préstamo como referencia
+                        'equipos' => $equiposDevueltos,
+                        'encargado' => $_SESSION['usuario'] ?? 'Encargado',
+                        'hora_confirmacion' => date('H:i')
+                    ];
+                    
+                    // Notificar al profesor
+                    if ($idUsuarioPrestamo) {
+                        $notifService->crearNotificacionDevolucionPack(
+                            $db,
+                            $idUsuarioPrestamo,
+                            'Profesor',
+                            $datosDev
+                        );
+                    }
+                    
+                    // Notificar a todos los administradores
+                    $admins = $controller->model->listarUsuariosPorRol(['Administrador']);
+                    foreach ($admins as $admin) {
+                        $notifService->crearNotificacionDevolucionPack(
+                            $db,
+                            (int)$admin['id_usuario'],
+                            'Administrador',
+                            $datosDev
+                        );
+                    }
+                } catch (\Exception $e) {
+                    error_log("Error al crear notificaciones de devolución agrupada: " . $e->getMessage());
+                }
+            }
+            
             if ($exitosos === count($ids)) {
                 $mensaje = '✅ Devolución de ' . $exitosos . ' equipo(s) registrada correctamente.';
             } else if ($exitosos > 0) {

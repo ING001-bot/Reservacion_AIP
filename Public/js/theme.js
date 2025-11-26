@@ -1,49 +1,79 @@
 // Public/js/theme.js
-// Theme toggle - ahora integrado en navbar
+// Theme toggle - integrado en navbar (100% funcional)
 (function(){
+  var retryCount = 0;
+  var maxRetries = 10;
+  
   function applySavedTheme(){
     try {
       var saved = localStorage.getItem('theme');
+      console.log('🎨 Theme.js: Tema guardado:', saved);
       if (saved === 'dark') { 
         document.body.classList.add('dark');
+        console.log('🌙 Theme.js: Modo oscuro aplicado desde localStorage');
       }
       // Intentar actualizar el icono si el botón ya existe
       setTimeout(function() { updateThemeIcon(saved === 'dark'); }, 100);
-    } catch(e) {}
+    } catch(e) {
+      console.error('❌ Theme.js: Error al aplicar tema:', e);
+    }
   }
   
   function updateThemeIcon(isDark){
     var btn = document.getElementById('theme-toggle-navbar');
-    if (!btn) return;
+    if (!btn) {
+      console.warn('⚠️ Theme.js: Botón no encontrado aún para actualizar icono');
+      return;
+    }
     var icon = btn.querySelector('i');
-    if (!icon) return;
+    if (!icon) {
+      console.warn('⚠️ Theme.js: Icono no encontrado en botón');
+      return;
+    }
     if (isDark) {
       icon.className = 'fas fa-sun fa-lg';
       btn.title = 'Cambiar a modo claro';
+      console.log('☀️ Theme.js: Icono cambiado a sol (modo oscuro activo)');
     } else {
       icon.className = 'fas fa-moon fa-lg';
       btn.title = 'Cambiar a modo oscuro';
+      console.log('🌙 Theme.js: Icono cambiado a luna (modo claro activo)');
     }
   }
   
   function bindToggle(){
     var btn = document.getElementById('theme-toggle-navbar');
     if (!btn) {
-      // Reintentar en 500ms si el navbar aún no se ha cargado
-      setTimeout(bindToggle, 500);
+      retryCount++;
+      if (retryCount < maxRetries) {
+        console.log('⏳ Theme.js: Reintentando encontrar botón (' + retryCount + '/' + maxRetries + ')...');
+        setTimeout(bindToggle, 300);
+      } else {
+        console.error('❌ Theme.js: Botón de tema NO encontrado después de', maxRetries, 'intentos');
+      }
       return;
     }
     
+    console.log('✅ Theme.js: Botón encontrado, vinculando evento click');
+    
     btn.addEventListener('click', function(){
+      console.log('🖱️ Theme.js: Click en botón de tema detectado');
       document.body.classList.toggle('dark');
       var isDark = document.body.classList.contains('dark');
-      try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
+      console.log('🎨 Theme.js: Tema cambiado a:', isDark ? 'oscuro' : 'claro');
+      try { 
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        console.log('💾 Theme.js: Tema guardado en localStorage');
+      } catch(e) {
+        console.error('❌ Theme.js: Error al guardar en localStorage:', e);
+      }
       updateThemeIcon(isDark);
     });
     
     // Actualizar icono inicial
     var isDark = document.body.classList.contains('dark');
     updateThemeIcon(isDark);
+    console.log('🎉 Theme.js: Sistema de tema completamente inicializado');
   }
   function ensureTableScrollWrappers(){
     try{

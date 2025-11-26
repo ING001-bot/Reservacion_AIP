@@ -195,4 +195,129 @@ class NotificationService {
             $this->sendSms($userPhone, $smsMessage);
         }
     }
+
+    /**
+     * Crear notificación en BD (in-app) para reservas
+     * @param PDO $db Conexión a la base de datos
+     * @param int $idUsuario ID del usuario que recibirá la notificación
+     * @param string $tipoUsuario Rol del usuario (Profesor, Administrador, Encargado)
+     * @param array $datosReserva Datos de la reserva (aula, fecha, hora_inicio, hora_fin)
+     * @return bool
+     */
+    public function crearNotificacionReserva($db, $idUsuario, $tipoUsuario, $datosReserva) {
+        try {
+            $aula = $datosReserva['aula'] ?? 'N/A';
+            $fecha = $datosReserva['fecha'] ?? date('Y-m-d');
+            $horaInicio = $datosReserva['hora_inicio'] ?? '';
+            $horaFin = $datosReserva['hora_fin'] ?? '';
+            
+            // URL de redirección según el rol
+            $url = '';
+            if ($tipoUsuario === 'Profesor') {
+                $url = 'Historial.php';
+                $titulo = '✅ Reserva creada exitosamente';
+                $mensaje = "Tu reserva ha sido registrada. Aula: {$aula}, Fecha: {$fecha}, Hora: {$horaInicio} - {$horaFin}";
+            } elseif ($tipoUsuario === 'Administrador') {
+                $url = 'HistorialGlobal.php';
+                $titulo = '🔔 Nueva reserva registrada';
+                $mensaje = "Se ha creado una reserva. Aula: {$aula}, Fecha: {$fecha}, Hora: {$horaInicio} - {$horaFin}";
+            } else {
+                return false; // No enviar notificación a otros roles
+            }
+            
+            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
+            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url]);
+        } catch (\Exception $e) {
+            error_log("Error al crear notificación de reserva: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Crear notificación para préstamos vencidos
+     * @param PDO $db Conexión a la base de datos
+     * @param int $idUsuario ID del usuario que recibirá la notificación
+     * @param string $tipoUsuario Rol del usuario
+     * @param array $datosPrestamo Datos del préstamo (id_prestamo, solicitante, equipos, hora_fin)
+     * @return bool
+     */
+    public function crearNotificacionPrestamoVencido($db, $idUsuario, $tipoUsuario, $datosPrestamo) {
+        try {
+            $idPrestamo = $datosPrestamo['id_prestamo'] ?? 0;
+            $solicitante = $datosPrestamo['solicitante'] ?? 'Usuario';
+            $horaFin = $datosPrestamo['hora_fin'] ?? '';
+            $minutosRetraso = $datosPrestamo['minutos_retraso'] ?? 0;
+            
+            // URL de redirección según el rol
+            $url = '';
+            if ($tipoUsuario === 'Encargado') {
+                $url = 'Devolucion.php';
+                $titulo = '⚠️ Préstamo sin devolver';
+                $mensaje = "El préstamo #{$idPrestamo} venció hace {$minutosRetraso} minutos. Solicitado por: {$solicitante}. Hora fin: {$horaFin}";
+            } elseif ($tipoUsuario === 'Administrador') {
+                $url = 'HistorialGlobal.php';
+                $titulo = '🔔 Alerta: Préstamo vencido sin devolución';
+                $mensaje = "Préstamo #{$idPrestamo} sin devolución desde {$horaFin}. Solicitante: {$solicitante}. Retraso: {$minutosRetraso} min";
+            } else {
+                return false;
+            }
+            
+            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
+            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url]);
+        } catch (\Exception $e) {
+            error_log("Error al crear notificación de préstamo vencido: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Crear notificación de devolución (agrupada si es pack)
+     * @param PDO $db Conexión a la base de datos
+     * @param int $idUsuario ID del usuario que recibirá la notificación
+     * @param string $tipoUsuario Rol del usuario
+     * @param array $datosDev Datos de la devolución (id_prestamo, equipos[], encargado, hora_confirmacion)
+     * @return bool
+     */
+    public function crearNotificacionDevolucionPack($db, $idUsuario, $tipoUsuario, $datosDev) {
+        try {
+            $idPrestamo = $datosDev['id_prestamo'] ?? 0;
+            $equipos = $datosDev['equipos'] ?? [];
+            $encargado = $datosDev['encargado'] ?? 'Encargado';
+            $horaConfirmacion = $datosDev['hora_confirmacion'] ?? date('H:i');
+            
+            $cantidadEquipos = count($equipos);
+            $listaEquipos = implode(', ', array_map(function($eq) {
+                return $eq['nombre'] ?? 'Equipo';
+            }, $equipos));
+            
+            // URL de redirección según el rol
+            $url = '';
+            if ($tipoUsuario === 'Profesor') {
+                $url = 'Historial.php';
+                $titulo = '✅ Devolución confirmada';
+                if ($cantidadEquipos > 1) {
+                    $mensaje = "{$cantidadEquipos} equipos devueltos: {$listaEquipos}. Confirmado a las {$horaConfirmacion}";
+                } else {
+                    $mensaje = "Equipo devuelto: {$listaEquipos}. Confirmado a las {$horaConfirmacion}";
+                }
+            } elseif ($tipoUsuario === 'Administrador') {
+                $url = 'HistorialGlobal.php';
+                $titulo = '📦 Devolución registrada';
+                if ($cantidadEquipos > 1) {
+                    $mensaje = "Préstamo #{$idPrestamo} - {$cantidadEquipos} equipos devueltos ({$listaEquipos}) - Confirmado por {$encargado} a las {$horaConfirmacion}";
+                } else {
+                    $mensaje = "Préstamo #{$idPrestamo} - Equipo devuelto: {$listaEquipos} - Confirmado por {$encargado} a las {$horaConfirmacion}";
+                }
+            } else {
+                return false;
+            }
+            
+            $stmt = $db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
+            return $stmt->execute([$idUsuario, $titulo, $mensaje, $url]);
+        } catch (\Exception $e) {
+            error_log("Error al crear notificación de devolución: " . $e->getMessage());
+            return false;
+        }
+    }
 }
+

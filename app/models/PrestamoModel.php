@@ -162,6 +162,19 @@ class PrestamoModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function obtenerPrestamoPorId(int $id_prestamo): ?array {
+        $stmt = $this->db->prepare("
+            SELECT p.*, e.nombre_equipo, e.tipo_equipo, u.nombre, u.id_usuario
+            FROM prestamos p
+            LEFT JOIN equipos e ON p.id_equipo = e.id_equipo
+            LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+            WHERE p.id_prestamo = ?
+        ");
+        $stmt->execute([$id_prestamo]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public function obtenerUsuarioPorPrestamo(int $id_prestamo): ?int {
         $stmt = $this->db->prepare("SELECT id_usuario FROM prestamos WHERE id_prestamo = ?");
         $stmt->execute([$id_prestamo]);

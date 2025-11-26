@@ -161,7 +161,9 @@ $badge = count($no_leidas);
                   elseif (stripos($tituloN, 'devolución') !== false || stripos($tituloN, 'devolucion') !== false) { $icon = 'fa-undo text-info'; }
                   elseif (stripos($tituloN, 'cancelación') !== false || stripos($tituloN, 'cancelacion') !== false) { $icon = 'fa-ban text-warning'; }
                 ?>
-                <a class="list-group-item list-group-item-action d-flex align-items-start gap-3" href="<?= htmlspecialchars($n['url'] ?? '#') ?>">
+                <a class="list-group-item list-group-item-action d-flex align-items-start gap-3" 
+                   href="<?= htmlspecialchars($n['url'] ?? '#') ?>" 
+                   data-notif-id="<?= (int)$n['id_notificacion'] ?>">
                   <div class="pt-1" style="width:22px; text-align:center;">
                     <i class="fas <?= $icon ?>"></i>
                   </div>
@@ -504,6 +506,65 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
 <?php endif; ?>
 
 <script>
+// 🔔 Sistema de notificaciones con redirección
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    // Manejar click en notificaciones individuales
+    var notifItems = document.querySelectorAll('#notif-list .list-group-item');
+    notifItems.forEach(function(item){
+      item.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var url = this.getAttribute('href');
+        var idNotif = this.dataset.notifId; // Necesitaremos agregar este atributo
+        
+        // Marcar como leída
+        if (idNotif) {
+          fetch('../../app/api/notificaciones.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=marcar&id=' + idNotif
+          }).then(function(){ 
+            console.log('✅ Notificación marcada como leída'); 
+          }).catch(function(err){ 
+            console.error('Error al marcar notificación:', err); 
+          });
+        }
+        
+        // Redirigir
+        if (url && url !== '#') {
+          window.location.href = url;
+        }
+      });
+    });
+    
+    // Marcar todas como leídas
+    var markAllBtn = document.getElementById('notif-markall');
+    if (markAllBtn) {
+      markAllBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        
+        fetch('../../app/api/notificaciones.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'action=marcar_todas'
+        }).then(function(response){
+          return response.json();
+        }).then(function(data){
+          if (data.ok) {
+            console.log('✅ Todas las notificaciones marcadas');
+            window.location.reload(); // Recargar para actualizar badge
+          }
+        }).catch(function(err){
+          console.error('Error al marcar todas:', err);
+        });
+      });
+    }
+  });
+})();
+
 // Ocultar enlaces/botones "Volver" o "Atrás" en pantallas pequeñas
 (function(){
   function hideBackButtons(){

@@ -78,29 +78,47 @@ class ReservaController {
                 $this->mensaje = "✅ Reserva realizada correctamente.";
                 $this->tipo = "success";
                 
-                // Obtener datos una sola vez
+                // Obtener datos del aula
                 $aula = $this->model->obtenerAulaPorId($id_aula);
                 $aulaNombre = $aula['nombre_aula'] ?? ('Aula #' . $id_aula);
-                $encargados = $this->model->listarUsuariosPorRol(['Encargado']);
                 
-                // Notificar al Encargado (sistema)
+                // NUEVO SISTEMA DE NOTIFICACIONES IN-APP
                 try {
-                    $msg = 'Nueva reserva de aula por '.($_SESSION['usuario'] ?? 'Usuario').'. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
-                    foreach ($encargados as $u) {
-                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Nueva reserva de aula', $msg, '/Reservacion_AIP/Admin.php?view=historial_global');
+                    $notifService = new NotificationService();
+                    $conexion = $this->model->getDb();
+                    
+                    $datosReserva = [
+                        'aula' => $aulaNombre,
+                        'fecha' => $fecha_reserva_str,
+                        'hora_inicio' => $hora_inicio,
+                        'hora_fin' => $hora_fin
+                    ];
+                    
+                    // Notificar al profesor que creó la reserva
+                    $notifService->crearNotificacionReserva(
+                        $conexion,
+                        $id_usuario,
+                        'Profesor',
+                        $datosReserva
+                    );
+                    
+                    // Notificar a todos los administradores
+                    $admins = $this->model->listarUsuariosPorRol(['Administrador']);
+                    foreach ($admins as $admin) {
+                        $notifService->crearNotificacionReserva(
+                            $conexion,
+                            (int)$admin['id_usuario'],
+                            'Administrador',
+                            $datosReserva
+                        );
                     }
-                } catch (\Throwable $e) { /* log suave */ }
-
-                // Crear notificación interna para el profesor (campanita)
-                try {
-                    $tituloProf = 'Reserva confirmada';
-                    $msgProf = 'Tu reserva fue registrada. Aula: '.$aulaNombre.'. Fecha: '.$fecha_reserva_str.', '.$hora_inicio.' - '.$hora_fin;
-                    $this->model->crearNotificacion((int)$id_usuario, $tituloProf, $msgProf, '/Reservacion_AIP/Public/index.php?view=mis_reservas');
-                } catch (\Throwable $e) { /* noop */ }
+                } catch (\Exception $e) {
+                    error_log("Error al crear notificaciones in-app de reserva: " . $e->getMessage());
+                }
                 
-                // Enviar notificación al profesor (email y SMS)
+                // Enviar notificación por email/SMS (mantener sistema existente)
                 $userEmail = $_SESSION['correo'] ?? '';
-                $userPhone = $_SESSION['telefono'] ?? ''; // Asegúrate de que el teléfono esté en la sesión
+                $userPhone = $_SESSION['telefono'] ?? '';
                 $userName = $_SESSION['usuario'] ?? 'Usuario';
                 
                 if ($userEmail) {

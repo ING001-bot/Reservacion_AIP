@@ -13,7 +13,20 @@ class DevolucionController {
         $this->model = new PrestamoModel($conexion);
     }
 
-    // Procesar devolución
+    // Métodos públicos para acceder a datos del modelo
+    public function obtenerPrestamoPorId($idPrestamo) {
+        return $this->model->obtenerPrestamoPorId($idPrestamo);
+    }
+
+    public function getDb() {
+        return $this->model->getDb();
+    }
+
+    public function listarUsuariosPorRol($roles) {
+        return $this->model->listarUsuariosPorRol($roles);
+    }
+
+    // Procesar devolución individual
     public function procesarDevolucion($id) {
         if (!ctype_digit($id)) {
             $this->mensaje = "❌ ID de préstamo inválido.";
@@ -25,53 +38,69 @@ class DevolucionController {
         if ($this->model->devolverEquipo($id, $comentario)) {
             $this->mensaje = "✅ Equipo devuelto correctamente.";
 
-            // Notificaciones según lógica: al Administrador (correo+campanita) y al Docente (correo+campanita)
+            // Notificaciones con el nuevo sistema
             try {
                 $ns = new NotificationService();
-                $idProfesor = $this->model->obtenerUsuarioPorPrestamo((int)$id);
-                $prof = $idProfesor ? $this->model->obtenerUsuarioPorId((int)$idProfesor) : null;
-                $nombreProf = $prof['nombre'] ?? 'Docente';
-                $correoProf = $prof['correo'] ?? '';
-                $obs = $comentario !== '' ? $comentario : '(sin observación)';
-
-                // Administradores: correo + campanita
+                $db = $this->model->getDb();
+                
+                // Obtener datos del préstamo
+                $prestamo = $this->model->obtenerPrestamoPorId((int)$id);
+                if (!$prestamo) {
+                    throw new \Exception("Préstamo no encontrado");
+                }
+                
+                $idProfesor = (int)($prestamo['id_usuario'] ?? 0);
+                $nombreEquipo = $prestamo['nombre_equipo'] ?? 'Equipo';
+                $nombreProf = $prestamo['nombre'] ?? 'Docente';
+                
+                $datosDev = [
+                    'id_prestamo' => $id,
+                    'equipos' => [['nombre' => $nombreEquipo]],
+                    'encargado' => $_SESSION['usuario'] ?? 'Encargado',
+                    'hora_confirmacion' => date('H:i')
+                ];
+                
+                // Notificar al profesor
+                if ($idProfesor) {
+                    $ns->crearNotificacionDevolucionPack(
+                        $db,
+                        $idProfesor,
+                        'Profesor',
+                        $datosDev
+                    );
+                }
+                
+                // Notificar a todos los administradores
                 $admins = $this->model->listarUsuariosPorRol(['Administrador']);
+                foreach ($admins as $admin) {
+                    $ns->crearNotificacionDevolucionPack(
+                        $db,
+                        (int)$admin['id_usuario'],
+                        'Administrador',
+                        $datosDev
+                    );
+                }
+                
+                // Mantener el sistema de correos existente para admins
+                $obs = $comentario !== '' ? $comentario : '(sin observación)';
                 $subjectAdmin = 'Devolución confirmada - ' . $nombreProf;
                 $msgAdmin = 'El encargado confirmó la devolución de un equipo.<br><br>' .
                             '<strong>Profesor:</strong> ' . htmlspecialchars($nombreProf) . '<br>' .
+                            '<strong>Equipo:</strong> ' . htmlspecialchars($nombreEquipo) . '<br>' .
                             '<strong>Observación:</strong> ' . nl2br(htmlspecialchars($obs));
                 foreach ($admins as $u) {
-                    // correo
                     if (!empty($u['correo'])) {
                         $ns->sendNotification(
                             ['email' => $u['correo']],
                             $subjectAdmin,
                             $msgAdmin,
-                            [ 'userName' => ($u['nombre'] ?? 'Administrador'), 'type' => 'info', 'sendSms' => false,
-                              'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global' ]
+                            [ 'userName' => ($u['nombre'] ?? 'Administrador'), 'type' => 'info', 'sendSms' => false ]
                         );
                     }
-                    // campanita
-                    $this->model->crearNotificacion((int)$u['id_usuario'], 'Devolución confirmada', strip_tags($msgAdmin), '/Reservacion_AIP/Admin.php?view=historial_global');
                 }
-
-                // Docente: correo + campanita
-                if ($idProfesor) {
-                    // correo al docente
-                    if (!empty($correoProf)) {
-                        $ns->sendNotification(
-                            ['email' => $correoProf],
-                            'Resultado de devolución de equipo',
-                            'El encargado registró la devolución de tu equipo.<br><br>' .
-                            '<strong>Estado:</strong> Devuelto<br>' .
-                            '<strong>Observación:</strong> ' . nl2br(htmlspecialchars($obs)),
-                            [ 'userName' => $nombreProf, 'type' => 'success', 'sendSms' => false ]
-                        );
-                    }
-                    // campanita al docente
-                    $this->model->crearNotificacion((int)$idProfesor, 'Devolución registrada', 'Se confirmó la devolución de tu equipo. Observación: ' . $obs, '/Reservacion_AIP/Public/index.php?view=mis_prestamos');
-                }
-            } catch (\Throwable $e) { /* noop */ }
+            } catch (\Throwable $e) {
+                error_log("Error al crear notificaciones de devolución: " . $e->getMessage());
+            }
             return true;
         } else {
             $this->mensaje = "❌ Error al devolver el equipo.";

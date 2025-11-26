@@ -371,40 +371,24 @@ label {
 .password-field .toggle-password i { font-size: 1rem; }
 
 /* ==============================
-   🌓 BOTÓN FLOTANTE TEMA GLOBAL
+   🌓 BOTÓN DE TEMA EN NAVBAR
    ============================== */
-.theme-fab {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 50px;
-  height: 50px;
-  border-radius: 999px;
-  border: 2px solid var(--brand-color);
-  background: linear-gradient(135deg, var(--brand-color), var(--accent-green));
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(30, 107, 214, 0.3);
-  cursor: pointer;
-  z-index: 1040;
-  font-size: 1.4rem;
+/* Botón flotante eliminado - ahora el botón está integrado en navbar */
+#theme-toggle-navbar {
   transition: all 0.3s ease;
 }
-.theme-fab:hover { 
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 32px rgba(30, 107, 214, 0.4);
+
+#theme-toggle-navbar:hover {
+  transform: scale(1.1);
+  opacity: 0.8;
 }
 
-body.dark .theme-fab {
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
-  border-color: #60a5fa;
-  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.3);
+#theme-toggle-navbar i {
+  transition: transform 0.3s ease;
 }
 
-body.dark .theme-fab:hover {
-  box-shadow: 0 12px 32px rgba(96, 165, 250, 0.4);
+#theme-toggle-navbar:active i {
+  transform: rotate(20deg);
 }
 
 /* ==============================

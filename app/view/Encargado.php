@@ -15,6 +15,22 @@ if ($_SESSION['tipo'] !== 'Encargado') {
 }
 $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 
+// Verificar préstamos vencidos (solo si estamos en el dashboard principal)
+$prestamosVencidos = [];
+$totalVencidos = 0;
+if (!isset($_GET['view']) || $_GET['view'] === 'inicio') {
+    require_once __DIR__ . '/../config/conexion.php';
+    require_once __DIR__ . '/../lib/AlertService.php';
+    try {
+        $alertService = new \App\Lib\AlertService($conexion);
+        $vencidosData = $alertService->obtenerPrestamosVencidosParaDashboard();
+        $prestamosVencidos = array_merge($vencidosData['prestamos'], $vencidosData['packs']);
+        $totalVencidos = $vencidosData['total'];
+    } catch (\Exception $e) {
+        error_log("Error al verificar préstamos vencidos: " . $e->getMessage());
+    }
+}
+
 // Determinar qué vista cargar
 $vista = $_GET['view'] ?? 'inicio';
 ?>
@@ -95,6 +111,76 @@ $vista = $_GET['view'] ?? 'inicio';
   ?>
 </main>
 
+<!-- 🔔 Modal de alerta de préstamos vencidos -->
+<?php if ($totalVencidos > 0): ?>
+<div class="modal fade" id="modalPrestamosVencidos" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          ⚠️ Préstamos sin devolver
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">
+          <strong>Hay <?= $totalVencidos ?> préstamo(s) que ya pasaron su hora de fin y aún no han sido devueltos:</strong>
+        </p>
+        <ul class="list-group">
+          <?php foreach ($prestamosVencidos as $pv): ?>
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-bold">
+                  <?= isset($pv['id_pack']) ? 'Pack #'.$pv['id_pack'] : 'Préstamo #'.$pv['id_prestamo'] ?>
+                </div>
+                <div class="small text-muted">
+                  Solicitante: <?= htmlspecialchars($pv['solicitante']) ?><br>
+                  Hora fin: <?= $pv['hora_fin'] ?>
+                </div>
+              </div>
+              <span class="badge bg-danger rounded-pill"><?= $pv['minutos_retraso'] ?> min</span>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <a href="?view=devolucion" class="btn btn-danger">Ir a Devoluciones</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sonido de alerta (sutil) -->
+<audio id="alertSound" style="display:none;">
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFQxPquXwuWkdCDGN1vLTgjMGHGi56OmyiSMCAA==" type="audio/wav">
+</audio>
+
+<script>
+  // Mostrar modal y reproducir sonido si hay vencidos
+  (function(){
+    var modal = document.getElementById('modalPrestamosVencidos');
+    if (modal) {
+      var bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
+      
+      // Reproducir sonido de alerta (solo si el usuario ha interactuado)
+      setTimeout(function(){
+        try {
+          var sound = document.getElementById('alertSound');
+          if (sound) {
+            sound.volume = 0.3;
+            sound.play().catch(function(err){
+              console.log('No se pudo reproducir sonido de alerta (requiere interacción del usuario)');
+            });
+          }
+        } catch(e) { }
+      }, 500);
+    }
+  })();
+</script>
+<?php endif; ?>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../Public/js/sidebar.js"></script>
 <script>
@@ -118,6 +204,73 @@ $vista = $_GET['view'] ?? 'inicio';
   });
 })();
 </script>
+
+<!-- 🔄 Verificación periódica de préstamos vencidos (solo en dashboard principal) -->
+<?php if (!isset($_GET['view']) || $_GET['view'] === 'inicio'): ?>
+<script>
+(function(){
+  var intervalo = 5 * 60 * 1000; // 5 minutos
+  var ultimoTotal = <?= $totalVencidos ?>;
+  
+  function verificarPrestamosVencidos() {
+    fetch('../../app/api/verificar_prestamos_vencidos.php', {
+      method: 'GET',
+      cache: 'no-store'
+    })
+    .then(function(response){ return response.json(); })
+    .then(function(data){
+      if (data.ok && data.total > 0) {
+        console.log('⚠️ Préstamos vencidos detectados:', data.total);
+        
+        // Si hay nuevos vencidos desde la última verificación, mostrar notificación
+        if (data.total > ultimoTotal) {
+          // Mostrar toast o alerta sutil
+          if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+            var toastHTML = '<div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
+              '<div class="d-flex">' +
+                '<div class="toast-body">⚠️ Nuevos préstamos vencidos detectados (' + data.total + '). <a href="?view=devolucion" class="text-white fw-bold">Ver devoluciones</a></div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+              '</div>' +
+            '</div>';
+            
+            var toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            toastContainer.innerHTML = toastHTML;
+            document.body.appendChild(toastContainer);
+            
+            var toastEl = toastContainer.querySelector('.toast');
+            var toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+            toast.show();
+            
+            // Reproducir sonido
+            try {
+              var sound = document.getElementById('alertSound');
+              if (sound) {
+                sound.volume = 0.3;
+                sound.play().catch(function(){});
+              }
+            } catch(e) {}
+          }
+          
+          ultimoTotal = data.total;
+        }
+      }
+    })
+    .catch(function(err){
+      console.error('Error al verificar préstamos vencidos:', err);
+    });
+  }
+  
+  // Verificar cada 5 minutos
+  setInterval(verificarPrestamosVencidos, intervalo);
+  
+  // Primera verificación después de 1 minuto (para no saturar al cargar)
+  setTimeout(verificarPrestamosVencidos, 60000);
+})();
+</script>
+<?php endif; ?>
+
 <script src="../../Public/js/auth-guard.js"></script>
 <script src="../../Public/js/theme.js"></script>
 </body>
