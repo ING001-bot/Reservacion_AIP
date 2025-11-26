@@ -112,8 +112,12 @@ class ReservaController {
                             $datosReserva
                         );
                     }
+                    
+                    // Obtener encargados para emails
+                    $encargados = $this->model->listarUsuariosPorRol(['Encargado']);
                 } catch (\Exception $e) {
                     error_log("Error al crear notificaciones in-app de reserva: " . $e->getMessage());
+                    $encargados = []; // Inicializar vacío en caso de error
                 }
                 
                 // Enviar notificación por email/SMS (mantener sistema existente)
