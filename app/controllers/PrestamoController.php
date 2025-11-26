@@ -38,7 +38,7 @@ class PrestamoController {
                 try {
                     $titulo = 'Préstamo registrado';
                     $mensaje = 'Tu préstamo fue registrado. ' . $detalles . 'Fecha: ' . $fecha_prestamo . ', ' . $hora_inicio . '-' . ($hora_fin?:'-') . '.';
-                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, '/Reservacion_AIP/Public/index.php?view=mis_prestamos');
+                    $this->model->crearNotificacion((int)$id_usuario, $titulo, $mensaje, 'Historial.php');
                 } catch (\Throwable $e) { /* noop */ }
                 // correo al profesor
                 if (!empty($correoDoc)) {

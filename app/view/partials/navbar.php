@@ -160,9 +160,17 @@ $badge = count($no_leidas);
                   elseif (stripos($tituloN, 'préstamo') !== false || stripos($tituloN, 'prestamo') !== false) { $icon = 'fa-laptop text-primary'; }
                   elseif (stripos($tituloN, 'devolución') !== false || stripos($tituloN, 'devolucion') !== false) { $icon = 'fa-undo text-info'; }
                   elseif (stripos($tituloN, 'cancelación') !== false || stripos($tituloN, 'cancelacion') !== false) { $icon = 'fa-ban text-warning'; }
+                  
+                  // Procesar URL para hacerla funcional desde cualquier ubicación
+                  $urlNotif = $n['url'] ?? '#';
+                  // Si la URL no es absoluta (no empieza con http o /), agregar ruta relativa
+                  if ($urlNotif !== '#' && !preg_match('/^(https?:\/\/|\/)/i', $urlNotif)) {
+                    // Es una URL relativa como "Historial.php", agregar prefijo
+                    $urlNotif = '../view/' . $urlNotif;
+                  }
                 ?>
                 <a class="list-group-item list-group-item-action d-flex align-items-start gap-3" 
-                   href="<?= htmlspecialchars($n['url'] ?? '#') ?>" 
+                   href="<?= htmlspecialchars($urlNotif) ?>" 
                    data-notif-id="<?= (int)$n['id_notificacion'] ?>">
                   <div class="pt-1" style="width:22px; text-align:center;">
                     <i class="fas <?= $icon ?>"></i>
@@ -517,24 +525,34 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
         e.stopPropagation();
         
         var url = this.getAttribute('href');
-        var idNotif = this.dataset.notifId; // Necesitaremos agregar este atributo
+        var idNotif = this.dataset.notifId;
         
-        // Marcar como leída
+        // Marcar como leída y luego redirigir
         if (idNotif) {
           fetch('../../app/api/notificaciones.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'action=marcar&id=' + idNotif
-          }).then(function(){ 
-            console.log('✅ Notificación marcada como leída'); 
+          }).then(function(response){ 
+            return response.json();
+          }).then(function(data){
+            console.log('✅ Notificación marcada como leída');
+            // Redirigir después de marcar
+            if (url && url !== '#') {
+              window.location.href = url;
+            }
           }).catch(function(err){ 
-            console.error('Error al marcar notificación:', err); 
+            console.error('Error al marcar notificación:', err);
+            // Redirigir aunque falle marcar
+            if (url && url !== '#') {
+              window.location.href = url;
+            }
           });
-        }
-        
-        // Redirigir
-        if (url && url !== '#') {
-          window.location.href = url;
+        } else {
+          // Si no hay ID, redirigir directamente
+          if (url && url !== '#') {
+            window.location.href = url;
+          }
         }
       });
     });
