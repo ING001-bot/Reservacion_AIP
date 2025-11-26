@@ -1,18 +1,42 @@
 <?php
 namespace App\Lib;
 
-use App\Lib\Mailer;
-use App\Lib\SmsService;
-
 class NotificationService {
     private $mailer;
     private $smsService;
     private $appName;
 
     public function __construct() {
-        $this->mailer = new Mailer();
-        $this->smsService = new SmsService();
+        // Instanciar Mailer y SmsService solo cuando sea necesario (lazy loading)
+        $this->mailer = null;
+        $this->smsService = null;
         $this->appName = 'Sistema de Reservas AIP';
+    }
+
+    /**
+     * Obtener instancia de Mailer (lazy loading)
+     */
+    private function getMailer() {
+        if ($this->mailer === null) {
+            if (!class_exists('App\Lib\Mailer')) {
+                require_once __DIR__ . '/Mailer.php';
+            }
+            $this->mailer = new Mailer();
+        }
+        return $this->mailer;
+    }
+
+    /**
+     * Obtener instancia de SmsService (lazy loading)
+     */
+    private function getSmsService() {
+        if ($this->smsService === null) {
+            if (!class_exists('App\Lib\SmsService')) {
+                require_once __DIR__ . '/SmsService.php';
+            }
+            $this->smsService = new SmsService();
+        }
+        return $this->smsService;
     }
 
     /**
@@ -50,12 +74,12 @@ class NotificationService {
 
     private function sendEmail($to, $subject, $message, $options) {
         // Usamos el sistema de correo existente
-        $this->mailer->send($to, $subject, $message);
+        $this->getMailer()->send($to, $subject, $message);
     }
 
     private function sendSms($to, $message) {
         // Usamos el servicio de SMS que ya creamos
-        $this->smsService->sendSms($to, $message);
+        $this->getSmsService()->sendSms($to, $message);
     }
 
     private function formatEmailMessage($message, $options) {
