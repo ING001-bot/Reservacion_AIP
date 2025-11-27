@@ -22,7 +22,7 @@ class TommibotController {
   public function replyPayload($userId, $message, $mode = 'text'){
     $replyText = $this->reply($userId, $message, $mode);
     $lower = mb_strtolower(trim((string)$message), 'UTF-8');
-    $intent = $this->ai->extractIntent($message) ?? $this->detectIntent($lower);
+    $intent = $this->detectIntent($lower);
     $actions = $this->mapIntentToActions($intent, $lower);
     return [ 'reply' => $replyText, 'actions' => $actions ];
   }

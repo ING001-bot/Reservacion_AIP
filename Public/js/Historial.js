@@ -109,31 +109,27 @@ document.addEventListener('DOMContentLoaded', function(){
     function renderCalendarios(data, turno, monday){
         calendarios.innerHTML = '';
 
-        const containerLeft = document.createElement('div');
-        containerLeft.className = 'calendario-box';
+        // Renderizar dinámicamente TODAS las aulas AIP
+        if (data.aulas && data.aulas.length > 0) {
+            data.aulas.forEach(aula => {
+                const container = document.createElement('div');
+                container.className = 'calendario-box';
 
-        const containerRight = document.createElement('div');
-        containerRight.className = 'calendario-box';
+                const title = document.createElement('h3');
+                const cancelCount = Object.values(aula.cancelaciones || {}).reduce((acc, arr)=> acc + (arr?.length||0), 0);
+                title.textContent = (aula.nombre_aula || 'Aula') + (cancelCount ? `  ·  ${cancelCount} cancelada(s)` : '');
 
-        const titleLeft = document.createElement('h3');
-        const cancelCount1 = Object.values(data.cancel1 || {}).reduce((acc, arr)=> acc + (arr?.length||0), 0);
-        titleLeft.textContent = (data.aip1_nombre || 'AIP 1') + (cancelCount1 ? `  ·  ${cancelCount1} cancelada(s)` : '');
-        const titleRight = document.createElement('h3');
-        const cancelCount2 = Object.values(data.cancel2 || {}).reduce((acc, arr)=> acc + (arr?.length||0), 0);
-        titleRight.textContent = (data.aip2_nombre || 'AIP 2') + (cancelCount2 ? `  ·  ${cancelCount2} cancelada(s)` : '');
+                container.appendChild(title);
 
-        containerLeft.appendChild(titleLeft);
-        containerRight.appendChild(titleRight);
+                // Generar tabla para esta aula
+                const table = buildTableForAula(aula.reservas, aula.cancelaciones, turno, monday);
+                container.appendChild(table);
 
-        // Usar el monday del servidor para generar las fechas correctas
-        const tableLeft = buildTableForAula(data.aip1, data.cancel1, turno, monday);
-        const tableRight = buildTableForAula(data.aip2, data.cancel2, turno, monday);
-
-        containerLeft.appendChild(tableLeft);
-        containerRight.appendChild(tableRight);
-
-        calendarios.appendChild(containerLeft);
-        calendarios.appendChild(containerRight);
+                calendarios.appendChild(container);
+            });
+        } else {
+            calendarios.innerHTML = '<p class="text-center text-muted">No hay aulas AIP disponibles</p>';
+        }
     }
 
    function buildTableForAula(aipData, cancelData, turno, startWeek){

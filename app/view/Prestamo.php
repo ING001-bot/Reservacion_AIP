@@ -100,19 +100,23 @@ $rol = $_SESSION['tipo'] ?? 'Profesor';
 $aulas = $aulaController->listarAulas('REGULAR');
 
 // Cargar inventario por tipo con stock disponible (activos y disponibles para la fecha)
+// SISTEMA DINÁMICO: Obtiene TODOS los tipos de equipos registrados en BD
 $fecha_prestamo_check = $_POST['fecha_prestamo'] ?? date('Y-m-d', strtotime('+1 day'));
-$laptops = $prestamoController->listarEquiposPorTipoConStock('LAPTOP', $fecha_prestamo_check);
-$proyectores = $prestamoController->listarEquiposPorTipoConStock('PROYECTOR', $fecha_prestamo_check);
-$mouses = $prestamoController->listarEquiposPorTipoConStock('MOUSE', $fecha_prestamo_check);
-$extensiones = $prestamoController->listarEquiposPorTipoConStock('EXTENSION', $fecha_prestamo_check);
-$parlantes = $prestamoController->listarEquiposPorTipoConStock('PARLANTE', $fecha_prestamo_check);
+$tipos_equipos = $prestamoController->listarTodosLosTiposConStock($fecha_prestamo_check);
+
+// Para compatibilidad con código existente, mantener variables específicas si existen
+$laptops = $tipos_equipos['LAPTOP']['equipos'] ?? [];
+$proyectores = $tipos_equipos['PROYECTOR']['equipos'] ?? [];
+$mouses = $tipos_equipos['MOUSE']['equipos'] ?? [];
+$extensiones = $tipos_equipos['EXTENSION']['equipos'] ?? [];
+$parlantes = $tipos_equipos['PARLANTE']['equipos'] ?? [];
 
 // Calcular totales disponibles
-$total_laptops = array_sum(array_column($laptops, 'disponible'));
-$total_proyectores = array_sum(array_column($proyectores, 'disponible'));
-$total_mouses = array_sum(array_column($mouses, 'disponible'));
-$total_extensiones = array_sum(array_column($extensiones, 'disponible'));
-$total_parlantes = array_sum(array_column($parlantes, 'disponible'));
+$total_laptops = $tipos_equipos['LAPTOP']['total_disponible'] ?? 0;
+$total_proyectores = $tipos_equipos['PROYECTOR']['total_disponible'] ?? 0;
+$total_mouses = $tipos_equipos['MOUSE']['total_disponible'] ?? 0;
+$total_extensiones = $tipos_equipos['EXTENSION']['total_disponible'] ?? 0;
+$total_parlantes = $tipos_equipos['PARLANTE']['total_disponible'] ?? 0;
 
 // Procesar formulario (selección por equipo específico) – evitar cuando es POST de verificación
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['verificar_codigo'])) {
@@ -356,7 +360,7 @@ setTimeout(() => {
     <?php endif; ?>
 
     <!-- Verificar stock y aulas -->
-    <?php $noEquipos = empty($laptops) && empty($proyectores) && empty($mouses) && empty($extensiones) && empty($parlantes); ?>
+    <?php $noEquipos = empty($tipos_equipos) || count($tipos_equipos) === 0; ?>
     <?php if (empty($aulas)): ?>
         <?php if (in_array($rol, ['Administrador','Encargado'], true)): ?>
             <div class="alert alert-danger">
@@ -379,8 +383,8 @@ setTimeout(() => {
                 <p class="mb-0">Verifica que:</p>
                 <ul class="mb-0">
                     <li>Se hayan registrado equipos en el sistema</li>
-                    <li>Los tipos de equipos sean: <strong>LAPTOP, PROYECTOR, MOUSE, EXTENSION, PARLANTE</strong> (en mayúsculas)</li>
                     <li>Los equipos estén marcados como <strong>activos</strong></li>
+                    <li>Los equipos tengan <strong>stock disponible</strong> para la fecha seleccionada</li>
                 </ul>
                 <a href="Admin.php?view=equipos" class="btn btn-sm btn-primary mt-2">Ir a Gestión de Equipos</a>
             </div>

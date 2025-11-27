@@ -1,16 +1,13 @@
 <?php
 /**
- * Servicio de Inteligencia Artificial para Tommibot
- * Utiliza Google Gemini API (tier gratuito)
+ * Servicio de consultas inteligentes para Tommibot
+ * Sistema local basado en base de datos (sin IA externa)
  */
 
 require_once __DIR__ . '/../config/conexion.php';
 
 class AIService {
     private $db;
-    private $config;
-    private $cache = [];
-    private $systemContext;
     private $statsCache = null;
     private $statsCacheTime = 0;
     private $statsCacheDuration = 300; // 5 minutos
@@ -2931,96 +2928,10 @@ El sistema envía notificaciones por:
     
     public function __construct($conexion) {
         $this->db = $conexion;
-        $this->config = require __DIR__ . '/../config/ai_config.php';
-        $this->initializeSystemContext();
     }
     
     /**
-     * Inicializa el contexto del sistema para que la IA entienda el dominio
-     */
-    private function initializeSystemContext() {
-        $this->systemContext = "Eres Tommibot, un asistente virtual amable, profesional y MUY detallado para el Sistema de Reservas AIP del Colegio Monseñor Juan Tomis Stack. " .
-            "Tu misión es guiar a los usuarios con instrucciones PASO A PASO claras y precisas. " .
-            
-            "\n\n📋 INFORMACIÓN DEL COLEGIO:" .
-            "\n- Nombre: Colegio Monseñor Juan Tomis Stack" .
-            "\n- Ubicación: Iquique, Chile" .
-            "\n- Sistema: Gestión de Aulas de Innovación Pedagógica (AIP)" .
-            "\n- Contacto: Administrador del sistema o dirección académica" .
-            
-            "\n\n⚙️ CAPACIDADES DEL SISTEMA:" .
-            "\n1. Reservar aulas AIP para clases" .
-            "\n2. Solicitar préstamos de equipos tecnológicos" .
-            "\n3. Ver historial de reservas y préstamos" .
-            "\n4. Cancelar reservas (mismo día)" .
-            "\n5. Cambiar contraseña personal" .
-            "\n6. Registrar devoluciones (Encargado)" .
-            "\n7. Gestión completa de usuarios, aulas y equipos (Administrador)" .
-            "\n8. Estadísticas y reportes filtrados (Administrador)" .
-            
-            "\n\n🔐 REGLAS CRÍTICAS DEL SISTEMA:" .
-            "\n1. ANTICIPACIÓN OBLIGATORIA: Todas las reservas y préstamos requieren MÍNIMO 1 DÍA de anticipación. NO se puede reservar/prestar para HOY." .
-            "\n2. VERIFICACIÓN SMS AUTOMÁTICA (SOLO PROFESORES):" .
-            "\n   - Al entrar a Reservas, Préstamos o Cambiar Contraseña, el sistema ENVÍA AUTOMÁTICAMENTE un código SMS de 6 dígitos." .
-            "\n   - El profesor DEBE ingresar ese código en la ventana emergente ANTES de poder continuar." .
-            "\n   - El código expira en 10 minutos." .
-            "\n   - Si no llega el SMS, verificar que el número esté registrado en formato +51XXXXXXXXX." .
-            "\n   - Administradores y Encargados NO requieren SMS (acceso directo)." .
-            "\n3. SEPARACIÓN DE AULAS (MUY IMPORTANTE):" .
-            "\n   - Aulas AIP (AIP 1, AIP 2) = SOLO para RESERVAS de aula" .
-            "\n   - Aulas REGULARES (Aula 1, Aula 2, etc.) = SOLO para PRÉSTAMOS de equipos" .
-            "\n   - En el módulo 'Reservar Aula' SOLO aparecen aulas AIP" .
-            "\n   - En el módulo 'Préstamo de Equipos' SOLO aparecen aulas REGULARES" .
-            "\n   - Esta separación es FUNDAMENTAL y debes mencionarla SIEMPRE que expliques." .
-            "\n4. CANCELACIÓN: Las reservas SOLO se pueden cancelar el MISMO DÍA en que se crearon." .
-            "\n5. DEVOLUCIONES: SOLO el Encargado puede registrar devoluciones tras inspección física del equipo." .
-            "\n6. STOCK: El sistema controla automáticamente el stock de equipos (disminuye al prestar, aumenta al devolver)." .
-            
-            "\n\n👥 ROLES Y PERMISOS:" .
-            "\n📚 PROFESOR:" .
-            "\n  ✅ Reservar aulas AIP (mínimo 1 día anticipación)" .
-            "\n  ✅ Solicitar préstamos de equipos con aulas REGULARES" .
-            "\n  ✅ Ver su historial personal" .
-            "\n  ✅ Cancelar sus reservas (mismo día)" .
-            "\n  ✅ Cambiar su contraseña" .
-            "\n  ✅ Configurar su perfil (foto, bio)" .
-            "\n  🔒 REQUIERE verificación SMS AUTOMÁTICA para: reservas, préstamos, cambio de contraseña" .
-            "\n  ❌ NO puede ver historiales de otros profesores" .
-            "\n  ❌ NO puede gestionar usuarios ni equipos" .
-            
-            "\n\n👨‍💼 ADMINISTRADOR:" .
-            "\n  ✅ TODOS los permisos del Profesor (sin SMS)" .
-            "\n  ✅ Gestionar usuarios: crear, editar, eliminar (Profesores, Encargados, Administradores)" .
-            "\n  ✅ Ver historial global de TODOS los usuarios" .
-            "\n  ✅ Generar reportes filtrados por fecha, profesor, tipo, estado" .
-            "\n  ✅ Ver estadísticas con gráficos (uso de aulas y equipos)" .
-            "\n  ✅ Gestionar aulas: crear AIP y REGULARES" .
-            "\n  ✅ Gestionar equipos: crear, editar stock, activar/desactivar" .
-            "\n  ✅ Gestionar tipos de equipo (Laptop, Proyector, etc.)" .
-            "\n  ✅ Ejecutar mantenimiento mensual del sistema" .
-            "\n  ✅ Crear backups manuales de la base de datos" .
-            "\n  🔓 NO requiere SMS (acceso directo a todo)" .
-            
-            "\n\n🔧 ENCARGADO:" .
-            "\n  ✅ Ver historial global de todos los usuarios" .
-            "\n  ✅ Registrar devoluciones con inspección física" .
-            "\n  ✅ Validar estado de equipos: OK, Dañado, Falta accesorio" .
-            "\n  ✅ Buscar préstamos por profesor, equipo o aula" .
-            "\n  ✅ Cambiar su contraseña" .
-            "\n  🔓 NO requiere SMS" .
-            "\n  ❌ NO puede crear usuarios ni gestionar equipos" .
-            
-            "\n\n💡 ESTILO DE RESPUESTA:" .
-            "\n- Siempre da instrucciones PASO A PASO numeradas y MUY detalladas" .
-            "\n- Usa emojis para hacer las respuestas más amigables (📋, ✅, ⚠️, etc.)" .
-            "\n- Sé ESPECÍFICO con los nombres de botones y campos del formulario" .
-            "\n- Menciona SIEMPRE el SMS automático cuando hables de acciones de profesor" .
-            "\n- Si te preguntan algo fuera del sistema, responde brevemente y ofrece ayuda con el sistema" .
-            "\n- Adapta tu tono: juvenil con profesores, más técnico con administradores";
-    }
-    
-    /**
-     * Genera una respuesta usando IA (Google Gemini) con contexto por rol
+     * Genera una respuesta usando el motor de consultas local
      */
     public function generateResponse($userMessage, $userRole = 'Profesor', $userId = null) {
         // PRIMERO: Detectar si está pidiendo una guía paso a paso (respuesta inmediata)
@@ -3063,6 +2974,14 @@ El sistema envía notificaciones por:
             $advancedResponse = $this->handleAdvancedAdminQuery($lower, $userId);
             if ($advancedResponse) {
                 return $advancedResponse;
+            }
+        }
+        
+        // NIVEL 3B: Consultas comunes para Profesor y Encargado
+        if ($userRole === 'Profesor' || $userRole === 'Encargado') {
+            $commonResponse = $this->handleCommonQueries($lower, $userId);
+            if ($commonResponse) {
+                return $commonResponse;
             }
         }
 
@@ -3269,8 +3188,11 @@ El sistema envía notificaciones por:
             return $this->getAulasList($lower);
         }
 
-        // Listado de equipos
-        if (preg_match('/(lista|listado|muestra|dame).*(equipos|dispositivos)/i', $lower)) {
+        // Listado de equipos - AMPLIADO para detectar más variaciones
+        if (preg_match('/(lista|listado|muestra|dame|qué|que|cuales|cuáles).*(equipos|dispositivos)/i', $lower) ||
+            preg_match('/(equipos|dispositivos).*(disponibles|hay|están|estan|tenemos|puedo|solicitar)/i', $lower) ||
+            preg_match('/(que equipos|qué equipos|cuales equipos|cuáles equipos).*(disponibles|hay|puedo)/i', $lower) ||
+            preg_match('/(disponibles ahora|disponibles|en stock).*(equipos)/i', $lower)) {
             return $this->getEquiposList($lower);
         }
 
@@ -3304,6 +3226,29 @@ El sistema envía notificaciones por:
             return $this->getRolesInfo();
         }
 
+        return null;
+    }
+
+    /**
+     * Maneja consultas comunes para Profesor y Encargado
+     */
+    private function handleCommonQueries($lower, $userId) {
+        // Listado de equipos disponibles - MUCHAS VARIACIONES
+        if (preg_match('/(lista|listado|muestra|dame|qué|que|cuales|cuáles).*(equipos|dispositivos)/i', $lower) ||
+            preg_match('/(equipos|dispositivos).*(disponibles|hay|están|estan|tenemos|puedo|solicitar)/i', $lower) ||
+            preg_match('/(que equipos|qué equipos|cuales equipos|cuáles equipos).*(disponibles|hay|puedo)/i', $lower) ||
+            preg_match('/(disponibles ahora|disponibles|en stock).*(equipos)/i', $lower) ||
+            preg_match('/(necesito|quiero|busco).*(equipo|laptop|proyector|mouse|teclado)/i', $lower)) {
+            return $this->getEquiposList($lower);
+        }
+        
+        // Listado de aulas disponibles
+        if (preg_match('/(lista|listado|muestra|dame|qué|que|cuales|cuáles).*(aulas|salones)/i', $lower) ||
+            preg_match('/(aulas|salones).*(disponibles|hay|puedo|reservar)/i', $lower) ||
+            preg_match('/(que aulas|qué aulas|cuales aulas).*(puedo|disponibles)/i', $lower)) {
+            return $this->getAulasList($lower);
+        }
+        
         return null;
     }
 
@@ -3648,7 +3593,7 @@ El sistema envía notificaciones por:
     
     /**
      * Detecta si el usuario está pidiendo una guía paso a paso y la retorna directamente
-     * Esto ahorra tokens de Gemini API y da respuestas más rápidas y consistentes
+     * Esto da respuestas más rápidas y consistentes desde la base de datos
      */
     private function detectAndReturnGuide($userMessage, $userRole) {
         $lower = mb_strtolower($userMessage, 'UTF-8');
@@ -3728,6 +3673,141 @@ El sistema envía notificaciones por:
                 preg_match('/(roles).*(existen|hay|tiene|tiene el sistema)/i', $userMessage)) {
                 return $this->getRolesInfo();
             }
+        }
+        
+        // ========================================
+        // DETECCIONES ESPECÍFICAS DE BOTONES DE CONSULTA RÁPIDA
+        // (Estas deben ir ANTES de las guías generales para tener prioridad)
+        // ========================================
+        
+        // Botón: "Cómo solicitar préstamo" (PASO A PASO)
+        if (preg_match('/c(o|ó)mo solicito.*pr(e|é)stamo/i', $userMessage) ||
+            preg_match('/c(o|ó)mo solicitar.*pr(e|é)stamo/i', $userMessage) ||
+            preg_match('/solicitar.*pr(e|é)stamo.*paso.*paso/i', $userMessage)) {
+            return self::GUIDE_PRESTAMO;
+        }
+        
+        // Botón: "Cómo cancelar una reserva"
+        if (preg_match('/c(o|ó)mo cancelo.*reserva/i', $userMessage) ||
+            preg_match('/cancelar.*reserva/i', $userMessage)) {
+            return self::GUIDE_CANCELAR_RESERVA;
+        }
+        
+        // Botón: "Ver mi historial (PASO A PASO)"
+        if (preg_match('/c(o|ó)mo veo.*historial/i', $userMessage) ||
+            preg_match('/ver.*historial.*reservas.*pr(e|é)stamos/i', $userMessage)) {
+            if ($userRole === 'Profesor') {
+                return self::GUIDE_VER_HISTORIAL_PROFESOR;
+            } elseif ($userRole === 'Encargado') {
+                return self::GUIDE_VER_HISTORIAL_ENCARGADO;
+            } else {
+                return self::GUIDE_VER_HISTORIAL_GLOBAL;
+            }
+        }
+        
+        // Botón: "Descargar PDF (GUÍA COMPLETA)"
+        if (preg_match('/c(o|ó)mo descargo.*pdf/i', $userMessage) ||
+            preg_match('/descargar.*pdf.*historial/i', $userMessage)) {
+            return self::GUIDE_DESCARGAR_PDF_PROFESOR;
+        }
+        
+        // Botón: "No me llega el SMS (SOLUCIÓN)"
+        if (preg_match('/por.*qu(e|é).*no.*llega.*sms/i', $userMessage) ||
+            preg_match('/no.*llega.*sms/i', $userMessage)) {
+            return self::GUIDE_SMS_TROUBLESHOOTING;
+        }
+        
+        // Botón: "Cómo funciona el sistema (TUTORIAL)"
+        if (preg_match('/c(o|ó)mo funciona.*sistema.*completo/i', $userMessage) ||
+            preg_match('/funciona.*sistema.*tutorial/i', $userMessage)) {
+            return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+        }
+        
+        // Botón: "Mis permisos y funciones"
+        if (preg_match('/qu(e|é).*permisos.*tengo.*profesor/i', $userMessage) ||
+            preg_match('/mis.*permisos.*funciones/i', $userMessage)) {
+            if ($userRole === 'Profesor') {
+                return self::GUIDE_PERMISOS_PROFESOR;
+            } elseif ($userRole === 'Encargado') {
+                return self::GUIDE_PERMISOS_ENCARGADO;
+            } elseif ($userRole === 'Administrador') {
+                return $this->getRolesInfo();
+            }
+        }
+        
+        // Botón: "¿Qué es verificación SMS?"
+        if (preg_match('/qu(e|é) es.*verificaci(o|ó)n.*sms/i', $userMessage) ||
+            preg_match('/verificaci(o|ó)n.*sms.*qu(e|é) es/i', $userMessage)) {
+            return self::GUIDE_SMS_TROUBLESHOOTING;
+        }
+        
+        // Botón: "¿Qué aulas puedo reservar?"
+        if (preg_match('/que aulas.*puedo.*reservar/i', $userMessage) ||
+            preg_match('/aulas.*disponibles.*reservar/i', $userMessage)) {
+            return $this->getAulasList($lower);
+        }
+        
+        // Botón: "¿Puedo reservar para hoy?"
+        if (preg_match('/puedo.*reservar.*hoy/i', $userMessage) ||
+            preg_match('/reservar.*para.*hoy/i', $userMessage)) {
+            return "❌ **NO** puedes reservar para hoy.\n\n" .
+                   "📋 **Regla del sistema:**\n" .
+                   "- Todas las reservas requieren **MÍNIMO 1 DÍA de anticipación**\n" .
+                   "- La fecha mínima permitida es **MAÑANA**\n\n" .
+                   "💡 **Ejemplo:**\n" .
+                   "- Si hoy es lunes, puedes reservar desde martes en adelante\n\n" .
+                   "Esta regla garantiza una mejor organización y evita conflictos de último momento.";
+        }
+        
+        // Botón: "¿Qué equipos puedo solicitar?"
+        if (preg_match('/que equipos.*puedo.*solicitar/i', $userMessage)) {
+            return $this->getEquiposList($lower);
+        }
+        
+        // Botón: "Equipos disponibles ahora"
+        if (preg_match('/equipos.*disponibles.*ahora/i', $userMessage)) {
+            return $this->getEquiposList($lower);
+        }
+        
+        // Botón: "Cómo devolver equipos"
+        if (preg_match('/como.*devolver.*equipos/i', $userMessage)) {
+            if ($userRole === 'Encargado') {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
+            } else {
+                return "📦 **Devolución de Equipos**\n\n" .
+                       "❗ Solo el **Encargado** puede registrar devoluciones tras inspección física del equipo.\n\n" .
+                       "👨‍🏫 **Si eres Profesor:**\n" .
+                       "- Lleva el equipo al Encargado\n" .
+                       "- El Encargado inspeccionará el estado\n" .
+                       "- Validará: OK, Dañado, o Falta accesorio\n" .
+                       "- Registrará la devolución en el sistema\n\n" .
+                       "💡 El stock se actualiza automáticamente al devolver.";
+            }
+        }
+        
+        // Botón: "Mis reservas activas"
+        if (preg_match('/mis.*reservas.*activas/i', $userMessage) ||
+            preg_match('/cu(a|\u00e1)ntas.*reservas.*tengo.*activas/i', $userMessage)) {
+            return "📅 Para ver tus reservas activas:\n\n" .
+                   "1. Ve al módulo **Historial**\n" .
+                   "2. Selecciona la pestaña **Aulas (Reservas)**\n" .
+                   "3. Verás todas tus reservas de la semana actual\n\n" .
+                   "💡 También puedes descargar un PDF con tu historial completo.";
+        }
+        
+        // Botón: "Mis préstamos pendientes"
+        if (preg_match('/mis.*pr(e|é)stamos.*pendientes/i', $userMessage) ||
+            preg_match('/cu(a|\u00e1)ntos.*pr(e|\u00e9)stamos.*tengo.*pendientes/i', $userMessage)) {
+            return "📦 Para ver tus préstamos pendientes:\n\n" .
+                   "1. Ve al módulo **Historial**\n" .
+                   "2. Selecciona la pestaña **Equipos (Préstamos)**\n" .
+                   "3. Verás todos tus préstamos activos\n\n" .
+                   "💡 Recuerda devolver los equipos al Encargado cuando termines de usarlos.";
+        }
+        
+        // Botón: "Diferencia AIP vs REGULAR"
+        if (preg_match('/diferencia.*aip.*regular/i', $userMessage)) {
+            return self::GUIDE_DIFERENCIA_AULAS;
         }
         
         // ========================================
@@ -4122,7 +4202,7 @@ El sistema envía notificaciones por:
                 "\n  • Base de datos: MySQL con 12 tablas optimizadas" .
                 "\n  • Frontend: Bootstrap 5.3.3 + JavaScript ES6" .
                 "\n  • Librerías: PHPMailer, Twilio SDK, DomPDF, Chart.js" .
-                "\n  • IA: Google Gemini API para Tommibot" .
+                "\n  • Chatbot: Tommibot con consultas inteligentes" .
                 "\n  • Estructura: app/ (MVC), Public/ (assets), backups/, vendor/" .
                 
                 "\n\n🗄️ BASE DE DATOS (12 TABLAS):" .
@@ -4205,7 +4285,7 @@ El sistema envía notificaciones por:
                 "\n  • Limitación: solo cada 30 días" .
                 
                 "\n9️⃣ MÓDULO TOMMIBOT (IA):" .
-                "\n  • Asistente con Google Gemini API" .
+                "\n  • Asistente inteligente integrado" .
                 "\n  • Contexto por rol (conoce permisos)" .
                 "\n  • Guías paso a paso para profesores" .
                 "\n  • Consultas a BD en tiempo real para admins" .
@@ -4397,30 +4477,6 @@ El sistema envía notificaciones por:
         ];
         
         return $contexts[$userRole] ?? $contexts['Profesor'];
-    }
-    
-    /**
-     * Llama a la API de Google Gemini
-     */
-    private function callGeminiAPI($prompt) {
-        // Esta función queda deshabilitada para cumplir con el requisito de no usar la API.
-        return null;
-    }
-    
-    /**
-     * Verifica si una pregunta es sobre el sistema o es general
-     */
-    public function isSystemQuestion($message) {
-        // Ya no es necesario, el nuevo motor local maneja esto.
-        return true;
-    }
-    
-    /**
-     * Mejora una respuesta del KB con IA para hacerla más natural
-     */
-    public function enhanceKBResponse($kbResponse, $userMessage, $userRole = 'Profesor') {
-        // Ya no es necesario, el nuevo motor local maneja esto.
-        return $kbResponse;
     }
     
     // ========================================
@@ -4673,29 +4729,5 @@ El sistema envía notificaciones por:
         $response .= "Escribe: _\"¿Cómo gestiono usuarios?\"_ para la guía completa.";
         
         return $response;
-    }
-    
-    /**
-     * Responde preguntas generales (fuera del sistema) con contexto por rol
-     */
-    public function answerGeneralQuestion($message, $userRole = 'Profesor') {
-        // Ya no es necesario, el nuevo motor local maneja esto.
-        return $this->getFallbackResponse($userRole);
-    }
-    
-    /**
-     * Detecta el sentimiento mejorado con IA
-     */
-    public function detectSentimentAI($message) {
-        // Deshabilitado.
-        return null;
-    }
-    
-    /**
-     * Extrae la intención del usuario usando IA
-     */
-    public function extractIntent($message) {
-        // Deshabilitado.
-        return null;
     }
 }

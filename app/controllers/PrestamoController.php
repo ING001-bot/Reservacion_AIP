@@ -5,8 +5,10 @@ use App\Lib\NotificationService;
 
 class PrestamoController {
     private $model;
+    private $conexion;
 
     public function __construct($conexion) {
+        $this->conexion = $conexion;
         $this->model = new PrestamoModel($conexion);
     }
 
@@ -114,6 +116,37 @@ class PrestamoController {
     
     public function listarTodosEquipos() {
         return $this->model->listarTodosEquipos();
+    }
+    
+    /**
+     * Obtiene todos los tipos de equipos activos con su inventario disponible
+     * @param string $fecha Fecha para verificar disponibilidad
+     * @return array Array de tipos con sus equipos
+     */
+    public function listarTodosLosTiposConStock($fecha) {
+        try {
+            // Obtener todos los tipos distintos de equipos activos
+            $query = "SELECT DISTINCT tipo_equipo FROM equipos WHERE activo = 1 ORDER BY tipo_equipo";
+            $stmt = $this->conexion->prepare($query);
+            $stmt->execute();
+            $tipos = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            $resultado = [];
+            foreach ($tipos as $tipo) {
+                $equipos = $this->listarEquiposPorTipoConStock($tipo, $fecha);
+                if (!empty($equipos)) {
+                    $resultado[$tipo] = [
+                        'equipos' => $equipos,
+                        'total_disponible' => array_sum(array_column($equipos, 'disponible'))
+                    ];
+                }
+            }
+            
+            return $resultado;
+        } catch (PDOException $e) {
+            error_log("Error en listarTodosLosTiposConStock: " . $e->getMessage());
+            return [];
+        }
     }
 
     public function obtenerTodosPrestamos() {

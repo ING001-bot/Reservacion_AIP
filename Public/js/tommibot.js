@@ -520,6 +520,13 @@
     cleanText = cleanText.replace(/[\u2190-\u21FF]/g, ''); // ← → ↑ ↓
     cleanText = cleanText.replace(/[\u2200-\u22FF]/g, ''); // Símbolos matemáticos
     
+    // Eliminar símbolos de puntuación molestos EXCEPTO / en contexto de números
+    // Primero protegemos fracciones y rangos numéricos
+    cleanText = cleanText.replace(/(\d+)\s*\/\s*(\d+)/g, '$1 de $2'); // "2/2" -> "2 de 2"
+    
+    // Ahora eliminamos símbolos molestos (sin afectar números)
+    cleanText = cleanText.replace(/[%\$·"&\(\)\?¿!<>:;,\.]/g, '');
+    
     // Eliminar paréntesis vacíos y corchetes
     cleanText = cleanText.replace(/\(\s*\)/g, '');
     cleanText = cleanText.replace(/\[\s*\]/g, '');

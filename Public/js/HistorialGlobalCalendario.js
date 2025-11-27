@@ -91,20 +91,27 @@
 
   function renderCalendarios(data, turno){
     calendarios.innerHTML='';
-    const containerLeft = document.createElement('div'); containerLeft.className='calendario-box';
-    const containerRight= document.createElement('div'); containerRight.className='calendario-box';
-    const titleLeft = document.createElement('h3');
-    const cancelCount1 = Object.values(data.cancel1||{}).reduce((a,arr)=>a+(arr?.length||0),0);
-    titleLeft.textContent = (data.aip1_nombre||'AIP 1') + (cancelCount1?` · ${cancelCount1} cancelada(s)`:'');
-    const titleRight = document.createElement('h3');
-    const cancelCount2 = Object.values(data.cancel2||{}).reduce((a,arr)=>a+(arr?.length||0),0);
-    titleRight.textContent = (data.aip2_nombre||'AIP 2') + (cancelCount2?` · ${cancelCount2} cancelada(s)`:'');
-    containerLeft.appendChild(titleLeft); containerRight.appendChild(titleRight);
-
-    const tableLeft = buildTable(data.aip1||{}, data.cancel1||{}, turno);
-    const tableRight= buildTable(data.aip2||{}, data.cancel2||{}, turno);
-    containerLeft.appendChild(tableLeft); containerRight.appendChild(tableRight);
-    calendarios.appendChild(containerLeft); calendarios.appendChild(containerRight);
+    
+    // Renderizar dinámicamente TODAS las aulas AIP
+    if (data.aulas && data.aulas.length > 0) {
+      data.aulas.forEach(aula => {
+        const container = document.createElement('div');
+        container.className = 'calendario-box';
+        
+        const title = document.createElement('h3');
+        const cancelCount = Object.values(aula.cancelaciones || {}).reduce((a,arr)=>a+(arr?.length||0),0);
+        title.textContent = (aula.nombre_aula || 'Aula') + (cancelCount?` · ${cancelCount} cancelada(s)`:'');
+        
+        container.appendChild(title);
+        
+        const table = buildTable(aula.reservas||{}, aula.cancelaciones||{}, turno);
+        container.appendChild(table);
+        
+        calendarios.appendChild(container);
+      });
+    } else {
+      calendarios.innerHTML = '<p class="text-center text-muted">No hay aulas AIP disponibles</p>';
+    }
   }
 
   function getTimes(turno){
