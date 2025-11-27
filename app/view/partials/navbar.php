@@ -9,18 +9,51 @@ $nombre = htmlspecialchars($_SESSION['usuario'] ?? 'Usuario');
 $tipo = htmlspecialchars($_SESSION['tipo'] ?? '');
 $es_encargado = ($tipo === 'Encargado');
 $es_admin = ($tipo === 'Administrador');
-// Determinar si se debe mostrar botón Atrás (solo en vistas internas)
+
+// Asegurar que la conexión esté disponible
+if (!isset($conexion)) {
+    require_once __DIR__ . '/../../config/conexion.php';
+}
+
+// Obtener foto de perfil del usuario usando ConfiguracionController
+$foto_perfil = null;
+if ($id_usuario > 0) {
+    try {
+        require_once __DIR__ . '/../../controllers/ConfiguracionController.php';
+        $configController = new ConfiguracionController();
+        $perfilData = $configController->obtenerPerfil($id_usuario);
+        if ($perfilData && !empty($perfilData['foto_perfil'])) {
+            $foto_perfil = $perfilData['foto_perfil'];
+        }
+    } catch (Exception $e) {
+        // Si hay error, simplemente no mostrar foto
+        $foto_perfil = null;
+    }
+}
+
+// Determinar si se debe mostrar botón Atrás (en todas las vistas internas excepto dashboards principales)
 $view = strtolower($_GET['view'] ?? '');
 $uri  = $_SERVER['REQUEST_URI'] ?? '';
-$show_back = in_array($view, ['devolucion','historial'])
-  || preg_match('/Devolucion\.php|Historial(Global|Reportes)?\.php|Historial\.php/i', $uri);
+
+// Lista de archivos donde NO se muestra el botón Atrás (páginas principales/dashboards)
+$main_pages = ['Profesor.php', 'Encargado.php', 'Admin.php', 'Dashboard.php', 'index.php'];
+$is_main_page = false;
+foreach ($main_pages as $page) {
+    if (stripos($uri, $page) !== false && !stripos($uri, 'view=')) {
+        $is_main_page = true;
+        break;
+    }
+}
+
+// Mostrar botón Atrás si NO está en página principal
+$show_back = !$is_main_page && ($tipo === 'Profesor' || $tipo === 'Encargado' || $tipo === 'Administrador');
+
 // URL de regreso por rol
 $backUrl = '../view/Dashboard.php';
 if ($tipo === 'Encargado') { $backUrl = '../view/Encargado.php'; }
 elseif ($tipo === 'Administrador') { $backUrl = '../view/Admin.php'; }
 elseif ($tipo === 'Profesor') { $backUrl = '../view/Profesor.php'; }
 require_once __DIR__ . '/../../controllers/PrestamoController.php';
-require_once __DIR__ . '/../../config/conexion.php';
 $pc = new PrestamoController($conexion);
 $notis = $id_usuario ? $pc->listarNotificacionesUsuario($id_usuario, true, 10) : [];
 $no_leidas = array_values(array_filter($notis, function($n){ return (int)$n['leida'] === 0; })) ;
@@ -33,9 +66,13 @@ $badge = count($no_leidas);
 <div class="offcanvas offcanvas-start bg-brand text-white" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
   <div class="offcanvas-header bg-brand text-white border-0">
     <div class="d-flex align-items-center gap-3">
-      <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px; background: rgba(255,255,255,.15);">
-        <i class="fas fa-user text-white" style="font-size:1.4rem;"></i>
-      </div>
+      <?php if ($foto_perfil): ?>
+        <img src="../../Public/<?= htmlspecialchars($foto_perfil) ?>" alt="Foto de perfil" class="rounded-circle" style="width:48px;height:48px;object-fit:cover;border:2px solid rgba(255,255,255,0.3);">
+      <?php else: ?>
+        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px; background: rgba(255,255,255,.15);">
+          <i class="fas fa-user text-white" style="font-size:1.4rem;"></i>
+        </div>
+      <?php endif; ?>
       <div>
         <div class="fw-semibold text-white" style="line-height:1.1;"><?= $nombre ?></div>
         <small class="text-white-50"><?= $tipo ?></small>
@@ -46,60 +83,103 @@ $badge = count($no_leidas);
   <div class="offcanvas-body p-0 text-white">
     <div class="d-flex flex-column h-100">
       <nav class="nav flex-column flex-grow-1 p-3">
-        <a href="../view/Dashboard.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
-          <span>🏠 Inicio</span>
-        </a>
         <?php if ($tipo === 'Profesor'): ?>
+        <a href="../view/Profesor.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
+          <span>Inicio</span>
+        </a>
         <a href="../view/Profesor.php?view=reserva" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-calendar-check" style="width: 24px; text-align: center;"></i>
-          <span>🗓 Reservas</span>
+          <span>Reservas</span>
         </a>
         <a href="../view/Profesor.php?view=prestamo" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-laptop" style="width: 24px; text-align: center;"></i>
-          <span>💻 Préstamos</span>
+          <span>Préstamos</span>
         </a>
         <a href="../view/Profesor.php?view=historial" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-history" style="width: 24px; text-align: center;"></i>
-          <span>📜 Historial</span>
+          <span>Historial</span>
+        </a>
+        <a href="../view/Profesor.php?view=notificaciones" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-bell" style="width: 24px; text-align: center;"></i>
+          <span>Notificaciones</span>
         </a>
         <a href="../view/Profesor.php?view=password" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-key" style="width: 24px; text-align: center;"></i>
-          <span>🔐 Cambiar contraseña</span>
+          <span>Cambiar contraseña</span>
         </a>
         <?php endif; ?>
         
         <?php if ($es_admin): ?>
         <a href="../view/Admin.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-gauge" style="width: 24px; text-align: center;"></i>
-          <span>🏠 Inicio Admin</span>
+          <span>Inicio</span>
         </a>
-        <a href="../view/HistorialReportes.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-chart-line" style="width: 24px; text-align: center;"></i>
-          <span>📊 Reportes y Filtros</span>
+        <a href="../view/Admin.php?view=usuarios" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-users" style="width: 24px; text-align: center;"></i>
+          <span>Usuarios</span>
         </a>
-        <a href="../view/HistorialGlobal.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+        <a href="../view/Admin.php?view=equipos" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-laptop" style="width: 24px; text-align: center;"></i>
+          <span>Equipos</span>
+        </a>
+        <a href="../view/Admin.php?view=aulas" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-door-open" style="width: 24px; text-align: center;"></i>
+          <span>Aulas</span>
+        </a>
+        <a href="../view/Admin.php?view=historial_global" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-calendar" style="width: 24px; text-align: center;"></i>
-          <span>🗓 Historial Global</span>
+          <span>Historial Global</span>
+        </a>
+        <a href="../view/Admin.php?view=reportes" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-chart-line" style="width: 24px; text-align: center;"></i>
+          <span>Reportes</span>
+        </a>
+        <a href="../view/Admin.php?view=notificaciones" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-bell" style="width: 24px; text-align: center;"></i>
+          <span>Notificaciones</span>
+        </a>
+        <a href="../view/Admin.php?view=configuracion" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-cog" style="width: 24px; text-align: center;"></i>
+          <span>Configuración</span>
+        </a>
+        <a href="../view/Admin.php?view=password" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-key" style="width: 24px; text-align: center;"></i>
+          <span>Cambiar contraseña</span>
         </a>
         <?php endif; ?>
         
         <?php if ($es_encargado): ?>
-        <a href="../view/Historial.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-history" style="width: 24px; text-align: center;"></i>
-          <span>📜 Historial</span>
+        <a href="../view/Encargado.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
+          <span>Inicio</span>
         </a>
-        
-        <a href="../view/Devolucion.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+        <a href="../view/Encargado.php?view=calendario_equipos" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-calendar-alt" style="width: 24px; text-align: center;"></i>
+          <span>Calendario Equipos</span>
+        </a>
+        <a href="../view/Encargado.php?view=calendario" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-calendar" style="width: 24px; text-align: center;"></i>
+          <span>Calendario Aulas</span>
+        </a>
+        <a href="../view/Encargado.php?view=devolucion" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-undo" style="width: 24px; text-align: center;"></i>
-          <span>🔄 Devolución</span>
+          <span>Devolución</span>
+        </a>
+        <a href="../view/Encargado.php?view=notificaciones" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-bell" style="width: 24px; text-align: center;"></i>
+          <span>Notificaciones</span>
+        </a>
+        <a href="../view/Encargado.php?view=password" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-key" style="width: 24px; text-align: center;"></i>
+          <span>Cambiar contraseña</span>
         </a>
         <?php endif; ?>
         
-        <div class="mt-auto pt-3 border-top">
-          <a href="../controllers/LogoutController.php" class="nav-link d-flex align-items-center gap-3 py-3 text-danger d-md-none">
+        <div class="mt-auto pt-3 border-top border-white-50">
+          <a href="../controllers/LogoutController.php" class="nav-link d-flex align-items-center gap-3 py-3 text-danger">
             <i class="fas fa-sign-out-alt" style="width: 24px; text-align: center;"></i>
-            <span>🚪 Cerrar sesión</span>
+            <span>Cerrar sesión</span>
           </a>
         </div>
       </nav>
@@ -110,8 +190,8 @@ $badge = count($no_leidas);
 <!-- Barra de navegación superior -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-brand shadow-sm mb-0 sticky-top">
   <div class="container-fluid">
-    <!-- Hamburguesa: solo móvil -->
-    <button class="hamburger-btn d-lg-none me-2" type="button" data-sidebar-toggle title="Menú">
+    <!-- Hamburguesa: solo móvil - Abre el offcanvas -->
+    <button class="hamburger-btn d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu" title="Menú">
       <i class="fas fa-bars"></i>
     </button>
     <!-- Botón Atrás: visible en PC y móvil solo en Devolución/Historial -->
@@ -186,7 +266,11 @@ $badge = count($no_leidas);
       <!-- Perfil de usuario (informativo para evitar duplicar "Cerrar sesión") -->
       <div class="dropdown">
         <button type="button" class="btn btn-link nav-link text-white dropdown-toggle d-flex align-items-center border-0" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-display="static" aria-expanded="false">
-          <img src="../../Public/img/logo_colegio.png" alt="Logo" class="me-2" style="height:20px; width:auto; object-fit:contain;">
+          <?php if ($foto_perfil): ?>
+            <img src="../../Public/<?= htmlspecialchars($foto_perfil) ?>" alt="Foto de perfil" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;border:2px solid rgba(255,255,255,0.5);">
+          <?php else: ?>
+            <i class="fas fa-user-circle me-2" style="font-size:1.2rem;"></i>
+          <?php endif; ?>
           <span><?= $nombre ?></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
@@ -204,18 +288,35 @@ $badge = count($no_leidas);
 .offcanvas {
   width: 280px;
   max-width: 85vw;
-  background-color: #ffffff; /* Fondo sólido para no mezclar con la barra azul */
+  background-color: var(--brand-color) !important;
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  z-index: 3200 !important;
 }
 
-/* Asegurar que el offcanvas y su backdrop queden por encima de la navbar */
-/* Usar z-index por defecto de Bootstrap para evitar superposiciones indeseadas */
-/* offcanvas y backdrop se quedan con sus z-index nativos */
-/* Elevar un poco para garantizar que NO lo tape la cabecera */
-.offcanvas, .offcanvas-backdrop { z-index: 1065; }
-/* Backdrop no bloquea clics y no oscurece en exceso */
-.offcanvas-backdrop {
-  background-color: rgba(0,0,0,0.08) !important;
-  pointer-events: none;
+.offcanvas-backdrop { 
+  z-index: 3100 !important;
+  background-color: rgba(0,0,0,0.5) !important;
+}
+
+/* Header del offcanvas debe estar visible siempre */
+.offcanvas-header {
+  position: relative !important;
+  top: 0 !important;
+  z-index: 3201 !important;
+  background-color: var(--brand-color) !important;
+  padding: 1.5rem 1rem !important;
+  min-height: 80px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Body del offcanvas */
+.offcanvas-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 !important;
 }
 
 .offcanvas {

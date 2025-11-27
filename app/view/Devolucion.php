@@ -164,18 +164,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Filtros simples - Por defecto mostrar todos los estados (así, al confirmar, la fila sigue visible)
-$estado = $_GET['estado'] ?? '';
-$desde = $_GET['desde'] ?? '';
-$hasta = $_GET['hasta'] ?? '';
-$q     = $_GET['q'] ?? '';
+$estado = isset($_GET['estado']) && $_GET['estado'] !== '' ? trim($_GET['estado']) : '';
+$desde = isset($_GET['desde']) && $_GET['desde'] !== '' ? trim($_GET['desde']) : '';
+$hasta = isset($_GET['hasta']) && $_GET['hasta'] !== '' ? trim($_GET['hasta']) : '';
+$q = isset($_GET['q']) && $_GET['q'] !== '' ? trim($_GET['q']) : '';
 
 // Si no hay filtros de fecha, limitar a últimos 30 días para mejor rendimiento
-if (empty($desde) && empty($hasta)) {
+if ($desde === '' && $hasta === '') {
     $desde = date('Y-m-d', strtotime('-30 days'));
 }
 
 // Siempre usar filtros para optimizar la consulta
-$prestamos = $controller->obtenerPrestamosFiltrados($estado ?: null, $desde ?: null, $hasta ?: null, $q ?: null);
+$prestamos = $controller->obtenerPrestamosFiltrados(
+    $estado !== '' ? $estado : null, 
+    $desde !== '' ? $desde : null, 
+    $hasta !== '' ? $hasta : null, 
+    $q !== '' ? $q : null
+);
+
 $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
@@ -291,39 +297,65 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 </head>
 <body>
 <?php require __DIR__ . '/partials/navbar.php'; ?>
-    <main class="container py-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-            <h1 class="text-brand m-0">📦 Registrar Devolución</h1>
-            <div class="text-muted">Encargado: <strong><?= $usuario ?></strong></div>
-        </div>
 
-        <form class="card p-3 shadow-sm mb-3" method="get" action="">
+<main class="container py-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <h1 class="text-brand m-0">📦 Registrar Devolución</h1>
+        <div class="text-muted">Encargado: <strong><?= $usuario ?></strong></div>
+    </div>
+
+    <form class="card p-3 shadow-sm mb-3" method="get" action="Devolucion.php">
             <div class="row g-2 align-items-end filters">
                 <div class="col-6 col-md-2">
-                    <label class="form-label">Estado</label>
-                    <select name="estado" class="form-select">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-filter me-1"></i>Estado
+                    </label>
+                    <select name="estado" class="form-select form-select-sm">
                         <option value="">Todos</option>
                         <option value="Prestado" <?= $estado==='Prestado'?'selected':'' ?>>Prestado</option>
                         <option value="Devuelto" <?= $estado==='Devuelto'?'selected':'' ?>>Devuelto</option>
                     </select>
                 </div>
                 <div class="col-6 col-md-2">
-                    <label class="form-label">Desde</label>
-                    <input type="date" class="form-control" name="desde" value="<?= htmlspecialchars($desde) ?>">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-calendar-day me-1"></i>Desde
+                    </label>
+                    <input type="date" class="form-control form-control-sm" name="desde" value="<?= htmlspecialchars($desde) ?>">
                 </div>
                 <div class="col-6 col-md-2">
-                    <label class="form-label">Hasta</label>
-                    <input type="date" class="form-control" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-calendar-day me-1"></i>Hasta
+                    </label>
+                    <input type="date" class="form-control form-control-sm" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
                 </div>
                 <div class="col-12 col-md-4">
-                    <label class="form-label">Buscar</label>
-                    <input type="text" class="form-control" name="q" placeholder="Equipo, profesor o aula" value="<?= htmlspecialchars($q) ?>">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </label>
+                    <input type="text" class="form-control form-control-sm" name="q" placeholder="🔍 Buscar por equipo, profesor o aula..." value="<?= htmlspecialchars($q) ?>" autocomplete="off">
                 </div>
                 <div class="col-12 col-md-2 d-flex gap-2 justify-content-end align-items-center">
-                    <button class="btn btn-sm btn-brand rounded-pill px-3 w-100 w-md-auto" type="submit">🔎 Aplicar</button>
-                    <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 w-100 w-md-auto" href="Devolucion.php">🧹 Limpiar</a>
+                    <button class="btn btn-sm btn-brand rounded-pill px-3 w-100 w-md-auto" type="submit">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                    <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 w-100 w-md-auto" href="Devolucion.php" title="Limpiar filtros">
+                        <i class="fas fa-broom me-1"></i>Limpiar
+                    </a>
                 </div>
             </div>
+            
+            <?php if (!empty($q) || !empty($estado) || (!empty($desde) && $desde !== date('Y-m-d', strtotime('-30 days'))) || !empty($hasta)): ?>
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Filtros activos:
+                    <?php if ($estado): ?><span class="badge bg-primary"><?= htmlspecialchars($estado) ?></span><?php endif; ?>
+                    <?php if ($desde): ?><span class="badge bg-secondary">Desde: <?= htmlspecialchars($desde) ?></span><?php endif; ?>
+                    <?php if ($hasta): ?><span class="badge bg-secondary">Hasta: <?= htmlspecialchars($hasta) ?></span><?php endif; ?>
+                    <?php if ($q): ?><span class="badge bg-info text-dark">Búsqueda: "<?= htmlspecialchars($q) ?>"</span><?php endif; ?>
+                </small>
+            </div>
+            <?php endif; ?>
         </form>
         <?php
           // Optimización máxima: Procesamiento rápido
@@ -361,7 +393,27 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
           // Packs eliminados: no agregar filas de packs
         ?>
 
-        <h2 class="text-center text-brand mb-3">📖 Préstamos Registrados</h2>
+        <?php if (empty($rows)): ?>
+        <div class="alert alert-info d-flex align-items-center shadow-sm" role="alert">
+            <i class="fas fa-info-circle fa-2x me-3"></i>
+            <div>
+                <strong>No hay resultados</strong>
+                <?php if (!empty($q) || !empty($estado) || !empty($desde) || !empty($hasta)): ?>
+                <p class="mb-0">No se encontraron préstamos con los filtros aplicados. Intenta con otros criterios de búsqueda.</p>
+                <?php else: ?>
+                <p class="mb-0">No hay préstamos registrados en los últimos 30 días.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="text-brand mb-0">
+                <i class="fas fa-clipboard-list me-2"></i>Préstamos Registrados
+            </h2>
+            <small class="text-muted">
+                <i class="fas fa-list-ol me-1"></i><?= count($rows) ?> registro(s) encontrado(s)
+            </small>
+        </div>
         <div class="table-responsive shadow-lg">
             <table class="table table-hover align-middle text-center table-brand">
                 <thead class="table-primary text-center">
@@ -377,15 +429,14 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
                         <th>Acción</th>
                     </tr>
                 </thead>
-                        <tbody>
-                        <?php if(!empty($rows)): ?>
-                            <?php foreach($rows as $r): ?>
-                                <tr>
-                                    <td>
-                                        <?php foreach (($r['detalle_badges'] ?? []) as $chunk): ?>
-                                            <span class="badge bg-info me-1"><?= htmlspecialchars($chunk) ?></span>
-                                        <?php endforeach; ?>
-                                    </td>
+                <tbody>
+                    <?php foreach($rows as $r): ?>
+                        <tr>
+                            <td>
+                                <?php foreach (($r['detalle_badges'] ?? []) as $chunk): ?>
+                                    <span class="badge bg-info me-1"><?= htmlspecialchars($chunk) ?></span>
+                                <?php endforeach; ?>
+                            </td>
                                     <td><?= htmlspecialchars($r['responsable'] ?: '-') ?></td>
                                     <td><?= htmlspecialchars($r['aula'] ?: '-') ?></td>
                                     <td><?= htmlspecialchars($r['fecha'] ?: '-') ?></td>
@@ -409,25 +460,17 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
                                         <?php else: ?>
                                             <span class="badge bg-success">✔ Devuelto</span>
                                         <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="9" class="text-muted py-4">
-                                    No hay préstamos registrados.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
+</main>
 
-        
-    </main>
-
-    <!-- Toast feedback -->
-    <div class="toast-container">
+<!-- Toast feedback -->
+<div class="toast-container">
       <div id="toastFeedback" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
           <div class="toast-body" id="toastFeedbackBody">Acción realizada</div>
@@ -590,6 +633,20 @@ document.addEventListener('DOMContentLoaded', function(){
       t.show();
     })();
   <?php endif; ?>
+  
+  // Debug del formulario de búsqueda
+  const searchForm = document.querySelector('form[method="get"]');
+  if (searchForm) {
+    searchForm.addEventListener('submit', function(e) {
+      // Permitir submit normal
+      console.log('Formulario enviado con:', {
+        estado: this.querySelector('[name="estado"]')?.value,
+        desde: this.querySelector('[name="desde"]')?.value,
+        hasta: this.querySelector('[name="hasta"]')?.value,
+        q: this.querySelector('[name="q"]')?.value
+      });
+    });
+  }
 });
 // Bootstrap Bundle (modals)
 </script>

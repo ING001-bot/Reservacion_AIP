@@ -43,16 +43,16 @@ $vista = $_GET['view'] ?? 'inicio';
     <div class="px-3 pt-5 pb-3" style="margin-top: 20px;">
       <h4 class="text-white mb-4 fw-bold" style="font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase;">Panel Admin</h4>
       <nav class="nav flex-column" style="gap: 0.5rem;">
-        <a class="nav-link link-sidebar <?= $vista==='inicio'?'active':'' ?>" href="Admin.php?view=inicio">🏠 Inicio</a>
-        <a class="nav-link link-sidebar <?= $vista==='usuarios'?'active':'' ?>" href="Admin.php?view=usuarios">👤 Gestión de Usuarios</a>
-        <a class="nav-link link-sidebar <?= $vista==='aulas'?'active':'' ?>" href="Admin.php?view=aulas">🏫 Gestión de Aulas</a>
-        <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos">💻 Gestión de Equipos</a>
-        <a class="nav-link link-sidebar <?= $vista==='tipos_equipo'?'active':'' ?>" href="Admin.php?view=tipos_equipo">⚙ Tipos de Equipo</a>
-        <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global">🗂️ Historial General</a>
-        <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes">📊 Reportes y Estadísticas</a>
-        <a class="nav-link link-sidebar <?= $vista==='notificaciones'?'active':'' ?>" href="Admin.php?view=notificaciones">🔔 Notificaciones</a>
-        <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password">🔑 Cambiar Contraseña</a>
-        <a class="nav-link link-sidebar <?= $vista==='configuracion'?'active':'' ?>" href="Admin.php?view=configuracion">⚙️ Configuración</a>
+        <a class="nav-link link-sidebar <?= $vista==='inicio'?'active':'' ?>" href="Admin.php?view=inicio"><i class="fas fa-home me-2"></i> Inicio</a>
+        <a class="nav-link link-sidebar <?= $vista==='usuarios'?'active':'' ?>" href="Admin.php?view=usuarios"><i class="fas fa-users me-2"></i> Gestión de Usuarios</a>
+        <a class="nav-link link-sidebar <?= $vista==='aulas'?'active':'' ?>" href="Admin.php?view=aulas"><i class="fas fa-door-open me-2"></i> Gestión de Aulas</a>
+        <a class="nav-link link-sidebar <?= $vista==='equipos'?'active':'' ?>" href="Admin.php?view=equipos"><i class="fas fa-laptop me-2"></i> Gestión de Equipos</a>
+        <a class="nav-link link-sidebar <?= $vista==='tipos_equipo'?'active':'' ?>" href="Admin.php?view=tipos_equipo"><i class="fas fa-cogs me-2"></i> Tipos de Equipo</a>
+        <a class="nav-link link-sidebar <?= $vista==='historial_global'?'active':'' ?>" href="Admin.php?view=historial_global"><i class="fas fa-calendar me-2"></i> Historial General</a>
+        <a class="nav-link link-sidebar <?= $vista==='reportes'?'active':'' ?>" href="Admin.php?view=reportes"><i class="fas fa-chart-line me-2"></i> Reportes y Estadísticas</a>
+        <a class="nav-link link-sidebar <?= $vista==='notificaciones'?'active':'' ?>" href="Admin.php?view=notificaciones"><i class="fas fa-bell me-2"></i> Notificaciones</a>
+        <a class="nav-link link-sidebar <?= $vista==='password'?'active':'' ?>" href="Admin.php?view=password"><i class="fas fa-key me-2"></i> Cambiar Contraseña</a>
+        <a class="nav-link link-sidebar <?= $vista==='configuracion'?'active':'' ?>" href="Admin.php?view=configuracion"><i class="fas fa-cog me-2"></i> Configuración</a>
       </nav>
       <div class="mt-auto pt-4 border-top border-white border-opacity-25">
         <div class="small text-white-50">Admin: <?= $usuario ?></div>

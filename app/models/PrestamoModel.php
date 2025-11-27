@@ -136,19 +136,60 @@ class PrestamoModel {
     }
 
     public function obtenerPrestamosFiltrados(?string $estado, ?string $desde, ?string $hasta, ?string $q): array {
-        $sql = "\n            SELECT p.id_prestamo, e.nombre_equipo, e.tipo_equipo, u.nombre, \n                   a.nombre_aula, a.tipo,\n                   p.fecha_prestamo, p.hora_inicio, p.hora_fin, \n                   p.fecha_devolucion, p.estado\n            FROM prestamos p\n            LEFT JOIN equipos e ON p.id_equipo = e.id_equipo\n            JOIN usuarios u ON p.id_usuario = u.id_usuario\n            JOIN aulas a ON p.id_aula = a.id_aula\n            WHERE 1=1\n        ";
+        $sql = "
+            SELECT 
+                p.id_prestamo, 
+                COALESCE(e.nombre_equipo, 'Sin equipo') as nombre_equipo, 
+                COALESCE(e.tipo_equipo, '') as tipo_equipo, 
+                u.nombre, 
+                COALESCE(a.nombre_aula, 'Sin aula') as nombre_aula, 
+                COALESCE(a.tipo, '') as tipo,
+                p.fecha_prestamo, 
+                p.hora_inicio, 
+                p.hora_fin, 
+                p.fecha_devolucion, 
+                p.estado,
+                p.id_usuario,
+                p.id_aula
+            FROM prestamos p
+            LEFT JOIN equipos e ON p.id_equipo = e.id_equipo
+            LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+            LEFT JOIN aulas a ON p.id_aula = a.id_aula
+            WHERE 1=1
+        ";
         $params = [];
-        if ($estado) { $sql .= " AND p.estado = :estado"; $params[':estado'] = $estado; }
-        if ($desde) { $sql .= " AND p.fecha_prestamo >= :desde"; $params[':desde'] = $desde; }
-        if ($hasta) { $sql .= " AND p.fecha_prestamo <= :hasta"; $params[':hasta'] = $hasta; }
-        if ($q) {
-            $sql .= " AND (u.nombre LIKE :q OR e.nombre_equipo LIKE :q OR a.nombre_aula LIKE :q)";
-            $params[':q'] = "%$q%";
+        
+        if ($estado) { 
+            $sql .= " AND p.estado = ?"; 
+            $params[] = $estado; 
         }
+        
+        if ($desde) { 
+            $sql .= " AND p.fecha_prestamo >= ?"; 
+            $params[] = $desde; 
+        }
+        
+        if ($hasta) { 
+            $sql .= " AND p.fecha_prestamo <= ?"; 
+            $params[] = $hasta; 
+        }
+        
+        if ($q) {
+            $qLower = "%" . strtolower($q) . "%";
+            $sql .= " AND (
+                LOWER(u.nombre) LIKE ? 
+                OR LOWER(e.nombre_equipo) LIKE ? 
+                OR LOWER(a.nombre_aula) LIKE ?
+            )";
+            $params[] = $qLower;
+            $params[] = $qLower;
+            $params[] = $qLower;
+        }
+        
         $sql .= " ORDER BY p.fecha_prestamo DESC, p.hora_inicio DESC";
+        
         $stmt = $this->db->prepare($sql);
-        foreach ($params as $k=>$v) { $stmt->bindValue($k, $v); }
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

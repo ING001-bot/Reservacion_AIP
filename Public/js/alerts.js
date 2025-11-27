@@ -113,7 +113,7 @@ async function showDoubleConfirm(title, text, confirmText = 'Sí, estoy seguro')
         ...SwalConfig,
         icon: 'warning',
         title: title,
-        text: text,
+        html: text,
         showCancelButton: true,
         confirmButtonText: 'Continuar',
         customClass: {

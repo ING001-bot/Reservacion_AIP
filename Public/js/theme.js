@@ -1,6 +1,10 @@
 // Public/js/theme.js
-// Theme toggle - integrado en navbar (100% funcional)
+// Theme toggle - DESHABILITADO (botón eliminado del navbar)
 (function(){
+  // Funcionalidad de tema deshabilitada
+  // El botón fue eliminado porque no funcionaba correctamente
+  
+  /*
   var retryCount = 0;
   var maxRetries = 10;
   
@@ -75,6 +79,8 @@
     updateThemeIcon(isDark);
     console.log('🎉 Theme.js: Sistema de tema completamente inicializado');
   }
+  */
+  
   function ensureTableScrollWrappers(){
     try{
       var tables = Array.prototype.slice.call(document.querySelectorAll('table'));
@@ -144,8 +150,8 @@
     });
   }
   document.addEventListener('DOMContentLoaded', function(){
-    applySavedTheme();
-    bindToggle();
+    // applySavedTheme(); // DESHABILITADO
+    // bindToggle(); // DESHABILITADO
     ensureTableScrollWrappers();
     observeDynamicTables();
     bindConfirmations();

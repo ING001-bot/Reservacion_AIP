@@ -290,7 +290,7 @@ setTimeout(() => {
     }, 1000);
     try { await fetch(window.location.pathname + '?reenviar=1', { credentials:'same-origin' }); } catch(e){}
   });
-})();
+});
 </script>
 <?php endif; ?>
 

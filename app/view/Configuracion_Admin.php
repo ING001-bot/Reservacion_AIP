@@ -10,16 +10,27 @@ if (!defined('EMBEDDED_VIEW')) {
 
 require_once __DIR__ . '/../controllers/ConfiguracionController.php';
 require_once __DIR__ . '/../models/UsuarioModel.php';
+require_once __DIR__ . '/../controllers/SistemaController.php';
 
 $id_usuario = $_SESSION['id_usuario'] ?? 0;
 $configController = new ConfiguracionController();
 $usuarioModel = new UsuarioModel();
+$sistemaController = new SistemaController();
 
 $mensaje = '';
 $mensaje_tipo = '';
 
 // Procesar acciones
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['ejecutar_mantenimiento'])) {
+        $res = $sistemaController->ejecutarMantenimientoCompleto($id_usuario);
+        $mensaje = $res['mensaje'];
+        if (!$res['error'] && isset($res['detalles'])) {
+            $mensaje .= '<br><small>' . implode('<br>', $res['detalles']) . '</small>';
+        }
+        $mensaje_tipo = $res['error'] ? 'danger' : 'success';
+    }
+    
     if (isset($_POST['actualizar_datos'])) {
         $res = $configController->actualizarDatosPersonales(
             $id_usuario,
@@ -62,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $perfil = $configController->obtenerPerfil($id_usuario);
 $todosUsuarios = $usuarioModel->obtenerUsuarios();
+$mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
 ?>
 
 <!DOCTYPE html>
@@ -172,6 +184,81 @@ $todosUsuarios = $usuarioModel->obtenerUsuarios();
                 <input type="hidden" name="eliminar_foto" value="1">
             </form>
         <?php endif; ?>
+    </div>
+
+    <!-- Mantenimiento del Sistema -->
+    <div class="config-section">
+        <h4><i class="fas fa-tools me-2"></i> Mantenimiento del Sistema</h4>
+        
+        <?php 
+        // Mostrar alerta solo si puede ejecutarse (han pasado 30 días o nunca se ejecutó)
+        $mostrarAlerta = !$mantenimientoInfo['ejecutado'] || $mantenimientoInfo['puede_ejecutar'];
+        ?>
+        
+        <?php if ($mostrarAlerta): ?>
+        <div class="alert alert-<?= !$mantenimientoInfo['ejecutado'] ? 'warning' : 'info' ?>">
+            <i class="fas fa-<?= !$mantenimientoInfo['ejecutado'] ? 'exclamation-triangle' : 'info-circle' ?> me-2"></i>
+            <?php if (!$mantenimientoInfo['ejecutado']): ?>
+                <strong>Atención:</strong> No se ha ejecutado mantenimiento aún. Se recomienda ejecutarlo para optimizar el sistema.
+            <?php else: ?>
+                <strong>Disponible:</strong> Han pasado 30 días desde el último mantenimiento. Es recomendable ejecutarlo.
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($mantenimientoInfo['ejecutado']): ?>
+        <div class="mb-3">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-1">Último Mantenimiento</h6>
+                            <p class="mb-0 fw-bold"><?= date('d/m/Y H:i', strtotime($mantenimientoInfo['fecha'])) ?></p>
+                            <small class="text-muted">Por: <?= htmlspecialchars($mantenimientoInfo['ejecutado_por']) ?></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-<?= $mantenimientoInfo['puede_ejecutar'] ? 'success' : 'secondary' ?>">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-1">Próximo Disponible</h6>
+                            <?php if ($mantenimientoInfo['puede_ejecutar']): ?>
+                                <p class="mb-0 fw-bold text-success"><i class="fas fa-check-circle me-1"></i> Disponible Ahora</p>
+                            <?php else: ?>
+                                <p class="mb-0 fw-bold">En <?= $mantenimientoInfo['dias_restantes'] ?> días</p>
+                                <small class="text-muted"><?= $mantenimientoInfo['dias_transcurridos'] ?> de 30 días transcurridos</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
+        <form method="POST" id="formMantenimiento">
+            <input type="hidden" name="ejecutar_mantenimiento" value="1">
+            <button type="button" 
+                    class="btn btn-lg btn-<?= ($mantenimientoInfo['puede_ejecutar'] ?? true) ? 'primary' : 'secondary' ?> w-100" 
+                    id="btnMantenimiento"
+                    <?= (!($mantenimientoInfo['puede_ejecutar'] ?? true) && $mantenimientoInfo['ejecutado']) ? 'disabled' : '' ?>
+                    onclick="confirmarMantenimiento()">
+                <i class="fas fa-sync-alt me-2"></i>
+                <?= (!($mantenimientoInfo['puede_ejecutar'] ?? true) && $mantenimientoInfo['ejecutado']) 
+                    ? 'Mantenimiento No Disponible (Esperar ' . $mantenimientoInfo['dias_restantes'] . ' días)' 
+                    : 'Ejecutar Mantenimiento Completo' ?>
+            </button>
+        </form>
+        
+        <div class="mt-3">
+            <small class="text-muted">
+                <strong>El mantenimiento incluye:</strong><br>
+                • Optimización de base de datos<br>
+                • Limpieza de notificaciones antiguas (+3 meses)<br>
+                • Generación de backup automático<br>
+                • Limpieza de sesiones caducadas<br>
+                • Recálculo de estadísticas
+            </small>
+        </div>
     </div>
 
     <!-- Estadísticas del Sistema -->
@@ -610,6 +697,38 @@ async function confirmarEliminarFoto() {
         }
         form.submit();
     }
+}
+
+// Función para confirmar mantenimiento del sistema
+async function confirmarMantenimiento() {
+    const confirm = await showDoubleConfirm(
+        '🔧 Mantenimiento del Sistema',
+        '<div class="text-start">' +
+        '<p class="mb-3">Se ejecutará un mantenimiento completo que incluye:</p>' +
+        '<ul class="list-unstyled ps-3">' +
+        '<li class="mb-2"><i class="fas fa-database text-primary me-2"></i> Optimización de base de datos</li>' +
+        '<li class="mb-2"><i class="fas fa-bell-slash text-warning me-2"></i> Limpieza de notificaciones antiguas</li>' +
+        '<li class="mb-2"><i class="fas fa-save text-success me-2"></i> Generación de backup automático</li>' +
+        '<li class="mb-2"><i class="fas fa-broom text-info me-2"></i> Limpieza de sesiones</li>' +
+        '<li class="mb-2"><i class="fas fa-chart-line text-danger me-2"></i> Recálculo de estadísticas</li>' +
+        '</ul>' +
+        '<div class="alert alert-warning mt-3 mb-0">' +
+        '<i class="fas fa-clock me-2"></i><strong>Nota:</strong> Este proceso puede tardar varios minutos.' +
+        '</div>' +
+        '</div>',
+        'Sí, ejecutar ahora'
+    );
+    
+    if (!confirm.isConfirmed) return;
+    
+    showLoading('Ejecutando Mantenimiento', 'Por favor espere, esto puede tardar varios minutos...');
+    
+    // Deshabilitar el botón
+    const btn = document.getElementById('btnMantenimiento');
+    btn.disabled = true;
+    
+    // Enviar el formulario
+    document.getElementById('formMantenimiento').submit();
 }
 </script>
 

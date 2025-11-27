@@ -152,11 +152,6 @@ if (!defined('EMBEDDED_VIEW')):
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-bell me-2"></i>Historial de Notificaciones</h2>
-        <?php if (!defined('EMBEDDED_VIEW')): ?>
-        <a href="<?= $tipo_usuario === 'Administrador' ? 'Admin.php' : ($tipo_usuario === 'Encargado' ? 'Encargado.php' : 'Profesor.php') ?>" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Volver
-        </a>
-        <?php endif; ?>
     </div>
 
     <!-- Pestañas -->
