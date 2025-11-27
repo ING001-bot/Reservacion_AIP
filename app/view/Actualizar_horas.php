@@ -96,8 +96,8 @@ if ($id_aula && $fecha) {
                 if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
             }
             
-            // Solo 10:10 es especial (marca como ocupada si termina ahí)
-            $fin_especiales = ['10:10'];
+            // Horarios especiales: 10:10 (recreo) y 12:45 (fin de turno mañana)
+            $fin_especiales = ['10:10', '12:45'];
             $es_fin_especial = $half_end && in_array($inicio_hm, $fin_especiales, true);
             
             if ($starts_here || $ocupada || $es_fin_especial) {

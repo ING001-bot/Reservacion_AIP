@@ -18,22 +18,32 @@ require_once '../models/UsuarioModel.php';
 // Verificar si ya está verificado para reservas
 $necesitaVerificacion = !isset($_SESSION['verified_reserva']) || $_SESSION['verified_reserva'] !== true;
 
-// Si necesita verificación y no es una petición de verificación, enviar código
+// Solo enviar SMS si no hay código activo en sesión (optimización de velocidad)
 if ($necesitaVerificacion && !isset($_POST['verificar_codigo']) && !isset($_GET['reenviar'])) {
-    $usuarioModel = new UsuarioModel($conexion);
-    $usuario = $usuarioModel->obtenerPorId($_SESSION['id_usuario']);
+    // Verificar si ya se envió un código recientemente (últimos 10 minutos)
+    $codigoReciente = isset($_SESSION['otp_sent_reserva']) && 
+                      isset($_SESSION['otp_sent_time_reserva']) && 
+                      (time() - $_SESSION['otp_sent_time_reserva']) < 600; // 10 minutos
     
-    if ($usuario && !empty($usuario['telefono'])) {
-        $verificationService = new \App\Lib\VerificationService($conexion);
-        $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'reserva');
-        if (empty($resultadoSMS['success'])) {
-            $errorVerificacion = '⚠️ No se pudo enviar el SMS de verificación. Verifica que tu número esté en formato +51XXXXXXXXX y vuelve a intentar.';
-            if (!empty($resultadoSMS['error'])) {
-                $errorVerificacion .= ' Detalle: ' . htmlspecialchars($resultadoSMS['error']);
+    if (!$codigoReciente) {
+        $usuarioModel = new UsuarioModel($conexion);
+        $usuario = $usuarioModel->obtenerPorId($_SESSION['id_usuario']);
+        
+        if ($usuario && !empty($usuario['telefono'])) {
+            $verificationService = new \App\Lib\VerificationService($conexion);
+            $resultadoSMS = $verificationService->sendVerificationCode($_SESSION['id_usuario'], $usuario['telefono'], 'reserva');
+            if (!empty($resultadoSMS['success'])) {
+                $_SESSION['otp_sent_reserva'] = true;
+                $_SESSION['otp_sent_time_reserva'] = time();
+            } else {
+                $errorVerificacion = '⚠️ No se pudo enviar el SMS de verificación. Verifica que tu número esté en formato +51XXXXXXXXX y vuelve a intentar.';
+                if (!empty($resultadoSMS['error'])) {
+                    $errorVerificacion .= ' Detalle: ' . htmlspecialchars($resultadoSMS['error']);
+                }
             }
+        } else {
+            $errorVerificacion = '⚠️ No tienes un teléfono registrado. Actualiza tu número en tu perfil o solicita al administrador que lo registre con formato +51XXXXXXXXX.';
         }
-    } else {
-        $errorVerificacion = '⚠️ No tienes un teléfono registrado. Actualiza tu número en tu perfil o solicita al administrador que lo registre con formato +51XXXXXXXXX.';
     }
 }
 

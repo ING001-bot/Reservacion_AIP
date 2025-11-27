@@ -574,8 +574,8 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
         </div>
         <button type="button" id="tbm-close" class="btn btn-sm btn-outline-secondary ms-auto">Cerrar</button>
       </div>
-      <div class="tbm-body" style="grid-template-columns:1fr; padding:14px;">
-        <div class="tbm-chat" style="height:440px;">
+      <div class="tbm-body">
+        <div class="tbm-chat">
           <div id="tbm-msgs" class="tbm-msgs"></div>
           <div class="tbm-input">
             <input id="tbm-input" class="form-control" placeholder="Escribe tu consulta..." autocomplete="off">
@@ -592,6 +592,17 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
             </div>
           </div>
         </div>
+        <aside>
+          <div class="tbm-help mb-3">
+            <h6 class="mb-2">💡 Preguntas Rápidas</h6>
+            <div class="quick-queries-panel" id="quick-queries-panel">
+              <!-- Botones se cargarán dinámicamente según el rol -->
+            </div>
+          </div>
+          <div class="small text-muted" id="tbm-footer-text">
+            <!-- Texto se cargará dinámicamente -->
+          </div>
+        </aside>
       </div>
     </div>
   </div>
@@ -601,8 +612,92 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
       var fab = document.getElementById('tbm-fab');
       var panel = document.getElementById('tbm-panel');
       var closeBtn = document.getElementById('tbm-close');
-      if (fab && panel){ fab.addEventListener('click', function(){ panel.classList.add('show'); }); }
-      if (closeBtn && panel){ closeBtn.addEventListener('click', function(){ panel.classList.remove('show'); }); }
+      
+      // Abrir panel y cargar preguntas rápidas
+      if (fab && panel){ 
+        fab.addEventListener('click', function(){ 
+          panel.classList.add('show');
+          loadQuickQueries(); // Cargar preguntas al abrir
+        }); 
+      }
+      
+      if (closeBtn && panel){ 
+        closeBtn.addEventListener('click', function(){ 
+          panel.classList.remove('show'); 
+        }); 
+      }
+      
+      // Cargar preguntas rápidas según el rol
+      function loadQuickQueries() {
+        var rol = '<?= $_SESSION['tipo'] ?? '' ?>';
+        var queriesPanel = document.getElementById('quick-queries-panel');
+        var footerText = document.getElementById('tbm-footer-text');
+        
+        if (!queriesPanel) return;
+        
+        var queries = [];
+        var footer = '';
+        
+        if (rol === 'Administrador') {
+          queries = [
+            { emoji: '👥', text: 'Total usuarios', query: '¿Cuántos usuarios hay?' },
+            { emoji: '🔑', text: 'Roles del sistema', query: '¿Qué roles existen?' },
+            { emoji: '📊', text: 'Info del sistema', query: 'Dame información del sistema' },
+            { emoji: '👤', text: 'Gestionar usuarios', query: '¿Cómo gestiono usuarios?' },
+            { emoji: '💻', text: 'Gestionar equipos', query: '¿Cómo administro equipos?' },
+            { emoji: '🏫', text: 'Gestionar aulas', query: '¿Cómo gestiono aulas?' },
+            { emoji: '📝', text: 'Listado usuarios', query: 'Dame un listado de usuarios' },
+            { emoji: '💾', text: 'Listado equipos', query: 'Muestra los equipos' },
+            { emoji: '⏰', text: 'Préstamos vencidos', query: '¿Hay préstamos vencidos?' },
+            { emoji: '⚠️', text: 'Sin verificar', query: '¿Usuarios sin verificar?' },
+            { emoji: '📉', text: 'Sin stock', query: '¿Equipos sin stock?' },
+            { emoji: '❓', text: 'Guía completa', query: '¿Cómo funciona el sistema?' }
+          ];
+          footer = '• Tienes acceso completo al sistema.<br>• Puedes gestionar usuarios, equipos, aulas y ver reportes detallados.';
+        } else if (rol === 'Profesor') {
+          queries = [
+            { emoji: '📅', text: 'Hacer reserva', query: '¿Cómo hago una reserva?' },
+            { emoji: '💻', text: 'Solicitar préstamo', query: '¿Cómo solicito un préstamo?' },
+            { emoji: '📜', text: 'Ver historial', query: 'Muéstrame mi historial' },
+            { emoji: '❓', text: 'Guía del sistema', query: '¿Cómo funciona el sistema?' },
+            { emoji: '🔑', text: 'Cambiar contraseña', query: '¿Cómo cambio mi contraseña?' },
+            { emoji: '💾', text: 'Equipos disponibles', query: '¿Qué equipos están disponibles?' },
+            { emoji: '📱', text: 'Verificación SMS', query: '¿Qué es la verificación SMS?' },
+            { emoji: '🏫', text: 'Aulas disponibles', query: '¿Qué aulas puedo reservar?' }
+          ];
+          footer = '• Mínimo 1 día de anticipación para reservas y préstamos.<br>• Si tienes problemas con SMS de verificación, verifica tu número en tu perfil.';
+        } else if (rol === 'Encargado') {
+          queries = [
+            { emoji: '🔄', text: 'Registrar devolución', query: '¿Cómo registro una devolución?' },
+            { emoji: '✅', text: 'Validar préstamo', query: '¿Cómo valido un préstamo?' },
+            { emoji: '📜', text: 'Ver historial', query: 'Muéstrame el historial' },
+            { emoji: '❓', text: 'Guía del sistema', query: '¿Cómo funciona el sistema?' },
+            { emoji: '⚠️', text: 'Reportar problema', query: '¿Cómo reporto un equipo dañado?' },
+            { emoji: '📦', text: 'Préstamos activos', query: '¿Cuántos préstamos hay activos?' }
+          ];
+          footer = '• Puedes validar préstamos y registrar devoluciones.<br>• Reporta cualquier problema con equipos al administrador.';
+        }
+        
+        // Generar HTML de botones
+        var html = '';
+        queries.forEach(function(q) {
+          html += '<button class="tbm-chip" data-q="' + q.query + '">' + q.emoji + ' ' + q.text + '</button>';
+        });
+        
+        queriesPanel.innerHTML = html;
+        if (footerText) footerText.innerHTML = footer;
+        
+        // Agregar event listeners a los botones
+        queriesPanel.querySelectorAll('.tbm-chip').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var query = this.getAttribute('data-q');
+            var inp = document.getElementById('tbm-input');
+            if (inp) inp.value = query;
+            var sendBtn = document.getElementById('tbm-send');
+            if (sendBtn) sendBtn.click();
+          });
+        });
+      }
     })();
   </script>
 <?php endif; ?>

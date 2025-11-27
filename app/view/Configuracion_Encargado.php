@@ -209,6 +209,17 @@ $perfil = $configController->obtenerPerfil($id_usuario);
 </div>
 
 <script>
+// Mostrar mensaje de éxito/error automáticamente
+<?php if ($mensaje && isset($_POST['eliminar_foto'])): ?>
+Swal.fire({
+    icon: '<?= $mensaje_tipo === 'success' ? 'success' : 'error' ?>',
+    title: '<?= $mensaje_tipo === 'success' ? '¡Foto eliminada!' : 'Error' ?>',
+    text: '<?= addslashes($mensaje) ?>',
+    timer: 3000,
+    showConfirmButton: true
+});
+<?php endif; ?>
+
 // Auto-submit al seleccionar foto
 document.getElementById('inputFoto')?.addEventListener('change', function() {
     if (this.files.length > 0) {
@@ -216,29 +227,21 @@ document.getElementById('inputFoto')?.addEventListener('change', function() {
     }
 });
 
-async function confirmarEliminarFoto() {
-    const confirm = await showDangerConfirm(
-        '¿Eliminar foto de perfil?',
-        'Tu foto de perfil actual será eliminada y volverá al avatar predeterminado',
-        'Sí, eliminar'
-    );
-    
-    if (confirm.isConfirmed) {
-        let form = document.getElementById('formEliminarFoto');
-        if (!form) {
-            // Crear el formulario dinámicamente si no existe
-            form = document.createElement('form');
-            form.method = 'POST';
-            form.id = 'formEliminarFoto';
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'eliminar_foto';
-            input.value = '1';
-            form.appendChild(input);
-            document.body.appendChild(form);
+function confirmarEliminarFoto() {
+    Swal.fire({
+        title: '¿Eliminar foto de perfil?',
+        text: 'Tu foto de perfil actual será eliminada y volverá al avatar predeterminado',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('formEliminarFoto').submit();
         }
-        form.submit();
-    }
+    });
 }
 </script>
 

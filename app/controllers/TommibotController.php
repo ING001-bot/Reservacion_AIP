@@ -7,11 +7,12 @@ class TommibotController {
   private $ai;
   private $userRole;
   private $userName;
+  private $userId; // Nuevo campo para almacenar ID del usuario
   
   public function __construct($conexion){
     $this->db = $conexion;
     $this->kb = $this->loadKB();
-    $this->ai = new AIService();
+    $this->ai = new AIService($this->db);
     $this->detectUserRole();
   }
 
@@ -32,9 +33,50 @@ class TommibotController {
   private function mapIntentToActions($intent, string $lower){
     $role = strtolower((string)$this->userRole);
     $actions = [];
+    
     if (!$intent) {
+      // Detectar VERBOS DE NAVEGACIÓN (ir, llevar, mostrar, ver, abrir, quiero)
+      $hasNavigationVerb = preg_match('/(ir|llevame|llévame|llevame|mostrar|ver|abrir|quiero|necesito|dame|muestra|abre)/i', $lower);
+      
       // Inferir por texto simple para comandos comunes
-      if (mb_strpos($lower, 'reserv') !== false) $intent = 'reservar';
+      if (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(reserv)/i', $lower)) {
+        $intent = 'reservar';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(préstamo|prestamo|prestar|equipo)/i', $lower)) {
+        $intent = 'prestamo';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(historial|mis reservas|mis préstamos|mis prestamos)/i', $lower)) {
+        $intent = 'historial';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(contraseña|password|clave|cambiar|seguridad)/i', $lower)) {
+        $intent = 'cambiar_contrasena';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(reporte|estadística|estadistica|gráfico|grafico)/i', $lower)) {
+        $intent = 'reportes_estadisticas';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(devoluc|validar|entregar)/i', $lower)) {
+        $intent = 'devolucion';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(usuario|profesor|admin|encargado|gestionar)/i', $lower)) {
+        $intent = 'gestion_usuarios';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(aula|sala|laboratorio)/i', $lower)) {
+        $intent = 'gestion_aulas';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(equipo|laptop|proyector|extensión|inventario)/i', $lower)) {
+        $intent = 'gestion_equipos';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(notificac|aviso|alerta)/i', $lower)) {
+        $intent = 'notificaciones';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(perfil|configurac|ajuste|cuenta)/i', $lower)) {
+        $intent = 'perfil';
+      }
+      elseif (preg_match('/(ir|llevame|llévame|mostrar|ver|abrir|quiero).*(inicio|dashboard|principal|home)/i', $lower)) {
+        $intent = 'inicio';
+      }
+      // Detección SIN verbo (formato antiguo - mantener compatibilidad)
+      elseif (mb_strpos($lower, 'reserv') !== false) $intent = 'reservar';
       elseif (mb_strpos($lower, 'préstamo') !== false || mb_strpos($lower, 'prestamo') !== false) $intent = 'prestamo';
       elseif (mb_strpos($lower, 'historial') !== false || mb_strpos($lower, 'mis reservas') !== false || mb_strpos($lower, 'mis préstamos') !== false || mb_strpos($lower, 'mis prestamos') !== false) $intent = 'historial';
       elseif (mb_strpos($lower, 'contraseña') !== false || mb_strpos($lower, 'password') !== false) $intent = 'cambiar_contrasena';
@@ -45,33 +87,64 @@ class TommibotController {
 
     switch ($intent){
       case 'reservar':
-        if ($role === 'profesor') $actions[] = ['type'=>'navigate','target'=>'reservas'];
+        if ($role === 'profesor' || $role === 'administrador') {
+          $actions[] = ['type'=>'offer','target'=>'reservas','message'=>'¿Quieres que te lleve al módulo de Reservas ahora?'];
+        }
         break;
       case 'prestamo':
-        if ($role === 'profesor') $actions[] = ['type'=>'navigate','target'=>'prestamo'];
+        if ($role === 'profesor' || $role === 'administrador') {
+          $actions[] = ['type'=>'offer','target'=>'prestamo','message'=>'¿Quieres que te lleve al módulo de Préstamos ahora?'];
+        }
         break;
       case 'historial':
       case 'historial_global':
-        if ($role === 'administrador') $actions[] = ['type'=>'navigate','target'=>'historial'];
-        elseif ($role === 'encargado') $actions[] = ['type'=>'navigate','target'=>'historial'];
-        else $actions[] = ['type'=>'navigate','target'=>'historial'];
+        if ($role === 'administrador') $actions[] = ['type'=>'offer','target'=>'historial','message'=>'¿Quieres ver el Historial Global ahora?'];
+        elseif ($role === 'encargado') $actions[] = ['type'=>'offer','target'=>'historial','message'=>'¿Quieres ver el Historial ahora?'];
+        else $actions[] = ['type'=>'offer','target'=>'historial','message'=>'¿Quieres ver tu Historial ahora?'];
         break;
       case 'cambiar_contrasena':
-        if ($role === 'profesor') $actions[] = ['type'=>'navigate','target'=>'password'];
+        $actions[] = ['type'=>'offer','target'=>'password','message'=>'¿Quieres ir a Cambiar Contraseña ahora?'];
+        break;
+      case 'devolucion':
+        if ($role === 'encargado') {
+          $actions[] = ['type'=>'offer','target'=>'devolucion','message'=>'¿Quieres ir al módulo de Devoluciones ahora?'];
+        }
         break;
       case 'gestion_usuarios':
-        if ($role === 'administrador') $actions[] = ['type'=>'navigate','target'=>'usuarios'];
+        if ($role === 'administrador') {
+          $actions[] = ['type'=>'offer','target'=>'usuarios','message'=>'¿Quieres ir a Gestión de Usuarios ahora?'];
+        }
+        break;
+      case 'gestion_aulas':
+        if ($role === 'administrador') {
+          $actions[] = ['type'=>'offer','target'=>'aulas','message'=>'¿Quieres ir a Gestión de Aulas ahora?'];
+        }
+        break;
+      case 'gestion_equipos':
+        if ($role === 'administrador') {
+          $actions[] = ['type'=>'offer','target'=>'equipos','message'=>'¿Quieres ir a Gestión de Equipos ahora?'];
+        }
         break;
       case 'reportes_estadisticas':
-        if ($role === 'administrador') $actions[] = ['type'=>'navigate','target'=>'reportes'];
+        if ($role === 'administrador') {
+          $actions[] = ['type'=>'navigate','target'=>'reportes'];
+        }
         break;
       case 'validar_prestamo':
       case 'registrar_devolucion':
       case 'devolucion':
-        if ($role === 'encargado') $actions[] = ['type'=>'navigate','target'=>'devolucion'];
+        if ($role === 'encargado' || $role === 'administrador') {
+          $actions[] = ['type'=>'navigate','target'=>'devolucion'];
+        }
+        break;
+      case 'notificaciones':
+        $actions[] = ['type'=>'navigate','target'=>'notificaciones'];
         break;
       case 'perfil':
         $actions[] = ['type'=>'navigate','target'=>'perfil'];
+        break;
+      case 'inicio':
+        $actions[] = ['type'=>'navigate','target'=>'inicio'];
         break;
       case 'descargar_pdf':
         $actions[] = ['type'=>'click','selector'=>'[data-action="download-pdf"]'];
@@ -91,11 +164,13 @@ class TommibotController {
     if (session_status() === PHP_SESSION_NONE) session_start();
     $this->userRole = $_SESSION['tipo'] ?? 'Visitante';
     $this->userName = $_SESSION['usuario'] ?? 'Usuario';
+    $this->userId = $_SESSION['usuario_id'] ?? null; // Capturar ID del usuario
   }
 
   public function reply($userId, $message, $mode = 'text'){
     $m = trim((string)$message);
-    if ($m === '') return $this->getEmptyMessageResponse();
+    // Si el mensaje está vacío, no responder nada (el panel lateral tiene las preguntas)
+    if ($m === '') return '';
 
     $lower = mb_strtolower($m, 'UTF-8');
     
@@ -105,89 +180,37 @@ class TommibotController {
       return $this->greetingFor($sent);
     }
     
-    // Verificar si es pregunta del sistema o general
-    $isSystemQuestion = $this->ai->isSystemQuestion($m);
+    // El flujo ahora es más simple: siempre se usa el AIService, que tiene la lógica local.
+    $response = $this->ai->generateResponse($message, $this->userRole, $this->userId);
     
-    if ($isSystemQuestion) {
-      // Pregunta sobre el sistema - usar KB + IA para mejorar
-      return $this->handleSystemQuestion($m, $lower, $mode);
-    } else {
-      // Pregunta general - usar IA directamente
-      return $this->handleGeneralQuestion($m, $mode);
-    }
+    return $this->addRoleContext($response);
   }
   
   /**
-   * Maneja preguntas sobre el sistema
+   * Maneja preguntas sobre el sistema - ESTA FUNCIÓN YA NO SE USA DIRECTAMENTE
    */
   private function handleSystemQuestion($message, $lower, $mode) {
-    // Detectar intención con IA primero, luego con KB
-    $intent = $this->ai->extractIntent($message) ?? $this->detectIntent($lower);
-    $sent = $this->ai->detectSentimentAI($message) ?? $this->detectSentiment($lower);
-    
-    // Buscar en KB
-    $tpl = isset($this->kb['intents'][$intent]) ? $this->kb['intents'][$intent]['template'] : null;
-    
-    if ($tpl) {
-      // Respuesta del KB
-      $kbResponse = $this->formatFromTemplate($tpl, $sent, $mode);
-      
-      // Mejorar con IA si está en modo texto
-      if ($mode === 'text') {
-        $enhancedResponse = $this->ai->enhanceKBResponse($kbResponse, $message, $this->userRole);
-        return $this->addRoleContext($enhancedResponse);
-      }
-      
-      return $kbResponse;
-    }
-    
-    // No encontrado en KB, usar IA pura
-    $aiResponse = $this->ai->generateResponse($message, $this->userRole, true);
-    
-    if ($aiResponse) {
-      return $this->addRoleContext($aiResponse);
-    }
-    
-    // Fallback final
-    return $this->formatFromTemplate($this->kb['out_of_scope']['response'] ?? null, $sent);
+    // Esta lógica ha sido movida y simplificada dentro de AIService.
+    // Se mantiene por si se necesita en el futuro, pero no es llamada en el flujo actual.
+    $response = $this->ai->generateResponse($message, $this->userRole, $this->userId);
+    return $this->addRoleContext($response);
   }
   
   /**
-   * Maneja preguntas generales (fuera del sistema)
+   * Maneja preguntas generales (fuera del sistema) - ESTA FUNCIÓN YA NO SE USA
    */
   private function handleGeneralQuestion($message, $mode) {
-    $aiResponse = $this->ai->answerGeneralQuestion($message, $this->userRole);
-    
-    if ($aiResponse) {
-      // Añadir contexto por rol aunque sea pregunta general
-      return $this->addRoleContext($aiResponse);
-    }
-    
-    // Si la IA no está disponible, fallback específico por rol
-    $fallbackByRole = [
-      'Profesor' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. 😊 ¿Te ayudo con reservas, préstamos, historial o cambio de contraseña?',
-      'Administrador' => 'Puedo responder preguntas generales breves, pero mi especialidad es el sistema. 🎯 ¿Te ayudo con gestión de usuarios, reportes, estadísticas o historial global?',
-      'Encargado' => 'Puedo responder preguntas generales breves, pero mi enfoque es el sistema. 🧰 ¿Te ayudo con devoluciones, validación de préstamos o historial?'
-    ];
-    $base = $fallbackByRole[$this->userRole] ?? '¿En qué te ayudo dentro del sistema?';
-    return $base;
+     // Esta lógica ha sido movida y simplificada dentro de AIService.
+    $response = $this->ai->generateResponse($message, $this->userRole, $this->userId);
+    return $this->addRoleContext($response);
   }
   
   /**
    * Agrega contexto según el rol del usuario
    */
   private function addRoleContext($response) {
-    // No modificar si ya es muy largo
-    if (strlen($response) > 800) return $response;
-    
-    $roleHints = [
-      'Profesor' => '',
-      'Administrador' => '\n\n💡 Como administrador, también puedes gestionar usuarios, ver reportes globales y estadísticas desde tu panel.',
-      'Encargado' => '\n\n💡 Como encargado, recuerda que puedes gestionar devoluciones y validar préstamos desde tu panel.'
-    ];
-    
-    $hint = $roleHints[$this->userRole] ?? '';
-    return $response . $hint;
+    // Función deshabilitada - Las sugerencias ahora se manejan en AIService
+    return $response;
   }
   
   /**
@@ -195,9 +218,9 @@ class TommibotController {
    */
   private function getEmptyMessageResponse() {
     $responses = [
-      'Profesor' => '¿En qué puedo ayudarte hoy? Puedo guiarte con reservas, préstamos, historial o cambio de contraseña. 😊',
-      'Administrador' => '¿En qué puedo ayudarte? Puedo asistirte con gestión de usuarios, reportes, estadísticas, y más.',
-      'Encargado' => '¿Qué necesitas? Puedo ayudarte con devoluciones, validación de préstamos y control de aulas.'
+      'Profesor' => '¡Hola! 👋 Soy Tommibot. Haz clic en las preguntas rápidas del panel lateral para comenzar.',
+      'Administrador' => '¡Hola! 👋 Soy Tommibot. Haz clic en las preguntas rápidas del panel lateral para comenzar.',
+      'Encargado' => '¡Hola! 👋 Soy Tommibot. Haz clic en las preguntas rápidas del panel lateral para comenzar.'
     ];
     
     return $responses[$this->userRole] ?? '¿En qué puedo ayudarte?';

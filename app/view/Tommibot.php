@@ -47,33 +47,39 @@ $rol = htmlspecialchars($_SESSION['tipo'] ?? '');
       <aside>
         <div class="tbm-help mb-3">
           <h6 class="mb-2">💡 Preguntas Rápidas</h6>
-          <div>
+          <div class="quick-queries-panel">
             <?php if ($rol === 'Profesor'): ?>
-              <span class="tbm-chip" data-q="¿Cómo hago una reserva de aula?">📅 Hacer reserva</span>
-              <span class="tbm-chip" data-q="¿Cómo solicito un préstamo de equipo?">💻 Solicitar préstamo</span>
-              <span class="tbm-chip" data-q="¿Cómo veo mi historial?">📜 Ver historial</span>
-              <span class="tbm-chip" data-q="Explícame el sistema como profesor">❓ Guía del sistema</span>
-              <span class="tbm-chip" data-q="¿Cómo cambio mi contraseña?">🔑 Cambiar contraseña</span>
-              <span class="tbm-chip" data-q="¿Qué necesito para hacer una reserva?">📋 Requisitos</span>
+              <button class="tbm-chip" data-q="¿Cómo hago una reserva?">📅 Hacer reserva</button>
+              <button class="tbm-chip" data-q="¿Cómo solicito un préstamo?">💻 Solicitar préstamo</button>
+              <button class="tbm-chip" data-q="Muéstrame mi historial">📜 Ver historial</button>
+              <button class="tbm-chip" data-q="¿Cómo funciona el sistema?">❓ Guía del sistema</button>
+              <button class="tbm-chip" data-q="¿Cómo cambio mi contraseña?">🔑 Cambiar contraseña</button>
+              <button class="tbm-chip" data-q="¿Qué equipos están disponibles?">💾 Equipos disponibles</button>
+              <button class="tbm-chip" data-q="¿Qué es la verificación SMS?">📱 Verificación SMS</button>
+              <button class="tbm-chip" data-q="¿Qué aulas puedo reservar?">🏫 Aulas disponibles</button>
             <?php elseif ($rol === 'Encargado'): ?>
-              <span class="tbm-chip" data-q="¿Cómo registro una devolución?">🔄 Registrar devolución</span>
-              <span class="tbm-chip" data-q="¿Cómo valido un préstamo?">✅ Validar préstamo</span>
-              <span class="tbm-chip" data-q="Muéstrame el historial de hoy">📜 Historial</span>
-              <span class="tbm-chip" data-q="Explícame mis funciones como encargado">❓ Mis funciones</span>
-              <span class="tbm-chip" data-q="¿Cómo reporto un problema con un equipo?">⚠️ Reportar problema</span>
-              <span class="tbm-chip" data-q="¿Cómo verifico el estado de los equipos?">💻 Estado equipos</span>
+              <button class="tbm-chip" data-q="¿Cómo registro una devolución?">🔄 Registrar devolución</button>
+              <button class="tbm-chip" data-q="¿Cómo valido un préstamo?">✅ Validar préstamo</button>
+              <button class="tbm-chip" data-q="Muéstrame el historial">📜 Ver historial</button>
+              <button class="tbm-chip" data-q="¿Cómo funciona el sistema?">❓ Guía del sistema</button>
+              <button class="tbm-chip" data-q="¿Cómo reporto un equipo dañado?">⚠️ Reportar problema</button>
+              <button class="tbm-chip" data-q="¿Cuántos préstamos hay activos?">📦 Préstamos activos</button>
             <?php elseif ($rol === 'Administrador'): ?>
-              <span class="tbm-chip" data-q="¿Cuántos usuarios hay registrados?">👥 Total usuarios</span>
-              <span class="tbm-chip" data-q="¿Cuáles son los roles de los usuarios?">🎭 Roles usuarios</span>
-              <span class="tbm-chip" data-q="¿Qué números están verificados?">📞 Teléfonos verificados</span>
-              <span class="tbm-chip" data-q="¿Quiénes hacen más reservas?">📊 Estadísticas reservas</span>
-              <span class="tbm-chip" data-q="Muéstrame reportes del sistema">📈 Ver reportes</span>
-              <span class="tbm-chip" data-q="¿Cómo gestiono usuarios?">👤 Gestionar usuarios</span>
-              <span class="tbm-chip" data-q="¿Cómo administro equipos?">💻 Gestionar equipos</span>
-              <span class="tbm-chip" data-q="Explícame todas las funciones de administrador">❓ Guía completa</span>
+              <button class="tbm-chip" data-q="¿Cuántos usuarios hay?">👥 Total usuarios</button>
+              <button class="tbm-chip" data-q="¿Qué roles existen?">🔑 Roles del sistema</button>
+              <button class="tbm-chip" data-q="Dame información del sistema">📊 Info del sistema</button>
+              <button class="tbm-chip" data-q="¿Cómo gestiono usuarios?">👤 Gestionar usuarios</button>
+              <button class="tbm-chip" data-q="¿Cómo administro equipos?">💻 Gestionar equipos</button>
+              <button class="tbm-chip" data-q="¿Cómo gestiono aulas?">🏫 Gestionar aulas</button>
+              <button class="tbm-chip" data-q="Dame un listado de usuarios">📝 Listado usuarios</button>
+              <button class="tbm-chip" data-q="Muestra los equipos">💾 Listado equipos</button>
+              <button class="tbm-chip" data-q="¿Hay préstamos vencidos?">⏰ Préstamos vencidos</button>
+              <button class="tbm-chip" data-q="¿Usuarios sin verificar?">⚠️ Sin verificar</button>
+              <button class="tbm-chip" data-q="¿Equipos sin stock?">📉 Sin stock</button>
+              <button class="tbm-chip" data-q="¿Cómo funciona el sistema?">❓ Guía completa</button>
             <?php else: ?>
-              <span class="tbm-chip" data-q="¿Cómo uso el sistema?">❓ Guía</span>
-              <span class="tbm-chip" data-q="Ayuda">💡 Ayuda</span>
+              <button class="tbm-chip" data-q="¿Cómo uso el sistema?">❓ Guía</button>
+              <button class="tbm-chip" data-q="Ayuda">💡 Ayuda</button>
             <?php endif; ?>
           </div>
         </div>
@@ -101,9 +107,24 @@ $rol = htmlspecialchars($_SESSION['tipo'] ?? '');
 </script>
 <script src="../../Public/js/tommibot.js?v=<?=time()?>"></script>
 <script>
+  // Click en los botones de preguntas rápidas
   document.addEventListener('click', function(e){
-    const t = e.target.closest('.tbm-chip'); if(!t) return; const q = t.getAttribute('data-q');
-    const inp = document.getElementById('tbm-input'); if(inp){ inp.value = q; }
-    const btn = document.getElementById('tbm-send'); if(btn){ btn.click(); }
+    const t = e.target.closest('.tbm-chip');
+    if (!t) return;
+    
+    const q = t.getAttribute('data-q');
+    if (!q) return;
+    
+    // Colocar la pregunta en el input
+    const inp = document.getElementById('tbm-input');
+    if (inp) {
+      inp.value = q;
+    }
+    
+    // Enviar automáticamente
+    const btn = document.getElementById('tbm-send');
+    if (btn) {
+      btn.click();
+    }
   });
 </script>

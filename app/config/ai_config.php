@@ -16,6 +16,7 @@
 return [
     // Google Gemini API Configuration
     'gemini' => [
+        'enabled' => false, // Desactiva completamente el uso de la API de Gemini
         'api_key' => getenv('GEMINI_API_KEY') ?: 'TU_API_KEY_AQUI', // Reemplazar con tu API Key de Google AI Studio o definir GEMINI_API_KEY en entorno
         'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
         'model' => 'gemini-pro',

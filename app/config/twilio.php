@@ -5,11 +5,11 @@
 
 return [
     // Ejemplo: ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    'account_sid' => 'ACa7557605dafbccb893da7b0e0130fa30',
+    'account_sid' => getenv('TWILIO_ACCOUNT_SID') ?: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     // Ejemplo: your_auth_token
-    'auth_token'  => '6a2b2066c3e73338c1566672813fa909',
+    'auth_token'  => getenv('TWILIO_AUTH_TOKEN') ?: 'your_auth_token_here',
     // Ejemplo: +16205518379 (formato E.164)
-    'from_number' => '+14788228209',
-    'whatsapp_from' => '+14155238886'
+    'from_number' => getenv('TWILIO_FROM_NUMBER') ?: '+1234567890',
+    'whatsapp_from' => getenv('TWILIO_WHATSAPP_FROM') ?: '+14155238886'
     , 'allow_dev_mode' => false
 ];

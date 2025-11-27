@@ -17,9 +17,18 @@
     const wrap = elMsgs(); if (!wrap) return;
     const div = document.createElement('div');
     div.className = 'tbm-msg ' + (kind==='user'?'user':'bot');
-    // Convertir saltos de línea en <br> y mantener formato
-    const formattedText = escapeHtml(text).replace(/\n/g, '<br>');
-    div.innerHTML = `${formattedText}<span class="tbm-time">${new Date().toLocaleTimeString()}</span>`;
+    
+    // Si el texto contiene HTML de botones, renderizarlo directamente
+    if (text.includes('<button') || text.includes('<div class=\'quick-queries\'')) {
+      // Convertir saltos de línea pero mantener HTML de botones
+      const formattedText = text.replace(/\n/g, '<br>');
+      div.innerHTML = `${formattedText}<span class="tbm-time">${new Date().toLocaleTimeString()}</span>`;
+    } else {
+      // Comportamiento normal: escapar HTML
+      const formattedText = escapeHtml(text).replace(/\n/g, '<br>');
+      div.innerHTML = `${formattedText}<span class="tbm-time">${new Date().toLocaleTimeString()}</span>`;
+    }
+    
     wrap.appendChild(div); wrap.scrollTop = wrap.scrollHeight;
   }
   function escapeHtml(s){
@@ -221,6 +230,209 @@
     finally{ elSend().disabled = false; lastMode = 'text'; }
   }
 
+  /**
+   * Ejecuta acciones enviadas por el backend (navegación, clicks, etc.)
+   */
+  function executeActions(actions) {
+    if (!Array.isArray(actions)) return;
+    
+    actions.forEach(action => {
+      if (!action || !action.type) return;
+      
+      switch (action.type) {
+        case 'navigate':
+          navigateToTarget(action.target);
+          break;
+        case 'offer':
+          // Mostrar botones de confirmación para navegar
+          showNavigationOffer(action.target, action.message);
+          break;
+        case 'click':
+          if (action.selector) {
+            const element = document.querySelector(action.selector);
+            if (element) element.click();
+          }
+          break;
+        default:
+          console.warn('Acción desconocida:', action.type);
+      }
+    });
+  }
+
+  /**
+   * Muestra botones de confirmación para navegar
+   */
+  function showNavigationOffer(target, message) {
+    const chatBox = document.getElementById('tommiChatBox');
+    if (!chatBox) return;
+    
+    const offerDiv = document.createElement('div');
+    offerDiv.className = 'msg bot-msg';
+    offerDiv.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 15px; margin: 10px 0;';
+    
+    offerDiv.innerHTML = `
+      <div style="margin-bottom: 10px;">${message || '¿Quieres navegar a este módulo?'}</div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="window.TommibotNavigate('${target}')" style="background: white; color: #667eea; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+          ✅ Sí, ir ahora
+        </button>
+        <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
+          ❌ No, gracias
+        </button>
+      </div>
+    `;
+    
+    chatBox.appendChild(offerDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // Función global para navegación desde botones
+  window.TommibotNavigate = function(target) {
+    navigateToTarget(target);
+  };
+
+  /**
+   * Navega a una sección específica según el rol del usuario
+   */
+  function navigateToTarget(target) {
+    if (!target) return;
+    
+    const role = (userRole || '').toLowerCase();
+    let url = '';
+    
+    // Verificar si estamos en un dashboard que usa ?view=
+    const currentPage = window.location.pathname;
+    const isInDashboard = currentPage.includes('Profesor.php') || 
+                          currentPage.includes('Admin.php') || 
+                          currentPage.includes('Encargado.php');
+    
+    // Si estamos en dashboard, usar parámetros ?view=
+    if (isInDashboard) {
+      const viewParam = mapTargetToView(target, role);
+      if (viewParam) {
+        appendMsg('bot', `✅ Te llevo a ${getTargetName(target)}...`);
+        setTimeout(() => {
+          window.location.href = '?view=' + viewParam;
+        }, 800);
+        return;
+      }
+    }
+    
+    // Si no estamos en dashboard, navegar a página completa
+    switch (target) {
+      case 'reservas':
+        if (role === 'profesor') url = 'Reserva.php';
+        else if (role === 'administrador') url = 'Reserva.php';
+        break;
+      
+      case 'prestamo':
+        if (role === 'profesor') url = 'Prestamo.php';
+        else if (role === 'administrador') url = 'Prestamo.php';
+        break;
+      
+      case 'historial':
+        if (role === 'administrador') url = 'HistorialGlobal.php';
+        else if (role === 'encargado') url = 'HistorialGlobal.php';
+        else if (role === 'profesor') url = 'Historial.php';
+        break;
+      
+      case 'password':
+        url = 'Cambiar_Contraseña.php';
+        break;
+      
+      case 'usuarios':
+        if (role === 'administrador') url = 'Crear_Administrador.php';
+        break;
+      
+      case 'aulas':
+        if (role === 'administrador') url = 'Crear_Aula.php';
+        break;
+      
+      case 'equipos':
+        if (role === 'administrador') url = 'Crear_Equipo.php';
+        break;
+      
+      case 'reportes':
+        if (role === 'administrador') url = 'HistorialReportes.php';
+        break;
+      
+      case 'devolucion':
+        if (role === 'encargado' || role === 'administrador') url = 'Devolucion.php';
+        break;
+      
+      case 'notificaciones':
+        url = 'Notificaciones.php';
+        break;
+      
+      case 'perfil':
+        if (role === 'profesor') url = 'Configuracion_Profesor.php';
+        else if (role === 'administrador') url = 'Configuracion_Admin.php';
+        else if (role === 'encargado') url = 'Configuracion_Encargado.php';
+        break;
+      
+      case 'inicio':
+        if (role === 'profesor') url = 'Profesor.php';
+        else if (role === 'administrador') url = 'Admin.php';
+        else if (role === 'encargado') url = 'Encargado.php';
+        break;
+      
+      default:
+        console.warn('Target desconocido:', target);
+        return;
+    }
+    
+    // Realizar la navegación
+    if (url) {
+      appendMsg('bot', `✅ Te llevo a ${getTargetName(target)}...`);
+      setTimeout(() => {
+        window.location.href = url;
+      }, 800);
+    }
+  }
+
+  /**
+   * Mapea target a parámetro view para dashboards
+   */
+  function mapTargetToView(target, role) {
+    const viewMap = {
+      'reservas': 'reserva',
+      'prestamo': 'prestamo',
+      'historial': 'historial',
+      'password': 'password',
+      'usuarios': 'usuarios',
+      'aulas': 'aulas',
+      'equipos': 'equipos',
+      'reportes': 'reportes',
+      'devolucion': 'devolucion',
+      'notificaciones': 'notificaciones',
+      'perfil': 'configuracion',
+      'inicio': 'inicio'
+    };
+    
+    return viewMap[target] || null;
+  }
+
+  /**
+   * Obtiene un nombre legible para el target
+   */
+  function getTargetName(target) {
+    const names = {
+      'reservas': 'Reservar Aula',
+      'prestamo': 'Préstamo de Equipos',
+      'historial': 'Historial',
+      'password': 'Cambiar Contraseña',
+      'usuarios': 'Gestión de Usuarios',
+      'aulas': 'Gestión de Aulas',
+      'equipos': 'Gestión de Equipos',
+      'reportes': 'Reportes y Filtros',
+      'devolucion': 'Devolución de Equipos',
+      'notificaciones': 'Notificaciones',
+      'perfil': 'Configuración',
+      'inicio': 'Inicio'
+    };
+    return names[target] || target;
+  }
+
   // Voice: Web Speech API
   let recog = null; let listening = false; let selectedVoice = null;
   function initVoice(){
@@ -283,7 +495,48 @@
     // Cancelar voz previa si existe
     window.speechSynthesis.cancel();
     
-    const u = new SpeechSynthesisUtterance(text);
+    // Limpiar el texto antes de leerlo
+    let cleanText = text;
+    
+    // Eliminar emojis (todos los caracteres Unicode de emojis)
+    cleanText = cleanText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F910}-\u{1F96B}]|[\u{1F980}-\u{1F9E0}]/gu, '');
+    
+    // Eliminar markdown (**, __, etc.)
+    cleanText = cleanText.replace(/\*\*/g, ''); // Eliminar **
+    cleanText = cleanText.replace(/\*/g, ''); // Eliminar *
+    cleanText = cleanText.replace(/\_\_/g, ''); // Eliminar __
+    cleanText = cleanText.replace(/\_/g, ''); // Eliminar _
+    cleanText = cleanText.replace(/\#\#\#/g, ''); // Eliminar ###
+    cleanText = cleanText.replace(/\#\#/g, ''); // Eliminar ##
+    cleanText = cleanText.replace(/\#/g, ''); // Eliminar #
+    
+    // Eliminar símbolos especiales comunes
+    cleanText = cleanText.replace(/[\u2713\u2714\u2705\u2611]/g, ''); // ✓ ✔ ✅ ☑
+    cleanText = cleanText.replace(/[\u274C\u2716\u2717\u274E]/g, ''); // ❌ ✖ ✗ ❎
+    cleanText = cleanText.replace(/[\u26A0\u26A1\u2B50\u2B55]/g, ''); // ⚠ ⚡ ⭐ ⭕
+    cleanText = cleanText.replace(/[\u{1F7E0}-\u{1F7EB}]/gu, ''); // Círculos de colores
+    
+    // Eliminar flechas y símbolos matemáticos
+    cleanText = cleanText.replace(/[\u2190-\u21FF]/g, ''); // ← → ↑ ↓
+    cleanText = cleanText.replace(/[\u2200-\u22FF]/g, ''); // Símbolos matemáticos
+    
+    // Eliminar paréntesis vacíos y corchetes
+    cleanText = cleanText.replace(/\(\s*\)/g, '');
+    cleanText = cleanText.replace(/\[\s*\]/g, '');
+    
+    // Eliminar saltos de línea múltiples y espacios extra
+    cleanText = cleanText.replace(/\n{3,}/g, '. '); // Múltiples saltos = pausa
+    cleanText = cleanText.replace(/\n{2}/g, '. '); // Doble salto = pausa
+    cleanText = cleanText.replace(/\n/g, '. '); // Salto simple = pausa
+    cleanText = cleanText.replace(/\s{2,}/g, ' '); // Múltiples espacios = uno
+    
+    // Eliminar guiones y listas
+    cleanText = cleanText.replace(/^[\-\•\*]\s*/gm, ''); // Eliminar bullets
+    
+    // Limpiar espacios al inicio y final
+    cleanText = cleanText.trim();
+    
+    const u = new SpeechSynthesisUtterance(cleanText);
     u.lang = 'es-PE';
     u.rate = 1.05; // un poco más ágil (voz adolescente)
     u.pitch = 1.3; // timbre juvenil
@@ -316,19 +569,26 @@
     const mic = elMic(); if (mic) mic.addEventListener('click', toggleMic);
     initVoice();
     
-    // Mensaje de bienvenida personalizado por rol
-    const role = (userRole||'').toLowerCase();
-    let welcomeMsg = '';
-    if (role === 'administrador'){
-      welcomeMsg = '🤖 ¡Hola! Soy Tommibot. Te ayudo con gestión de usuarios, reportes y estadísticas.\n' +
-                   'Prueba: "Ver reportes", "Gestionar usuarios" o "Ver estadísticas".';
-    } else if (role === 'encargado'){
-      welcomeMsg = '🤖 ¡Hola! Soy Tommibot. Te ayudo con devoluciones y control de préstamos.\n' +
-                   'Prueba: "Ir a devoluciones" o "Ver historial".';
-    } else {
-      welcomeMsg = '🤖 ¡Hola! Soy Tommibot. Te ayudo con reservas, préstamos e historial.\n' +
-                   'Prueba: "Ir a reservas", "Ir a préstamos" o "Muéstrame historial".';
-    }
-    appendMsg('bot', welcomeMsg);
+    // NO mostrar mensaje de bienvenida automático - solo panel lateral
   });
+  
+  /**
+   * Función global para enviar consultas desde botones HTML
+   */
+  window.sendQuery = function(query) {
+    if (!query) return;
+    
+    // Mostrar la consulta como mensaje del usuario
+    appendMsg('user', query);
+    
+    // Enviar al servidor
+    sendToTommibot(query, 'text');
+    
+    // Actualizar el input (opcional)
+    const inp = elInput();
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+    }
+  };
 })();
