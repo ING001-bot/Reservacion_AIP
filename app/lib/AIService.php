@@ -3927,6 +3927,123 @@ El sistema envía notificaciones por:
         }
         
         // ========================================
+        // DETECCIONES ESPECÍFICAS DE BOTONES PARA ADMINISTRADOR
+        // (Estas deben ir ANTES de las guías generales para tener prioridad)
+        // ========================================
+        
+        if ($userRole === 'Administrador') {
+            // Botón: "¿Cuántos usuarios hay?"
+            if (preg_match('/cu(a|á)ntos.*usuarios.*hay/i', $userMessage)) {
+                $stats = $this->getSystemStatistics('Administrador');
+                return "👥 **Total de usuarios:** " . ($stats['total_usuarios'] ?? 0) . "\n\n" .
+                       "📊 **Desglose por rol:**\n" .
+                       "- Profesores: " . ($stats['profesores'] ?? 0) . "\n" .
+                       "- Encargados: " . ($stats['encargados'] ?? 0) . "\n" .
+                       "- Administradores: " . ($stats['administradores'] ?? 0) . "\n\n" .
+                       "✅ Verificados: " . ($stats['verificados'] ?? 0) . "\n" .
+                       "⚠️ Sin verificar: " . ($stats['no_verificados'] ?? 0);
+            }
+            
+            // Botón: "¿Cuántos profesores hay?"
+            if (preg_match('/cu(a|á)ntos.*profesores.*hay/i', $userMessage)) {
+                $stats = $this->getSystemStatistics('Administrador');
+                return "👨‍🏫 **Total de profesores:** " . ($stats['profesores'] ?? 0) . "\n\n" .
+                       "Del total de " . ($stats['total_usuarios'] ?? 0) . " usuarios en el sistema.";
+            }
+            
+            // Botón: "¿Hay préstamos vencidos?"
+            if (preg_match('/hay.*pr(e|é)stamos.*vencidos/i', $userMessage)) {
+                return $this->getPrestamosVencidos();
+            }
+            
+            // Botón: "¿Cuántos equipos disponibles?"
+            if (preg_match('/cu(a|á)ntos.*equipos.*disponibles/i', $userMessage)) {
+                return $this->getEquiposList($userMessage);
+            }
+            
+            // Botón: "Dame información del sistema"
+            if (preg_match('/dame.*informaci(o|ó)n.*sistema/i', $userMessage) ||
+                preg_match('/informaci(o|ó)n.*del.*sistema/i', $userMessage)) {
+                $stats = $this->getSystemStatistics('Administrador');
+                return $this->getSystemOverview($stats, 'Administrador');
+            }
+            
+            // Botón: "¿Cómo gestiono usuarios?"
+            if (preg_match('/c(o|ó)mo gestiono.*usuarios/i', $userMessage) ||
+                preg_match('/gestionar.*usuarios/i', $userMessage)) {
+                return self::GUIDE_GESTIONAR_USUARIOS;
+            }
+            
+            // Botón: "¿Cómo administro equipos?"
+            if (preg_match('/c(o|ó)mo administro.*equipos/i', $userMessage) ||
+                preg_match('/administrar.*equipos/i', $userMessage)) {
+                return self::GUIDE_GESTIONAR_EQUIPOS;
+            }
+            
+            // Botón: "¿Cómo gestiono aulas?"
+            if (preg_match('/c(o|ó)mo gestiono.*aulas/i', $userMessage) ||
+                preg_match('/gestionar.*aulas/i', $userMessage)) {
+                return self::GUIDE_GESTIONAR_AULAS;
+            }
+            
+            // Botón: "¿Cómo funciona el sistema?"
+            if (preg_match('/c(o|ó)mo funciona.*sistema/i', $userMessage)) {
+                return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+            }
+            
+            // Botón: "¿Qué roles existen?"
+            if (preg_match('/qu(e|é).*roles.*existen/i', $userMessage) ||
+                preg_match('/roles.*del.*sistema/i', $userMessage)) {
+                return $this->getRolesInfo();
+            }
+            
+            // Botón: "Dame un listado de usuarios"
+            if (preg_match('/dame.*listado.*usuarios/i', $userMessage) ||
+                preg_match('/listado.*de.*usuarios/i', $userMessage) ||
+                preg_match('/lista.*usuarios/i', $userMessage)) {
+                return $this->getListadoUsuarios();
+            }
+            
+            // Botón: "Muestra los equipos"
+            if (preg_match('/muestra.*equipos/i', $userMessage) ||
+                preg_match('/listado.*equipos/i', $userMessage)) {
+                return $this->getEquiposList($userMessage);
+            }
+            
+            // Botón: "Lista las aulas"
+            if (preg_match('/lista.*aulas/i', $userMessage) ||
+                preg_match('/listado.*aulas/i', $userMessage)) {
+                return $this->getAulasList($userMessage);
+            }
+            
+            // Botón: "Préstamos activos"
+            if (preg_match('/pr(e|é)stamos.*activos/i', $userMessage)) {
+                return $this->getPrestamosActivos();
+            }
+            
+            // Botón: "Reservas activas"
+            if (preg_match('/reservas.*activas/i', $userMessage)) {
+                return $this->getReservasActivas();
+            }
+            
+            // Botón: "Estado del sistema"
+            if (preg_match('/estado.*del.*sistema/i', $userMessage)) {
+                $stats = $this->getSystemStatistics('Administrador');
+                return $this->getSystemOverview($stats, 'Administrador');
+            }
+            
+            // Botón: "¿Usuarios sin verificar?"
+            if (preg_match('/usuarios.*sin.*verificar/i', $userMessage)) {
+                return $this->getUsuariosSinVerificar();
+            }
+            
+            // Botón: "¿Equipos sin stock?"
+            if (preg_match('/equipos.*sin.*stock/i', $userMessage)) {
+                return $this->getEquiposSinStock();
+            }
+        }
+        
+        // ========================================
         // GUÍAS GENERALES (TODOS LOS ROLES)
         // ========================================
         
@@ -4745,6 +4862,61 @@ El sistema envía notificaciones por:
         } catch (Exception $e) {
             error_log("Error en getReservasActivas: " . $e->getMessage());
             return "Error al obtener las reservas activas.";
+        }
+    }
+    
+    /**
+     * Obtiene listado de todos los usuarios del sistema
+     */
+    private function getListadoUsuarios() {
+        try {
+            $sql = "SELECT u.id_usuario, u.nombre, u.correo, u.tipo_usuario, u.verificado, u.activo
+                    FROM usuarios u
+                    WHERE u.activo = 1
+                    ORDER BY u.tipo_usuario, u.nombre
+                    LIMIT 50";
+            
+            $stmt = $this->db->query($sql);
+            $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($usuarios)) {
+                return "No hay usuarios en el sistema.";
+            }
+
+            $response = "### 👥 Listado de Usuarios\n\n";
+            
+            // Agrupar por rol
+            $porRol = ['Administrador' => [], 'Encargado' => [], 'Profesor' => []];
+            foreach ($usuarios as $u) {
+                $rol = $u['tipo_usuario'];
+                if (isset($porRol[$rol])) {
+                    $porRol[$rol][] = $u;
+                }
+            }
+            
+            foreach ($porRol as $rol => $lista) {
+                if (empty($lista)) continue;
+                
+                $emoji = $rol === 'Administrador' ? '👑' : ($rol === 'Encargado' ? '🔧' : '👨‍🏫');
+                $response .= "**{$emoji} {$rol}s (" . count($lista) . "):**\n\n";
+                
+                foreach ($lista as $u) {
+                    $estado = $u['verificado'] == 1 ? '✅' : '⚠️';
+                    $response .= "- {$estado} {$u['nombre']}\n";
+                    $response .= "  Email: {$u['correo']}\n\n";
+                }
+            }
+
+            if (count($usuarios) >= 50) {
+                $response .= "_Mostrando los primeros 50 usuarios._\n\n";
+            }
+            
+            $response .= "💡 Para gestionar usuarios, ve al módulo **Gestionar Usuarios** desde el dashboard.";
+
+            return $response;
+        } catch (Exception $e) {
+            error_log("Error en getListadoUsuarios: " . $e->getMessage());
+            return "❌ Error al obtener el listado de usuarios.";
         }
     }
     
