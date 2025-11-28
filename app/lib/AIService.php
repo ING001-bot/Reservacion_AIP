@@ -3787,7 +3787,7 @@ El sistema envía notificaciones por:
         
         // Botón: "Mis reservas activas"
         if (preg_match('/mis.*reservas.*activas/i', $userMessage) ||
-            preg_match('/cu(a|\u00e1)ntas.*reservas.*tengo.*activas/i', $userMessage)) {
+            preg_match('/cu(a|á)ntas.*reservas.*tengo.*activas/i', $userMessage)) {
             return "📅 Para ver tus reservas activas:\n\n" .
                    "1. Ve al módulo **Historial**\n" .
                    "2. Selecciona la pestaña **Aulas (Reservas)**\n" .
@@ -3797,7 +3797,7 @@ El sistema envía notificaciones por:
         
         // Botón: "Mis préstamos pendientes"
         if (preg_match('/mis.*pr(e|é)stamos.*pendientes/i', $userMessage) ||
-            preg_match('/cu(a|\u00e1)ntos.*pr(e|\u00e9)stamos.*tengo.*pendientes/i', $userMessage)) {
+            preg_match('/cu(a|á)ntos.*pr(e|é)stamos.*tengo.*pendientes/i', $userMessage)) {
             return "📦 Para ver tus préstamos pendientes:\n\n" .
                    "1. Ve al módulo **Historial**\n" .
                    "2. Selecciona la pestaña **Equipos (Préstamos)**\n" .
