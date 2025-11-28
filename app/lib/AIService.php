@@ -3811,6 +3811,122 @@ El sistema envía notificaciones por:
         }
         
         // ========================================
+        // DETECCIONES ESPECÍFICAS DE BOTONES PARA ENCARGADO
+        // (Estas deben ir ANTES de las guías generales para tener prioridad)
+        // ========================================
+        
+        if ($userRole === 'Encargado') {
+            // Botón: "Cómo registrar devolución (PASO A PASO)"
+            if (preg_match('/c(o|ó)mo registro.*devoluci(o|ó)n.*paso.*paso/i', $userMessage) ||
+                preg_match('/registrar.*devoluci(o|ó)n.*paso/i', $userMessage)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
+            }
+            
+            // Botón: "Cómo inspecciono los equipos"
+            if (preg_match('/c(o|ó)mo inspecciono.*equipos/i', $userMessage) ||
+                preg_match('/inspeccionar.*equipos/i', $userMessage) ||
+                preg_match('/inspecci(o|ó)n.*equipos/i', $userMessage)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // La guía incluye inspección
+            }
+            
+            // Botón: "¿Qué hago con equipos dañados?"
+            if (preg_match('/qu(e|é) hago.*equipos.*da(ñ|n)ados/i', $userMessage) ||
+                preg_match('/equipos.*da(ñ|n)ados.*qu(e|é) hacer/i', $userMessage)) {
+                return "⚠️ **Equipos Dañados - Procedimiento:**\n\n" .
+                       "1. **Durante inspección:** Marca el estado como 'Dañado'\n" .
+                       "2. **Comentario obligatorio:** Describe el daño específico\n" .
+                       "   - Ejemplos: 'Pantalla rota', 'Teclado con teclas sueltas'\n" .
+                       "3. **Registra la devolución** con ese estado\n" .
+                       "4. **Notificación automática:** Se envía alerta al Administrador\n" .
+                       "5. **NO vuelvas a prestar ese equipo** hasta que sea reparado\n\n" .
+                       "💡 El Administrador recibirá la notificación y tomará medidas.";
+            }
+            
+            // Botón: "¿Hay préstamos vencidos ahora?"
+            if (preg_match('/hay.*pr(e|é)stamos.*vencidos/i', $userMessage) ||
+                preg_match('/pr(e|é)stamos.*vencidos.*ahora/i', $userMessage)) {
+                return $this->getPrestamosVencidos();
+            }
+            
+            // Botón: "Ver historial completo"
+            if (preg_match('/ver.*historial.*completo/i', $userMessage) ||
+                preg_match('/c(o|ó)mo veo.*historial/i', $userMessage)) {
+                return self::GUIDE_VER_HISTORIAL_ENCARGADO;
+            }
+            
+            // Botón: "Préstamos activos ahora"
+            if (preg_match('/cu(a|á)ntos.*pr(e|é)stamos.*activos/i', $userMessage) ||
+                preg_match('/pr(e|é)stamos.*activos.*ahora/i', $userMessage)) {
+                return $this->getPrestamosActivos();
+            }
+            
+            // Botón: "Equipos disponibles"
+            if (preg_match('/cu(a|á)ntos.*equipos.*disponibles/i', $userMessage) ||
+                preg_match('/equipos.*disponibles.*hay/i', $userMessage)) {
+                return $this->getEquiposList($userMessage);
+            }
+            
+            // Botón: "Descargar PDF historial"
+            if (preg_match('/c(o|ó)mo descargo.*pdf.*historial/i', $userMessage) ||
+                preg_match('/descargar.*pdf.*historial/i', $userMessage)) {
+                return "📥 **Descargar PDF del Historial (Encargado):**\n\n" .
+                       "1. Ve al módulo **Historial**\n" .
+                       "2. Selecciona el turno: **Mañana** o **Tarde**\n" .
+                       "3. Navega a la semana que deseas exportar (flechas ◀ ▶)\n" .
+                       "4. Haz clic en **'🟢 Descargar PDF'** (esquina superior)\n" .
+                       "5. El PDF se descarga automáticamente con:\n" .
+                       "   - Todas las devoluciones de esa semana\n" .
+                       "   - Estados de los equipos\n" .
+                       "   - Comentarios de inspección\n\n" .
+                       "💡 Puedes imprimir o guardar el reporte para tus registros.";
+            }
+            
+            // Botón: "Ver notificaciones"
+            if (preg_match('/c(o|ó)mo veo.*notificaciones/i', $userMessage) ||
+                preg_match('/ver.*notificaciones/i', $userMessage)) {
+                return self::GUIDE_NOTIFICACIONES_ENCARGADO;
+            }
+            
+            // Botón: "Tipos de notificaciones"
+            if (preg_match('/qu(e|é).*notificaciones.*recibo/i', $userMessage) ||
+                preg_match('/tipos.*notificaciones/i', $userMessage)) {
+                return "🔔 **Notificaciones que recibes como Encargado:**\n\n" .
+                       "1. **Nueva reserva creada** (informativo)\n" .
+                       "   - Un profesor reservó un aula\n" .
+                       "   - Solo para conocimiento\n\n" .
+                       "2. **Nuevo préstamo solicitado** (informativo)\n" .
+                       "   - Un profesor solicitó equipos\n" .
+                       "   - Solo para conocimiento\n\n" .
+                       "3. **Alertas del sistema** (si las configura Admin)\n" .
+                       "   - Equipos sin stock\n" .
+                       "   - Préstamos vencidos\n\n" .
+                       "💡 Accede a tus notificaciones haciendo clic en el icono 🔔 en la navbar.";
+            }
+            
+            // Botón: "Editar mi perfil"
+            if (preg_match('/c(o|ó)mo edito.*perfil/i', $userMessage) ||
+                preg_match('/editar.*perfil/i', $userMessage)) {
+                return self::GUIDE_PERFIL_ENCARGADO;
+            }
+            
+            // Botón: "Cambiar contraseña"
+            if (preg_match('/c(o|ó)mo cambio.*contrase(ñ|n)a/i', $userMessage)) {
+                return self::GUIDE_CAMBIAR_CLAVE;
+            }
+            
+            // Botón: "Mis permisos y funciones"
+            if (preg_match('/qu(e|é).*permisos.*tengo.*encargado/i', $userMessage) ||
+                preg_match('/mis.*permisos.*funciones/i', $userMessage)) {
+                return self::GUIDE_PERMISOS_ENCARGADO;
+            }
+            
+            // Botón: "Cómo funciona el sistema"
+            if (preg_match('/c(o|ó)mo funciona.*sistema/i', $userMessage)) {
+                return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+            }
+        }
+        
+        // ========================================
         // GUÍAS GENERALES (TODOS LOS ROLES)
         // ========================================
         
@@ -4482,6 +4598,73 @@ El sistema envía notificaciones por:
     // ========================================
     // NUEVAS CONSULTAS AVANZADAS PARA ADMIN
     // ========================================
+    
+    /**
+     * Obtiene préstamos vencidos (pasaron su hora de devolución)
+     */
+    private function getPrestamosVencidos() {
+        try {
+            $now = date('Y-m-d H:i:s');
+            $today = date('Y-m-d');
+            
+            $sql = "SELECT p.id_prestamo, u.nombre as usuario, e.nombre_equipo, a.nombre_aula, 
+                           p.fecha_prestamo, p.hora_inicio, p.hora_fin,
+                           CONCAT(p.fecha_prestamo, ' ', p.hora_fin) as fecha_limite
+                    FROM prestamos p
+                    INNER JOIN usuarios u ON p.id_usuario = u.id_usuario
+                    LEFT JOIN equipos e ON p.id_equipo = e.id_equipo
+                    LEFT JOIN aulas a ON p.id_aula = a.id_aula
+                    WHERE p.estado = 'Prestado'
+                    AND CONCAT(p.fecha_prestamo, ' ', p.hora_fin) < ?
+                    ORDER BY p.fecha_prestamo ASC, p.hora_fin ASC
+                    LIMIT 20";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$now]);
+            $vencidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($vencidos)) {
+                return "✅ **No hay préstamos vencidos en este momento.**\n\n" .
+                       "Todos los equipos prestados están dentro de su horario o ya fueron devueltos.\n\n" .
+                       "💡 Recuerda revisar periódicamente para contactar a profesores con retrasos.";
+            }
+
+            $response = "### 🔴 Préstamos Vencidos (" . count($vencidos) . ")\n\n";
+            $response .= "_Estos equipos debieron ser devueltos ya:_\n\n";
+            
+            foreach ($vencidos as $p) {
+                $fecha_limite = new DateTime($p['fecha_limite']);
+                $ahora = new DateTime($now);
+                $diff = $ahora->diff($fecha_limite);
+                
+                $retraso = "";
+                if ($diff->days > 0) {
+                    $retraso = $diff->days . " día(s)";
+                } elseif ($diff->h > 0) {
+                    $retraso = $diff->h . " hora(s)";
+                } else {
+                    $retraso = $diff->i . " minuto(s)";
+                }
+                
+                $response .= "**⚠️ Préstamo #{$p['id_prestamo']}** - Retraso: {$retraso}\n";
+                $response .= "- Usuario: {$p['usuario']}\n";
+                $response .= "- Equipo: {$p['nombre_equipo']}\n";
+                $response .= "- Aula: {$p['nombre_aula']}\n";
+                $response .= "- Debió devolverse: {$p['fecha_prestamo']} a las {$p['hora_fin']}\n\n";
+            }
+
+            $response .= "---\n\n";
+            $response .= "💡 **Acciones recomendadas:**\n";
+            $response .= "- Contacta a los profesores para que devuelvan los equipos\n";
+            $response .= "- Verifica si ya los devolvieron físicamente y falta registro\n";
+            $response .= "- Notifica al Administrador si hay casos persistentes\n";
+
+            return $response;
+        } catch (Exception $e) {
+            error_log("Error en getPrestamosVencidos: " . $e->getMessage());
+            return "❌ Error al obtener los préstamos vencidos. Por favor, intenta nuevamente.";
+        }
+    }
     
     /**
      * Obtiene préstamos activos/pendientes
