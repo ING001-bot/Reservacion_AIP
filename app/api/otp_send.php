@@ -12,7 +12,7 @@ try {
   $id_usuario = (int)$_SESSION['id_usuario'];
 
   // Obtener teléfono del usuario
-  $stmt = $conexion->prepare("SELECT telefono, telefono_verificado, nombre FROM usuarios WHERE id_usuario = ? AND activo = 1");
+  $stmt = $conexion->prepare("SELECT telefono, nombre FROM usuarios WHERE id_usuario = ? AND activo = 1");
   $stmt->execute([$id_usuario]);
   $row = $stmt->fetch(PDO::FETCH_ASSOC);
   if (!$row || empty($row['telefono'])) {
@@ -24,12 +24,6 @@ try {
 
   $purpose = $_POST['purpose'] ?? $_GET['purpose'] ?? 'prestamo';
   $purpose = in_array($purpose, ['prestamo','phone_verify'], true) ? $purpose : 'prestamo';
-
-  if ($purpose === 'prestamo' && (int)($row['telefono_verificado'] ?? 0) !== 1) {
-    http_response_code(400);
-    echo json_encode(['ok'=>false,'msg'=>'Debes verificar tu teléfono antes de solicitar códigos para préstamos. Usa la opción Verificar teléfono.']);
-    exit;
-  }
 
   // Si existe un OTP vigente, reutilizarlo (no crear uno nuevo para evitar spam/limit)
   $stmt = $conexion->prepare("SELECT id, sent_at, expires_at FROM otp_tokens WHERE id_usuario = ? AND purpose = ? AND expires_at >= NOW() ORDER BY id DESC LIMIT 1");

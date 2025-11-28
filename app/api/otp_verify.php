@@ -42,9 +42,7 @@ try {
   // Éxito: marcar como usado (opcional: borrar todos los OTP activos) y setear ventana de validez
   $conexion->prepare("DELETE FROM otp_tokens WHERE id_usuario = ? AND purpose = ?")->execute([$id_usuario, $purpose]);
   if ($purpose === 'phone_verify') {
-    // marcar teléfono verificado
-    $conexion->prepare("UPDATE usuarios SET telefono_verificado = 1, telefono_verificado_at = NOW() WHERE id_usuario = ?")
-            ->execute([$id_usuario]);
+    // Teléfono verificado (aunque no se almacena estado en BD - solo flujo OTP)
     echo json_encode(['ok'=>true,'msg'=>'Teléfono verificado.']);
   } else {
     $_SESSION['otp_verified_until'] = time() + 10*60; // 10 minutos

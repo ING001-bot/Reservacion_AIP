@@ -102,7 +102,6 @@ class UsuarioModel {
 
     public function obtenerUsuarios() {
         $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono FROM usuarios WHERE activo = 1");
-        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, tipo_usuario, telefono, telefono_verificado FROM usuarios WHERE activo = 1");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -123,9 +122,8 @@ class UsuarioModel {
         $nombre = ucwords(strtolower(trim($nombre)));
         $correo = strtolower(trim($correo));
         $telefono = $this->normalizePhone($telefono);
-        // Si cambia el teléfono, reiniciar verificación
-        $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ?, telefono = ?, telefono_verificado = IF(telefono <> ?, 0, telefono_verificado), telefono_verificado_at = IF(telefono <> ?, NULL, telefono_verificado_at) WHERE id_usuario = ?");
-        return $stmt->execute([$nombre, $correo, $tipo_usuario, $telefono, $telefono, $telefono, $id_usuario]);
+        $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ?, telefono = ? WHERE id_usuario = ?");
+        return $stmt->execute([$nombre, $correo, $tipo_usuario, $telefono, $id_usuario]);
     }
 
     // Actualiza correo estableciendo verificado=0 y guardando token/expira
@@ -159,7 +157,7 @@ class UsuarioModel {
 
     public function obtenerPorCorreo($correo) {
         $correo = strtolower(trim($correo));
-        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, telefono, telefono_verificado, contraseña, tipo_usuario, verificado, activo FROM usuarios WHERE correo = ?");
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, telefono, contraseña, tipo_usuario, verificado, activo FROM usuarios WHERE correo = ?");
         $stmt->execute([$correo]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -252,15 +250,6 @@ class UsuarioModel {
             if ($stmt->rowCount() === 0) {
                 $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(32) NULL AFTER correo");
             }
-            // add telefono_verificado columns if missing
-            $stmt = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'telefono_verificado'");
-            if ($stmt->rowCount() === 0) {
-                $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono_verificado TINYINT(1) NOT NULL DEFAULT 0 AFTER telefono");
-            }
-            $stmt = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'telefono_verificado_at'");
-            if ($stmt->rowCount() === 0) {
-                $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono_verificado_at DATETIME NULL AFTER telefono_verificado");
-            }
         } catch (\Throwable $e) {
             error_log('ensureSchema UsuarioModel: '.$e->getMessage());
         }
@@ -324,7 +313,7 @@ class UsuarioModel {
      * Obtener lista de usuarios por tipo
      */
     public function obtenerUsuariosPorTipo(string $tipo): array {
-        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, telefono, verificado, telefono_verificado FROM usuarios WHERE tipo_usuario = ? AND activo = 1 ORDER BY nombre ASC");
+        $stmt = $this->db->prepare("SELECT id_usuario, nombre, correo, telefono, verificado FROM usuarios WHERE tipo_usuario = ? AND activo = 1 ORDER BY nombre ASC");
         $stmt->execute([$tipo]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }

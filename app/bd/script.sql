@@ -31,7 +31,7 @@ CREATE TABLE usuarios (
   INDEX idx_correo (correo),
   INDEX idx_tipo (tipo_usuario),
   INDEX idx_activo (activo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Usuarios del sistema';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Usuarios del sistema (verificación solo por email)';
 
 -- ============================================
 -- TABLA: aulas

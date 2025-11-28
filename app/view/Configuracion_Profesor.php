@@ -174,21 +174,6 @@ $perfil = $configController->obtenerPerfil($id_usuario);
                 <?php endif; ?>
             </div>
         </div>
-        <div class="info-row">
-            <div class="info-label">Teléfono verificado</div>
-            <div class="info-value">
-                <?php if ($perfil['telefono_verificado']): ?>
-                    <span class="badge bg-success">✅ Verificado</span>
-                <?php else: ?>
-                    <span class="badge bg-secondary">❌ Sin verificar</span>
-                <?php endif; ?>
-                <?php if (!empty($perfil['telefono']) && !$perfil['telefono_verificado']): ?>
-                    <small class="text-muted d-block mt-1">
-                        Se te pedirá verificar tu teléfono al realizar reservas o préstamos
-                    </small>
-                <?php endif; ?>
-            </div>
-        </div>
         <div class="mt-3">
             <a href="Profesor.php?view=password" class="btn btn-outline-brand">
                 🔑 Cambiar Contraseña

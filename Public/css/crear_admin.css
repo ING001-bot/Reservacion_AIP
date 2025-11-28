@@ -59,9 +59,10 @@ body.crear-admin{
 .brand-logo{
   width:56px; height:56px; object-fit:contain; border-radius:12px;
   background:#fff; padding:6px; box-shadow: 0 6px 30px rgba(0,0,0,.15);
+  display:block; margin: 0 auto 12px;
 }
-.brand-title{margin:12px 0 6px; font-size: clamp(26px, 4.4vw, 40px); font-weight:800; letter-spacing:.3px}
-.brand-sub{margin:0; opacity:.85; max-width: 52ch; line-height:1.5}
+.brand-title{margin:12px 0 6px; font-size: clamp(26px, 4.4vw, 40px); font-weight:800; letter-spacing:.3px; text-align:center; color:#ffffff;}
+.brand-sub{margin:0; color:#ffffff; opacity:.95; max-width: 52ch; line-height:1.5; text-align:center;}
 
 .kpi-badges{ display:flex; flex-wrap:wrap; gap:12px; margin-top:22px }
 .badge{
@@ -75,24 +76,21 @@ body.crear-admin{
 .card-glass{
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.55));
-  border:1px solid var(--stroke);
+  background: linear-gradient(180deg, #c5c7d0, #b8bac5);
+  border:1px solid #9598a5;
   border-radius: 18px;
   box-shadow: 0 24px 70px rgba(0,0,0,.28);
-}
-@media (prefers-color-scheme: dark){
-  .card-glass{ background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.06)); }
 }
 
 .form-card{ padding: clamp(20px, 3vw, 32px); justify-self:center; max-width: 560px; width:100%; }
 .form-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px }
-.form-head h2{ margin:0; font-size:clamp(20px, 2.6vw, 24px); font-weight:800 }
-.form-head .year{ color:var(--muted); font-size:13px }
+.form-head h2{ margin:0; font-size:clamp(20px, 2.6vw, 24px); font-weight:800; color:#1e293b; }
+.form-head .year{ color:#64748b; font-size:13px }
 
 /* Encabezado de marca dentro del formulario */
 .form-brand{ display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; text-align:center }
 .form-brand .form-logo{ width:64px; height:64px; object-fit:contain; border-radius:14px; background:#fff; padding:6px; box-shadow: 0 6px 30px rgba(0,0,0,.15); }
-.form-brand .form-title{ margin:0; font-weight:800; font-size: clamp(18px, 2.2vw, 22px); }
+.form-brand .form-title{ margin:0; font-weight:800; font-size: clamp(18px, 2.2vw, 22px); color:#1e293b; }
 
 .form-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px }
 @media (max-width: 980px){ .form-grid{ grid-template-columns: 1fr } }
@@ -100,15 +98,15 @@ body.crear-admin{
 /* Utilidad para ocupar ancho completo en el grid */
 .col-span-2{ grid-column: 1 / -1; }
 
-.label{ font-size:13px; color:var(--muted); margin-bottom:6px }
+.label{ font-size:13px; color:#64748b; margin-bottom:6px; font-weight:500; }
 .input{ width:100%; }
 .input{
   appearance:none;
-  border:1px solid var(--stroke);
-  background: #fff;
+  border:1px solid #cbd5e1;
+  background: #ffffff;
+  color:#1e293b;
   border-radius:12px; height:44px; padding:10px 12px; font-size:15px;
 }
-@media (prefers-color-scheme: dark){ .input{ background: #161a2e; color:#e5e7eb } }
 
 .password-field{ position:relative }
 .password-field .toggle{
@@ -129,7 +127,7 @@ body.crear-admin{
 }
 .btn{ background:var(--brand); color:#fff; border:1px solid var(--brand-700); }
 .btn:hover{ background:var(--brand-700) }
-.btn-outline{ background:transparent; border:1px solid var(--stroke); color:var(--text) }
+.btn-outline{ background:transparent; border:1px solid #475569; color:#1e293b; font-weight:700; }
 
 /* Botones auto-anchura en desktop y full width en mobile */
 @media (max-width: 600px){
@@ -140,7 +138,7 @@ body.crear-admin{
 .alert.success{ background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0 }
 .alert.error{ background:#fef2f2; color:#991b1b; border:1px solid #fecaca }
 
-.footer-note{ margin-top:18px; color:var(--muted); font-size:12px }
+.footer-note{ margin-top:18px; color:#64748b; font-size:12px }
 
 /* Small utility */
 .row{ display:flex; align-items:center; gap:14px }

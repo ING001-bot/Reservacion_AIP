@@ -191,18 +191,14 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
         <h4><i class="fas fa-tools me-2"></i> Mantenimiento del Sistema</h4>
         
         <?php 
-        // Mostrar alerta solo si puede ejecutarse (han pasado 30 días o nunca se ejecutó)
-        $mostrarAlerta = !$mantenimientoInfo['ejecutado'] || $mantenimientoInfo['puede_ejecutar'];
+        // Mostrar alerta SOLO si ya se ejecutó antes Y han pasado 30 días
+        $mostrarAlerta = $mantenimientoInfo['ejecutado'] && $mantenimientoInfo['puede_ejecutar'];
         ?>
         
         <?php if ($mostrarAlerta): ?>
-        <div class="alert alert-<?= !$mantenimientoInfo['ejecutado'] ? 'warning' : 'info' ?>">
-            <i class="fas fa-<?= !$mantenimientoInfo['ejecutado'] ? 'exclamation-triangle' : 'info-circle' ?> me-2"></i>
-            <?php if (!$mantenimientoInfo['ejecutado']): ?>
-                <strong>Atención:</strong> No se ha ejecutado mantenimiento aún. Se recomienda ejecutarlo para optimizar el sistema.
-            <?php else: ?>
-                <strong>Disponible:</strong> Han pasado 30 días desde el último mantenimiento. Es recomendable ejecutarlo.
-            <?php endif; ?>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Disponible:</strong> Han pasado 30 días desde el último mantenimiento. Es recomendable ejecutarlo.
         </div>
         <?php endif; ?>
         
