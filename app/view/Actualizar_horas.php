@@ -35,7 +35,11 @@ if ($id_aula && $fecha) {
                 $res_fin = substr($res['hora_fin'],0,5);
                 if ($res_ini === $inicio_hm) { $starts_here = true; }
                 if ($res_fin === $inicio_hm) { $half_end = true; }
-                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
+                
+                // CORREGIDO: Marcar ocupado SOLO si empieza en bloque o cubre bloque
+                $empiezaEnBloque = ($res['hora_inicio'] >= $inicio && $res['hora_inicio'] < $fin);
+                $cubreBloque = ($res['hora_inicio'] <= $inicio && $res['hora_fin'] >= $fin);
+                if ($empiezaEnBloque || $cubreBloque) { $ocupada = true; }
             }
             $fin_especiales = ['16:00','18:35'];
             if ($starts_here || $ocupada || ($half_end && in_array($inicio_hm, $fin_especiales, true))) {
@@ -60,7 +64,11 @@ if ($id_aula && $fecha) {
                 $res_fin = substr($res['hora_fin'],0,5);
                 if ($res_ini === $inicio_hm) { $starts_here = true; }
                 if ($res_fin === $inicio_hm) { $half_end = true; }
-                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
+                
+                // CORREGIDO: Marcar ocupado SOLO si empieza en bloque o cubre bloque
+                $empiezaEnBloque = ($res['hora_inicio'] >= $inicio && $res['hora_inicio'] < $fin);
+                $cubreBloque = ($res['hora_inicio'] <= $inicio && $res['hora_fin'] >= $fin);
+                if ($empiezaEnBloque || $cubreBloque) { $ocupada = true; }
             }
             $fin_especiales = ['16:00','18:35'];
             if ($starts_here || $ocupada || ($half_end && in_array($inicio_hm, $fin_especiales, true))) {
@@ -92,8 +100,11 @@ if ($id_aula && $fecha) {
                 $res_fin = substr($res['hora_fin'],0,5);
                 if ($res_ini === $inicio_hm) { $starts_here = true; }
                 if ($res_fin === $inicio_hm) { $half_end = true; }
-                // Un botón está ocupado si hay solapamiento de horarios
-                if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { $ocupada = true; }
+                
+                // CORREGIDO: Marcar ocupado SOLO si empieza en bloque o cubre bloque
+                $empiezaEnBloque = ($res['hora_inicio'] >= $inicio && $res['hora_inicio'] < $fin);
+                $cubreBloque = ($res['hora_inicio'] <= $inicio && $res['hora_fin'] >= $fin);
+                if ($empiezaEnBloque || $cubreBloque) { $ocupada = true; }
             }
             
             // Horarios especiales: 10:10 (recreo) y 12:45 (fin de turno mañana)

@@ -415,8 +415,19 @@ setTimeout(() => {
                                 $ocupada = false;
                                 if (!$isRecreoMarker) {
                                     foreach ($reservas_existentes as $res) {
-                                        // Verificar si hay solapamiento real de horarios
-                                        if ($inicio < $res['hora_fin'] && $fin > $res['hora_inicio']) { 
+                                        // CORREGIDO: Un bloque se marca ocupado SOLO si:
+                                        // 1. La reserva EMPIEZA en este bloque (res_inicio está dentro del bloque)
+                                        // 2. O la reserva CUBRE COMPLETAMENTE este bloque (empieza antes y termina después)
+                                        $res_inicio = $res['hora_inicio'];
+                                        $res_fin = $res['hora_fin'];
+                                        
+                                        // Caso 1: La reserva empieza dentro de este bloque
+                                        $empiezaEnBloque = ($res_inicio >= $inicio && $res_inicio < $fin);
+                                        
+                                        // Caso 2: La reserva cubre completamente el bloque
+                                        $cubreBloque = ($res_inicio <= $inicio && $res_fin >= $fin);
+                                        
+                                        if ($empiezaEnBloque || $cubreBloque) { 
                                             $ocupada = true; 
                                             break; 
                                         }
