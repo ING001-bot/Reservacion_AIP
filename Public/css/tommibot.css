@@ -37,6 +37,13 @@
   gap: 6px;
 }
 
+/* Layout en 2 columnas SOLO para administrador */
+.admin-dashboard .quick-queries-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .tbm-chip{ 
   display: block;
   width: 100%;
@@ -61,19 +68,107 @@
 }
 
 /* Bot flotante opcional (no anclado por defecto) */
-  .tbm-fab{ position:fixed; right:72px; bottom:16px; background:var(--tb-accent); color:#fff; border-radius:9999px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(30,107,214,.35); border:none; z-index:1040; }
+  .tbm-fab{ position:fixed; right:72px; bottom:60px; background:var(--tb-accent); color:#fff; border-radius:9999px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(30,107,214,.35); border:none; z-index:1040; }
   .tbm-fab:hover{ background:var(--tb-accent-2); }
+  
+  /* En móvil, posicionar más arriba para no tapar contenido */
+  @media (max-width: 768px){ 
+    .tbm-fab{ right:16px; bottom:90px; width:52px; height:52px; }
+  }
 
 /* Panel flotante */
-.tbm-panel{ position:fixed; right:18px; bottom:86px; width:700px; max-width:92vw; height:560px; z-index:1040; display:none; }
+.tbm-panel{ position:fixed; right:18px; bottom:130px; width:700px; max-width:92vw; height:560px; z-index:1040; display:none; }
 .tbm-panel.show{ display:block; animation: tbmSlideUp .18s ease-out; }
 .tbm-panel .tbm-body{ display:grid; grid-template-columns: 1fr 280px; gap:12px; padding:14px; }
 .tbm-panel .tbm-chat{ height:480px; }
+
 @keyframes tbmSlideUp{ from{ transform: translateY(8px); opacity:.0; } to{ transform:none; opacity:1; } }
+
+/* RESPONSIVE - TABLETS (hasta 992px) */
+@media (max-width: 992px){ 
+  .tbm-panel{ width:90vw; height:65vh; right:5vw; bottom:80px; } 
+  .tbm-panel .tbm-body{ grid-template-columns:1fr; padding:12px; } 
+  .tbm-panel .tbm-chat{ height:calc(65vh - 140px); }
+  .tbm-panel aside{ margin-top:12px; }
+}
+
+/* RESPONSIVE - MÓVILES (hasta 768px) */
 @media (max-width: 768px){ 
-  .tbm-panel{ right:10px; bottom:76px; height:70vh; width:95vw; } 
-  .tbm-panel .tbm-body{ grid-template-columns:1fr; } 
-  .tbm-panel aside{ display:none; }
+  .tbm-fab{ right:16px; bottom:80px; width:52px; height:52px; }
+  .tbm-fab i{ font-size:1.3rem; }
+  
+  .tbm-panel{ 
+    right:0; 
+    bottom:0; 
+    left:0;
+    top:auto;
+    width:100vw; 
+    height:85vh; 
+    max-width:100vw;
+    border-radius:16px 16px 0 0;
+  }
+  
+  .tbm-panel .tbm-card{ 
+    border-radius:16px 16px 0 0; 
+    height:85vh;
+    display:flex;
+    flex-direction:column;
+  }
+  
+  .tbm-panel .tbm-body{ 
+    grid-template-columns: 1fr 140px; /* Chat + Preguntas en 2 columnas */
+    padding:8px;
+    flex:1;
+    overflow:hidden;
+    gap:8px;
+  } 
+  
+  .tbm-panel .tbm-chat{ 
+    height:100%;
+    max-height:calc(85vh - 120px);
+  }
+  
+  .tbm-panel aside{ 
+    display:block;
+    margin-top:0;
+    overflow-y:auto;
+    max-height:calc(85vh - 120px);
+  }
+  
+  .tbm-help h6{ font-size:0.75rem; margin-bottom:8px; }
+  
+  .tbm-chip{ 
+    font-size:0.7rem; 
+    padding:6px 8px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  
+  .tbm-header{ padding:12px 14px; }
+  .tbm-avatar{ width:36px; height:36px; }
+  .tbm-title{ font-size:1rem; }
+  .tbm-sub{ font-size:0.8rem; }
+  
+  .tbm-input{ flex-direction:row; gap:6px; }
+  .tbm-input .form-control{ font-size:0.9rem; }
+  .tbm-btn{ font-size:0.85rem; padding:0.6rem 1rem; }
+  
+  .tbm-voice{ flex-direction:column; align-items:flex-start; gap:4px; }
+  .tbm-voice .state{ font-size:0.75rem; }
+  
+  .tbm-msg{ max-width:85%; font-size:0.9rem; padding:8px 10px; }
+}
+
+/* RESPONSIVE - MÓVILES PEQUEÑOS (hasta 480px) */
+@media (max-width: 480px){ 
+  .tbm-fab{ bottom:85px; }
+  .tbm-panel{ height:88vh; }
+  .tbm-panel .tbm-card{ height:88vh; }
+  .tbm-panel .tbm-chat{ max-height:calc(88vh - 200px); }
+  .tbm-msg{ max-width:90%; font-size:0.85rem; }
+  .tbm-input .form-control{ font-size:0.85rem; padding:0.65rem; }
+  .tbm-btn{ font-size:0.8rem; padding:0.55rem 0.85rem; }
 }
 
 /* Estilos para consultas rápidas con botones */

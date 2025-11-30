@@ -112,7 +112,7 @@ $badge = count($no_leidas);
         
         <?php if ($es_admin): ?>
         <a href="../view/Admin.php" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-gauge" style="width: 24px; text-align: center;"></i>
+          <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
           <span>Inicio</span>
         </a>
         <a href="../view/Admin.php?view=usuarios" class="nav-link text-white d-flex align-items-center gap-3 py-3">
@@ -120,19 +120,19 @@ $badge = count($no_leidas);
           <span>Usuarios</span>
         </a>
         <a href="../view/Admin.php?view=equipos" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-laptop" style="width: 24px; text-align: center;"></i>
+          <i class="fas fa-desktop" style="width: 24px; text-align: center;"></i>
           <span>Equipos</span>
         </a>
         <a href="../view/Admin.php?view=aulas" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-door-open" style="width: 24px; text-align: center;"></i>
+          <i class="fas fa-school" style="width: 24px; text-align: center;"></i>
           <span>Aulas</span>
         </a>
         <a href="../view/Admin.php?view=historial_global" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-calendar" style="width: 24px; text-align: center;"></i>
+          <i class="fas fa-history" style="width: 24px; text-align: center;"></i>
           <span>Historial Global</span>
         </a>
         <a href="../view/Admin.php?view=reportes" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-chart-line" style="width: 24px; text-align: center;"></i>
+          <i class="fas fa-chart-bar" style="width: 24px; text-align: center;"></i>
           <span>Reportes</span>
         </a>
         <a href="../view/Admin.php?view=notificaciones" class="nav-link text-white d-flex align-items-center gap-3 py-3">
@@ -154,17 +154,17 @@ $badge = count($no_leidas);
           <i class="fas fa-home" style="width: 24px; text-align: center;"></i>
           <span>Inicio</span>
         </a>
-        <a href="../view/Encargado.php?view=calendario_equipos" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-calendar-alt" style="width: 24px; text-align: center;"></i>
-          <span>Calendario Equipos</span>
+        <a href="../view/Encargado.php?view=configuracion" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-user-circle" style="width: 24px; text-align: center;"></i>
+          <span>Mi Perfil</span>
         </a>
-        <a href="../view/Encargado.php?view=calendario" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-calendar" style="width: 24px; text-align: center;"></i>
-          <span>Calendario Aulas</span>
+        <a href="../view/Encargado.php?view=historial" class="nav-link text-white d-flex align-items-center gap-3 py-3">
+          <i class="fas fa-file-alt" style="width: 24px; text-align: center;"></i>
+          <span>Historial</span>
         </a>
         <a href="../view/Encargado.php?view=devolucion" class="nav-link text-white d-flex align-items-center gap-3 py-3">
-          <i class="fas fa-undo" style="width: 24px; text-align: center;"></i>
-          <span>Devolución</span>
+          <i class="fas fa-box-open" style="width: 24px; text-align: center;"></i>
+          <span>Devoluciones</span>
         </a>
         <a href="../view/Encargado.php?view=notificaciones" class="nav-link text-white d-flex align-items-center gap-3 py-3">
           <i class="fas fa-bell" style="width: 24px; text-align: center;"></i>
@@ -586,7 +586,8 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
               <button id="tbm-mic" class="btn btn-outline-brand btn-sm tbm-btn" type="button"><i class="fas fa-microphone"></i> Hablar</button>
               <span id="tbm-mic-state" class="state">Pulsa para hablar</span>
             </div>
-            <div class="form-check form-switch">
+            <!-- Checkbox oculto pero funcional (TTS SIEMPRE ACTIVO) -->
+            <div class="form-check form-switch" style="display: none;">
               <input class="form-check-input" type="checkbox" id="tbm-speak" checked>
               <label class="form-check-label" for="tbm-speak">Leer respuestas</label>
             </div>
@@ -618,6 +619,49 @@ window.__tbUserRole = <?= json_encode($tipo, JSON_UNESCAPED_UNICODE) ?>;
         fab.addEventListener('click', function(){ 
           panel.classList.add('show');
           loadQuickQueries(); // Cargar preguntas al abrir
+          
+          // SALUDO AUTOMÁTICO al abrir por primera vez
+          var msgsContainer = document.getElementById('tbm-msgs');
+          if (msgsContainer && msgsContainer.children.length === 0) {
+            var userName = (window.__tbUserName || 'Usuario').trim();
+            var userRole = (window.__tbUserRole || 'Usuario').trim();
+            
+            var greeting = '👋 **¡Hola, ' + userName + '!**\n\n';
+            greeting += '🤖 Soy **Tommibot**, tu asistente virtual del sistema de Reservaciones Juan Tomis Stack.\n\n';
+            greeting += '🎯 **Estoy aquí para ayudarte con:**\n';
+            
+            if (userRole === 'Profesor') {
+              greeting += '• 📋 Hacer reservas de aulas\n';
+              greeting += '• 💻 Solicitar préstamos de equipos\n';
+              greeting += '• 📅 Ver tu historial de reservas y préstamos\n';
+              greeting += '• 🔑 Cambiar tu contraseña\n';
+              greeting += '• ❓ Responder tus dudas sobre el sistema\n\n';
+            } else if (userRole === 'Encargado') {
+              greeting += '• 🔄 Registrar devoluciones de equipos\n';
+              greeting += '• 🔍 Inspeccionar equipos\n';
+              greeting += '• ✅ Validar préstamos\n';
+              greeting += '• 📅 Ver historial de devoluciones\n';
+              greeting += '• ❓ Responder tus dudas sobre el sistema\n\n';
+            } else if (userRole === 'Administrador') {
+              greeting += '• 👥 Gestionar usuarios\n';
+              greeting += '• 💻 Administrar equipos\n';
+              greeting += '• 🏫 Administrar aulas\n';
+              greeting += '• 📈 Ver estadísticas y reportes\n';
+              greeting += '• 💾 Hacer backups del sistema\n';
+              greeting += '• ❓ Responder tus dudas sobre el sistema\n\n';
+            }
+            
+            greeting += '💡 **Puedes preguntarme:**\n';
+            greeting += '• Escribiendo tu pregunta en lenguaje natural\n';
+            greeting += '• Usando el micrófono para hablar conmigo\n';
+            greeting += '• Haciendo clic en las preguntas rápidas que aparecen abajo\n\n';
+            greeting += '🚀 **¿En qué puedo ayudarte hoy?**';
+            
+            // Llamar a appendMsg desde tommibot.js
+            if (typeof window.tomibot_appendMsg === 'function') {
+              window.tomibot_appendMsg('bot', greeting);
+            }
+          }
         }); 
       }
       

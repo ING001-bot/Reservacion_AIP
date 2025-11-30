@@ -205,37 +205,29 @@ Una vez verificado, la ventana desaparece y ves el formulario principal:
    - Debe ser mayor que hora de inicio
 
 **PASO 4: Seleccionar equipos (IMPORTANTE)**
-El formulario muestra 5 secciones de equipos:
 
-**Equipos OBLIGATORIOS (siempre selecciona):**
+⚠️ **NOTA:** El sistema muestra dinámicamente TODOS los tipos de equipos registrados en el sistema. Los equipos disponibles pueden variar según lo que el administrador haya registrado.
 
-📱 **Laptop:**
-- Desplegable con laptops disponibles
-- Formato: \"LAPTOP 001 (Stock disponible: 5)\"
-- Si no hay stock, dice: \"(Sin stock disponible)\"
-- Debes seleccionar UNA laptop
+El formulario mostrará selectores para CADA tipo de equipo disponible en la base de datos. Algunos tipos comunes incluyen:
 
-🖥️ **Proyector:**
-- Desplegable con proyectores disponibles
-- Formato: \"PROYECTOR 001 (Stock disponible: 3)\"
-- Debes seleccionar UN proyector
+📦 **Tipos de equipos que podrías ver:**
+- 💻 **Laptop** - Computadoras portátiles
+- 📽 **Proyector** - Proyectores multimedia  
+- 🖱 **Mouse** - Mouse inalámbrico/USB
+- 🔌 **Extensión** - Cables de extensión eléctrica
+- 🔊 **Parlante** - Altavoces/Parlantes
+- 📱 **Tablet** - Tabletas (si están registradas)
+- ⌨️ **Teclado** - Teclados externos (si están registrados)
+- 🎥 **Cámara** - Cámaras web (si están registradas)
+- Y cualquier otro tipo que el administrador haya creado
 
-**Equipos OPCIONALES (checkbox para activar):**
-
-🖱️ **Mouse (Opcional):**
-- Marca el checkbox ☑️ \"Incluir mouse\"
-- Se activa el desplegable de mouses
-- Selecciona uno si lo necesitas
-
-🔌 **Extensión (Opcional):**
-- Marca el checkbox ☑️ \"Incluir extensión\"
-- Se activa el desplegable de extensiones
-- Selecciona una si la necesitas
-
-🔊 **Parlante (Opcional):**
-- Marca el checkbox ☑️ \"Incluir parlante\"
-- Se activa el desplegable de parlantes
-- Selecciona uno si lo necesitas
+**Cómo funciona:**
+- Cada tipo de equipo tiene su propio selector desplegable
+- Formato de cada opción: \"[NOMBRE] ([Stock disponible])\"  
+- Ejemplo: \"LAPTOP 001 (5 disponibles)\"
+- Puedes seleccionar UNO de cada tipo que necesites
+- NO es obligatorio seleccionar todos los tipos
+- Selecciona solo los equipos que realmente vas a usar en tu clase
 
 **PASO 5: Validar stock en tiempo real**
 - El sistema muestra stock disponible PARA LA FECHA seleccionada
@@ -2765,6 +2757,193 @@ Si tienes dudas técnicas o necesitas ayuda:
 - También puedes consultar estas guías en cualquier momento
 ";
 
+    private const GUIDE_ENCARGADO = "
+⚙️ **GUÍA DEL SISTEMA PARA ENCARGADO**
+
+## 🎯 **TUS FUNCIONES PRINCIPALES**
+
+Como **Encargado**, eres responsable de:
+1. ✅ **Registrar devoluciones** de equipos prestados
+2. ✅ **Inspeccionar equipos** al momento de devolución
+3. ✅ **Validar préstamos** verificando que todo esté completo
+4. ✅ **Reportar problemas** de equipos dañados o con fallas
+5. ✅ **Ver historial** de devoluciones y préstamos
+
+---
+
+## 📦 **1. REGISTRAR DEVOLUCIÓN (Paso a Paso)**
+
+### ¿Cuándo?
+- Cuando un profesor devuelve equipos prestados
+
+### ¿Cómo?
+1. Ve al módulo **Devolución** (menú lateral)
+2. El sistema muestra SOLO préstamos pendientes
+3. Busca el préstamo del profesor
+4. Haz clic en **'Registrar Devolución'**
+5. **INSPECCIONA CADA EQUIPO:**
+   - ✅ **OK** = Perfecto estado
+   - ⚠️ **Dañado** = Tiene fallas (describe el problema)
+   - 🔴 **Falta accesorio** = Le falta cable, mouse, etc.
+6. Agrega comentarios si es necesario
+7. Haz clic en **'Guardar Devolución'**
+
+**Resultado:**
+- ✅ Stock actualizado automáticamente
+- ✅ Préstamo marcado como devuelto
+- ✅ Si hay daño, el Admin recibe notificación
+
+---
+
+## 🔍 **2. INSPECCIONAR EQUIPOS**
+
+### ¿Por qué es importante?
+- Garantiza que los equipos estén en buen estado
+- Detecta daños a tiempo
+- Evita que se presten equipos defectuosos
+
+### ¿Qué revisar?
+✅ **Laptop/Tablet:**
+- Pantalla sin rayones o grietas
+- Teclado funcional
+- Batería carga correctamente
+- Puertos USB/HDMI funcionan
+- Incluye cargador y cable
+
+✅ **Proyector:**
+- Enciende correctamente
+- Proyecta imagen clara
+- Incluye cable HDMI y cable de poder
+- Control remoto (si aplica)
+
+✅ **Parlantes/Mouse/Teclado:**
+- Funcionan correctamente
+- Sin daños físicos visibles
+- Cables en buen estado
+
+**Si detectas un problema:**
+1. Marca como **'Dañado'** en el formulario
+2. Describe específicamente el problema
+3. El Admin recibirá una notificación automática
+
+---
+
+## ✅ **3. VALIDAR PRÉSTAMO**
+
+### ¿Qué significa validar?
+- Verificar que el profesor devolvió TODOS los equipos
+- Confirmar que están en buen estado
+- Cerrar el préstamo en el sistema
+
+### Proceso:
+1. El profesor te entrega los equipos
+2. **Cuenta los equipos:** Verifica que sean TODOS (laptop + mouse + cable, etc.)
+3. **Inspecciona cada uno:** Revisa que funcionen
+4. Si todo está OK:
+   - Registra la devolución con estado **'OK'**
+5. Si hay un problema:
+   - Marca como **'Dañado'** y describe el problema
+   - El sistema NO permitirá prestar ese equipo hasta que sea reparado
+
+---
+
+## ⚠️ **4. REPORTAR PROBLEMAS**
+
+### ¿Cuándo reportar?
+- Equipo dañado detectado durante inspección
+- Equipo con fallas que no se pueden usar
+- Falta de accesorios
+
+### ¿Cómo reportar?
+**Automático durante devolución:**
+1. Al registrar devolución, marca como **'Dañado'**
+2. Describe el problema en el campo de comentarios
+3. El Admin recibe notificación inmediata
+
+**Manual (si detectas problema después):**
+1. Ve a **Notificaciones** (menú)
+2. Haz clic en **'Reportar Problema'**
+3. Describe el equipo y el problema
+4. Envía el reporte
+
+---
+
+## 📊 **5. VER HISTORIAL**
+
+### ¿Qué puedes ver?
+- Todas las devoluciones registradas
+- Préstamos activos (pendientes de devolución)
+- Estado de cada equipo devuelto
+- Comentarios de inspección
+
+### ¿Cómo acceder?
+1. Ve al módulo **Historial** (menú lateral)
+2. Selecciona el turno: **Mañana** o **Tarde**
+3. Navega por semanas usando las flechas ◀ ▶
+4. Descarga PDF si necesitas un reporte
+
+---
+
+## 🔔 **6. NOTIFICACIONES**
+
+### Recibes notificaciones de:
+- ✅ Nueva reserva creada (informativo)
+- ✅ Nuevo préstamo solicitado (informativo)
+- ⚠️ Alertas del sistema (si Admin las configura)
+
+### ¿Cómo verlas?
+1. Haz clic en el icono 🔔 en la navbar
+2. Verás todas tus notificaciones
+3. Haz clic para ver detalles
+
+---
+
+## 💡 **CONSEJOS IMPORTANTES**
+
+✅ **SIEMPRE inspecciona los equipos:**
+- Es tu responsabilidad garantizar que estén en buen estado
+- Un equipo dañado no reportado puede causar problemas después
+
+✅ **Sé específico en los comentarios:**
+- En lugar de 'está roto', escribe 'pantalla tiene grieta en esquina superior derecha'
+- Ayuda al Admin a tomar decisiones
+
+✅ **Reporta INMEDIATAMENTE:**
+- Si detectas un equipo dañado, repórtalo de inmediato
+- No esperes a que se acumulen los problemas
+
+✅ **Revisa préstamos vencidos:**
+- Puedes preguntarme 'hay préstamos vencidos'
+- Coordina con el profesor para que devuelva
+
+---
+
+## ❓ **PREGUNTAS FRECUENTES**
+
+**¿Puedo hacer reservas o préstamos?**
+- ❌ NO. Tu rol es solo gestionar devoluciones y validar préstamos.
+
+**¿Puedo editar un préstamo después de registrado?**
+- ❌ NO. Una vez registrada la devolución, es permanente. Sé cuidadoso al inspeccionar.
+
+**¿Qué pasa si marco un equipo como dañado?**
+- El sistema lo quita del stock disponible automáticamente
+- El Admin recibe notificación
+- NO se podrá prestar hasta que el Admin lo repare y reactive
+
+**¿Puedo ver el historial de otros encargados?**
+- ✅ SÍ. Ves TODAS las devoluciones, de todos los encargados.
+
+---
+
+💬 **¿Necesitas ayuda?**
+Pregúntame cualquier cosa:
+- Cómo registro una devolución
+- Hay préstamos vencidos
+- Cuántos equipos disponibles hay
+- Cómo reporto un equipo dañado
+";
+
     private const GUIDE_COMO_FUNCIONA_SISTEMA = "
 ⚙️ **GUÍA COMPLETA: Cómo FUNCIONA EL SISTEMA**
 
@@ -2787,12 +2966,40 @@ El Sistema de Reservas AIP gestiona:
 - ✅ Gestionar aulas (crear, editar, activar/desactivar)
 - ✅ Ver historial global (de TODOS los usuarios)
 - ✅ Exportar reportes (PDF, Excel)
-- ✅ Configurar sistema
+- ✅ Configurar sistema y hacer backups de base de datos
 - ❌ NO puede hacer reservas ni préstamos (es solo gestor)
 
 **Acceso:**
 - ⚠️ REQUIERE verificación de correo (link enviado por email)
 - Sin verificación SMS requerida
+
+**💾 BACKUPS DE BASE DE DATOS:**
+- 📍 Ubicación: Configuración del Sistema → Backup
+- ⏰ Tiempo: 5-15 segundos por backup
+- 📅 Frecuencia recomendada:
+  • Mínimo: 1 vez por semana
+  • Recomendado: 2-3 veces por semana
+  • Ideal: Diariamente (al final de la jornada)
+- 🔄 Sin límite: Puedes hacer backups tantas veces como quieras
+- ⚠️ IMPORTANTE: El sistema NO hace backups automáticos, debes hacerlos manualmente
+- 💡 Guarda las copias en un lugar seguro (nube o disco externo)
+
+**🔧 MANTENIMIENTO DEL SISTEMA:**
+- 📍 Ubicación: Configuración del Sistema → Mantenimiento
+- ⏰ Tiempo: 15-30 segundos por ejecución
+- 📅 Frecuencia recomendada:
+  • Mínimo: 1 vez al mes
+  • Recomendado: 1 vez cada 2 semanas
+  • Ideal: 1 vez por semana
+- ⚠️ Límite: Máximo 1 vez cada 30 días (restricción del sistema)
+- 🎯 Tareas automáticas que ejecuta:
+  • Optimiza todas las tablas de la base de datos (OPTIMIZE TABLE)
+  • Limpia notificaciones antiguas (>3 meses)
+  • Elimina sesiones PHP expiradas (>24 horas)
+  • Crea backup automático de la BD
+  • Registra log de mantenimiento en auditoría
+- 💡 ¿Por qué hacerlo? Mejora velocidad, libera espacio, previene errores
+- 🔐 Solo Administradores pueden ejecutar mantenimiento
 
 ---
 
@@ -2933,7 +3140,7 @@ El sistema envía notificaciones por:
     /**
      * Genera una respuesta usando el motor de consultas local
      */
-    public function generateResponse($userMessage, $userRole = 'Profesor', $userId = null) {
+    public function generateResponse($userMessage, $userRole = 'Profesor', $userId = null, $mode = 'text') {
         // PRIMERO: Detectar si está pidiendo una guía paso a paso (respuesta inmediata)
         $guideResponse = $this->detectAndReturnGuide($userMessage, $userRole);
         if ($guideResponse) {
@@ -2941,7 +3148,7 @@ El sistema envía notificaciones por:
         }
 
         // SEGUNDO: Si no es una guía, usar el motor de respuestas locales basado en estadísticas
-        $localResponse = $this->generateLocalResponse($userMessage, $userRole, $userId);
+        $localResponse = $this->generateLocalResponse($userMessage, $userRole, $userId, $mode);
         if ($localResponse) {
             return $localResponse;
         }
@@ -2954,13 +3161,62 @@ El sistema envía notificaciones por:
      * Motor de respuestas local inteligente - Responde TODO sobre la base de datos
      * Utiliza análisis semántico, consultas dinámicas y estadísticas del sistema.
      */
-    private function generateLocalResponse($userMessage, $userRole, $userId) {
+    private function generateLocalResponse($userMessage, $userRole, $userId, $mode = 'text') {
         $lower = mb_strtolower($userMessage, 'UTF-8');
         $stats = $this->getSystemStatistics($userRole, $userId);
 
+        // Unificar lógica para texto y voz: si la pregunta es por voz, tratar igual que texto
+        $isVoice = false;
+        if (isset($_POST['mode'])) {
+            $isVoice = ($_POST['mode'] === 'voice');
+        } elseif (isset($_GET['mode'])) {
+            $isVoice = ($_GET['mode'] === 'voice');
+        } elseif (isset($GLOBALS['mode'])) {
+            $isVoice = ($GLOBALS['mode'] === 'voice');
+        }
+        // Si la pregunta es por voz, no cambiar la lógica de respuesta, solo ajustar formato si es necesario
+
+        // Respuestas sobre actualización mensual del chatbot (para todos los roles, prioridad alta)
+        if (preg_match('/(actualizaci[oó]n( mensual)?( del)? chatbot|actualizar( el)? chatbot|nueva versi[oó]n( del)? chatbot|changelog( del)? chatbot|mejoras( del)? chatbot|funciones nuevas( del)? chatbot|historial( del)? chatbot|novedades( del)? chatbot|qué trae( el)? chatbot|que trae( el)? chatbot|cómo actualizo( el)? chatbot|como actualizo( el)? chatbot|cómo se actualiza( el)? chatbot|como se actualiza( el)? chatbot|qué novedades( tiene| hay) el chatbot|que novedades( tiene| hay) el chatbot|para qu[eé] sirve la actualizaci[oó]n|para que sirve la actualizacion|para que sirve la actualización mensual)/i', $lower)) {
+            return "🔄 Actualización mensual del Chatbot Tommibot\n\n"
+                . "Cada actualización mensual agrega nuevas funciones reales al chatbot, como:\n"
+                . "- Lectura por voz (TTS): el chatbot puede leer sus respuestas en voz alta para todos los roles.\n"
+                . "- Reconocimiento de más preguntas frecuentes y comandos inteligentes.\n"
+                . "- Respuestas más detalladas, útiles y personalizadas.\n"
+                . "- Mejoras de seguridad y estabilidad.\n"
+                . "- Soporte para nuevas funciones administrativas.\n"
+                . "\nPuedes consultar el historial de actualizaciones en la Configuración para ver qué trae cada versión.\n\n"
+                . "¿Para qué sirve? Garantiza que el chatbot esté siempre actualizado, inteligente y adaptado a las necesidades reales del sistema. Así, responde mejor a tus preguntas y te asiste con nuevas capacidades cada mes.";
+        }
+        // Respuestas sobre TTS, voz, lectura en voz alta (para todos los roles)
+        if (preg_match('/(tts|voz|leer en voz alta|lectura por voz|activar voz|desactivar voz|text-to-speech|cómo activo la voz|como activo la voz|cómo funciona la voz|como funciona la voz|cómo se activa la voz|como se activa la voz|cómo escuchar respuestas|como escuchar respuestas|el chatbot puede hablar|el chatbot puede leer)/i', $lower)) {
+            return "🔊 <b>Lectura por voz (TTS)</b><br><br>"
+                . "TTS significa <b>Text-to-Speech</b> (texto a voz). Si activas esta opción en la Configuración, el chatbot leerá en voz alta sus respuestas, facilitando la accesibilidad y permitiendo que escuches la información sin necesidad de leerla. Es ideal para personas con dificultades visuales o para quienes prefieren escuchar las respuestas.";
+        }
+        // --- Mantenimiento del sistema ---
+        if (preg_match('/(mantenimiento|mantener|optimizar|limpiar).*(sistema|base\s+de\s+datos|bd)/i', $lower)) {
+            return "MANTENIMIENTO DEL SISTEMA:\n- Optimización de la base de datos para mayor velocidad y estabilidad.\n- Limpieza de notificaciones antiguas (más de 3 meses).\n- Generación de backup automático de seguridad.\n- Limpieza de sesiones caducadas para proteger la privacidad.\n- Recalculo de estadísticas para reportes precisos.\n\nEl mantenimiento solo puede ejecutarse cada 30 días y requiere confirmación del administrador. Tras ejecutarlo, verás mejoras en el rendimiento y seguridad del sistema.";
+        }
+        // --- Backups ---
+        if (preg_match('/(backup|respaldo|copia|exportar|descargar).*(base\s+de\s+datos|bd|database)/i', $lower)) {
+            return "BACKUP DE BASE DE DATOS:\n- Permite descargar una copia completa y segura de toda la información del sistema.\n- Se recomienda hacer backups antes de cada actualización o mantenimiento.\n- Puedes descargar el backup desde la sección de Backups en Configuración.\n- Guarda el archivo en un lugar seguro (nube o disco externo).\n- El sistema te notificará cuando sea recomendable hacer un backup.";
+        }
+
         // NIVEL 1: Resumen general del sistema
-        if (preg_match('/(resumen|informacion|información|estado|dashboard|vista general).*(sistema|todo|completo)/i', $userMessage)) {
-            return $this->getSystemOverview($stats, $userRole);
+        if (preg_match('/(resumen|informacion|información|estado|dashboard|vista general|guía completa|guia completa|cómo funciona el sistema|como funciona el sistema|guía del sistema|guia del sistema|para qué sirve el sistema|para que sirve el sistema)/i', $userMessage)) {
+            $overview = $this->getSystemOverview($stats, $userRole);
+            // Si es Administrador, añade la guía de actualización del chatbot
+            if (strtolower($userRole) === 'administrador') {
+                $overview .= "\n\n---\n\n";
+                $overview .= "## 🤖 Actualización mensual del Chatbot Tommibot\n";
+                $overview .= "Cada mes, el Administrador puede ejecutar una actualización real del chatbot desde la Configuración. Esto agrega nuevas funciones, mejora la inteligencia, activa la lectura por voz (TTS), amplía el reconocimiento de preguntas y actualiza el historial de cambios.\n";
+                $overview .= "- Solo el Administrador puede ejecutar la actualización mensual.\n";
+                $overview .= "- El botón de actualización se habilita cada 30 días.\n";
+                $overview .= "- Al actualizar, el sistema registra el historial y activa las nuevas funciones para todos los usuarios.\n";
+                $overview .= "- Puedes consultar el historial de actualizaciones en la Configuración.\n";
+                $overview .= "¿Para qué sirve? Mantiene el chatbot actualizado, inteligente y adaptado a las necesidades reales del sistema, mejorando la asistencia y las respuestas cada mes.";
+            }
+            return $overview;
         }
 
         // NIVEL 2: Análisis semántico de la pregunta
@@ -2982,6 +3238,28 @@ El sistema envía notificaciones por:
             $commonResponse = $this->handleCommonQueries($lower, $userId);
             if ($commonResponse) {
                 return $commonResponse;
+            }
+        }
+        
+        // NIVEL 4: Análisis inteligente de palabras clave (para todos los roles)
+        if ($userRole === 'Administrador') {
+            $smartResponse = $this->analyzeAdministradorKeywords($lower);
+            if ($smartResponse) {
+                return $smartResponse;
+            }
+        }
+        
+        if ($userRole === 'Encargado') {
+            $smartResponse = $this->analyzeEncargadoKeywords($lower);
+            if ($smartResponse) {
+                return $smartResponse;
+            }
+        }
+        
+        if ($userRole === 'Profesor') {
+            $smartResponse = $this->analyzeProfesorKeywords($lower);
+            if ($smartResponse) {
+                return $smartResponse;
             }
         }
 
@@ -3039,6 +3317,12 @@ El sistema envía notificaciones por:
      * Analiza semánticamente la pregunta y responde con datos reales
      */
     private function analyzeAndRespond($lower, $stats, $userRole, $userId) {
+        // CONSULTA ESPECIAL: ¿Qué equipos hay disponibles?
+        if (preg_match('/(que|qué|cuales|cuáles).*(equipos|tipos de equipo).*(hay|existen|disponibles|tenemos|puedo|solicitar)/i', $lower) ||
+            preg_match('/(equipos).*(disponibles|hay|tenemos|existen)/i', $lower)) {
+            return $this->getListadoEquiposDisponibles();
+        }
+        
         // Mapeo semántico mejorado con sinónimos y variaciones
         // IMPORTANTE: Orden de más específico a menos específico
         $entityMap = [
@@ -3247,6 +3531,621 @@ El sistema envía notificaciones por:
             preg_match('/(aulas|salones).*(disponibles|hay|puedo|reservar)/i', $lower) ||
             preg_match('/(que aulas|qué aulas|cuales aulas).*(puedo|disponibles)/i', $lower)) {
             return $this->getAulasList($lower);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Analiza palabras clave para responder preguntas del Encargado de forma inteligente
+     */
+    private function analyzeEncargadoKeywords($lower) {
+        // Palabras clave relacionadas con HISTORIAL
+        if (preg_match('/(historial|registro|consultar|revisar|ver)/i', $lower)) {
+            return self::GUIDE_VER_HISTORIAL_ENCARGADO;
+        }
+        
+        // Palabras clave relacionadas con DEVOLUCIÓN
+        if (preg_match('/(devoluci(o|ó)n|devolver|entregar|retornar)/i', $lower)) {
+            return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
+        }
+        
+        // Palabras clave relacionadas con INSPECCIÓN
+        if (preg_match('/(inspecci(o|ó)n|inspeccionar|revisar|verificar|estado|condici(o|ó)n)/i', $lower) && 
+            preg_match('/(equipo|laptop|proyector|dispositivo)/i', $lower)) {
+            return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // Incluye guía de inspección
+        }
+        
+        // Palabras clave relacionadas con VALIDAR
+        if (preg_match('/(validar|validaci(o|ó)n|verificar|confirmar|aprobar)/i', $lower) &&
+            preg_match('/(pr(e|é)stamo)/i', $lower)) {
+            return "✅ **VALIDAR PRÉSTAMO:**\n\n" .
+                   "Como Encargado, validar un préstamo significa verificar que se devolvieron TODOS los equipos.\n\n" .
+                   "**Pasos:**\n" .
+                   "1. Ve al módulo **Devolución**\n" .
+                   "2. Busca el préstamo del profesor\n" .
+                   "3. Verifica que todos los equipos estén presentes\n" .
+                   "4. Inspecciona el estado de cada equipo\n" .
+                   "5. Registra la devolución con el estado correspondiente\n\n" .
+                   "💡 Pregúntame: 'cómo registro devolución' para ver la guía completa.";
+        }
+        
+        // Palabras clave relacionadas con NOTIFICACIONES
+        if (preg_match('/(notificaci(o|ó)n|notificar|alerta|aviso)/i', $lower)) {
+            return self::GUIDE_NOTIFICACIONES_ENCARGADO;
+        }
+        
+        // Palabras clave relacionadas con PERFIL
+        if (preg_match('/(perfil|datos|informaci(o|ó)n personal|cuenta|configuraci(o|ó)n)/i', $lower) &&
+            !preg_match('/(sistema|equipos|préstamos)/i', $lower)) {
+            return self::GUIDE_PERFIL_ENCARGADO;
+        }
+        
+        // Palabras clave relacionadas con CONTRASEÑA
+        if (preg_match('/(contrase(ñ|n)a|clave|password)/i', $lower)) {
+            return self::GUIDE_CAMBIAR_CLAVE;
+        }
+        
+        // Palabras clave relacionadas con PERMISOS/FUNCIONES
+        if (preg_match('/(qu(e|é)\s+(puedo|funciones|permisos|hacer)|mis\s+(funciones|permisos))/i', $lower)) {
+            return "🔐 **TUS FUNCIONES COMO ENCARGADO:**\n\n" .
+                   "✅ **Puedes hacer:**\n" .
+                   "• Registrar devoluciones de equipos\n" .
+                   "• Inspeccionar estado de equipos\n" .
+                   "• Validar préstamos (verificar devoluciones)\n" .
+                   "• Reportar equipos dañados\n" .
+                   "• Ver historial completo de devoluciones\n" .
+                   "• Consultar préstamos activos y vencidos\n" .
+                   "• Ver notificaciones del sistema\n" .
+                   "• Editar tu perfil y cambiar contraseña\n\n" .
+                   "❌ **NO puedes hacer:**\n" .
+                   "• Hacer reservas de aulas\n" .
+                   "• Solicitar préstamos de equipos\n" .
+                   "• Gestionar usuarios\n" .
+                   "• Administrar equipos o aulas\n\n" .
+                   "💡 Pregúntame sobre cualquier función específica.";
+        }
+        
+        // GUÍA/AYUDA/TUTORIAL DEL SISTEMA - DETECCIÓN AMPLIA (Encargado)
+        if (preg_match('/(gu(i|í)a|ayuda|tutorial|manual|instrucciones|orientaci(o|ó)n)/i', $lower) &&
+            preg_match('/(sistema|completo|todo|general)/i', $lower)) {
+            return self::GUIDE_ENCARGADO;
+        }
+
+        // Solo "ayuda" o "ayudame" sin especificar qué
+        if (preg_match('/^(ayuda|ay(u|ú)dame|necesito\s+ayuda|tengo\s+duda)$/i', trim($lower))) {
+            return self::GUIDE_ENCARGADO;
+        }
+        
+        // DETECCIÓN AMPLIA: Preguntas con verbos interrogativos (cómo, qué, cuándo, dónde, por qué)
+        if (preg_match('/(c(o|ó)mo|qu(e|é)|cu(a|á)ndo|d(o|ó)nde|por\s+qu(e|é)|cu(a|á)nto)/i', $lower)) {
+            // Detectar tema de la pregunta
+            if (preg_match('/(devoluci(o|ó)n|devolver|recibir|entregar)/i', $lower)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
+            }
+            if (preg_match('/(inspecci(o|ó)n|inspeccionar|revisar|verificar|estado)/i', $lower)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // Incluye inspección
+            }
+            if (preg_match('/(validar|validaci(o|ó)n|aprobar|confirmar)/i', $lower)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // Incluye validación
+            }
+            if (preg_match('/(historial|registro|consultar)/i', $lower)) {
+                return self::GUIDE_VER_HISTORIAL_ENCARGADO;
+            }
+            if (preg_match('/(contrase(ñ|n)a|clave|password)/i', $lower)) {
+                return self::GUIDE_CAMBIAR_CLAVE;
+            }
+            // Si pregunta con verbo interrogativo pero no detectamos el tema, dar guía completa
+            return self::GUIDE_ENCARGADO;
+        }
+        
+        // DETECCIÓN AMPLIA: Verbos de acción (hacer, realizar, ejecutar, registrar)
+        if (preg_match('/(hacer|realizar|ejecutar|registrar|crear|necesito|quiero|quisiera|puedo)/i', $lower)) {
+            if (preg_match('/(devoluci(o|ó)n|devolver|recibir)/i', $lower)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
+            }
+            if (preg_match('/(inspecci(o|ó)n|inspeccionar|revisar)/i', $lower)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // Incluye inspección
+            }
+            if (preg_match('/(validar|validaci(o|ó)n)/i', $lower)) {
+                return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // Incluye validación
+            }
+            // Si tiene verbo de acción pero no detectamos el tema, dar guía completa
+            return self::GUIDE_ENCARGADO;
+        }
+        
+        // DETECCIÓN AMPLIA: Keywords sueltas importantes para Encargado
+        if (preg_match('/(equipo|dispositivo|laptop|proyector)\s+(devuelto|recibido|entregado|da(ñ|n)ado)/i', $lower)) {
+            return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Analiza palabras clave para responder preguntas del Profesor de forma inteligente
+     */
+    private function analyzeProfesorKeywords($lower) {
+        // Palabras clave relacionadas con RESERVA - DETECCIÓN MUY AMPLIA
+        if (preg_match('/(reserva|reservar|aula|sal(o|ó)n)/i', $lower) &&
+            !preg_match('/(historial|ver|consultar|cancelar)/i', $lower)) {
+            return self::GUIDE_RESERVA;
+        }
+        
+        // Si solo menciona "reserva" con verbos de ayuda
+        if (preg_match('/(ayuda|ayudame|ayúdame|cómo|como|qué|que|hacer|realizar)/i', $lower) &&
+            preg_match('/(reserva|reservar)/i', $lower) &&
+            !preg_match('/(historial|cancelar)/i', $lower)) {
+            return self::GUIDE_RESERVA;
+        }
+        
+        // Palabras clave relacionadas con PRÉSTAMO - DETECCIÓN MUY AMPLIA
+        // "ayudame hacer un prestamo" debe detectarse aquí
+        if (preg_match('/(pr(e|é)stamo|prestar|pedir|solicitar|necesito|quiero|dame)/i', $lower) &&
+            preg_match('/(equipo|laptop|proyector|dispositivo|material|pr(e|é)stamo)/i', $lower)) {
+            return self::GUIDE_PRESTAMO;
+        }
+        
+        // Si solo menciona "prestamo" con verbos de ayuda
+        if (preg_match('/(ayuda|ayudame|ayúdame|cómo|como|qué|que|hacer|realizar)/i', $lower) &&
+            preg_match('/pr(e|é)stamo/i', $lower) &&
+            !preg_match('/(devol|historial|vencido|activo)/i', $lower)) {
+            return self::GUIDE_PRESTAMO;
+        }
+        
+        // Palabras clave relacionadas con HISTORIAL
+        if (preg_match('/(historial|mis\s+(reservas|pr(e|é)stamos)|registro|consultar)/i', $lower)) {
+            return self::GUIDE_VER_HISTORIAL_PROFESOR;
+        }
+        
+        // Palabras clave relacionadas con NOTIFICACIONES
+        if (preg_match('/(notificaci(o|ó)n|notificar|alerta|aviso|recordatorio)/i', $lower)) {
+            return "🔔 **NOTIFICACIONES (Profesor):**\n\n" .
+                   "**Cómo ver tus notificaciones:**\n" .
+                   "1. Haz clic en el icono 🔔 en la barra superior\n" .
+                   "2. Verás todas tus notificaciones recientes\n" .
+                   "3. Haz clic en una notificación para ver detalles\n\n" .
+                   "**Tipos de notificaciones que recibes:**\n" .
+                   "• ✅ Reserva confirmada\n" .
+                   "• ✅ Préstamo aprobado\n" .
+                   "• ⚠️ Préstamo por vencer\n" .
+                   "• ⚠️ Préstamo vencido\n" .
+                   "• ℹ️ Alertas del sistema\n\n" .
+                   "💡 Las notificaciones te mantienen informado del estado de tus solicitudes.";
+        }
+        
+        // Palabras clave relacionadas con PERFIL
+        if (preg_match('/(perfil|datos|informaci(o|ó)n\s+personal|cuenta|tel(e|é)fono|correo)/i', $lower) &&
+            !preg_match('/(sistema|equipos|aulas)/i', $lower)) {
+            return "👤 **EDITAR PERFIL (Profesor):**\n\n" .
+                   "**Cómo actualizar tus datos:**\n" .
+                   "1. Haz clic en tu nombre (esquina superior derecha)\n" .
+                   "2. Selecciona 'Configuración' o 'Mi Perfil'\n" .
+                   "3. Edita los campos que necesites:\n" .
+                   "   - Nombre completo\n" .
+                   "   - Correo electrónico\n" .
+                   "   - Teléfono\n" .
+                   "4. Haz clic en 'Guardar Cambios'\n\n" .
+                   "💡 Mantén tus datos actualizados para recibir notificaciones correctamente.";
+        }
+        
+        // Palabras clave relacionadas con CONTRASEÑA
+        if (preg_match('/(contrase(ñ|n)a|clave|password)/i', $lower)) {
+            return self::GUIDE_CAMBIAR_CLAVE;
+        }
+        
+        // Palabras clave relacionadas con EQUIPOS DISPONIBLES
+        if (preg_match('/(equipos|dispositivos|laptop|proyector|mouse|teclado)\s+(disponibles|hay|tenemos)/i', $lower) ||
+            preg_match('/(qu(e|é)|cu(a|á)les)\s+equipos/i', $lower)) {
+            return $this->getEquiposList($lower);
+        }
+        
+        // Palabras clave relacionadas con AULAS DISPONIBLES
+        if (preg_match('/(aulas|salones)\s+(disponibles|hay|puedo)/i', $lower) ||
+            preg_match('/(qu(e|é)|cu(a|á)les)\s+aulas/i', $lower)) {
+            return $this->getAulasList($lower);
+        }
+        
+        // Palabras clave relacionadas con VERIFICACIÓN SMS
+        if (preg_match('/(sms|c(o|ó)digo|verificaci(o|ó)n|tel(e|é)fono|mensaje)/i', $lower) &&
+            preg_match('/(verificar|confirmar|recibir|c(o|ó)digo)/i', $lower)) {
+            return "📱 **VERIFICACIÓN SMS:**\n\n" .
+                   "Es un código de seguridad enviado a tu celular para confirmar tu identidad.\n\n" .
+                   "**Se usa al:**\n" .
+                   "• Hacer una reserva de aula\n" .
+                   "• Solicitar un préstamo de equipos\n\n" .
+                   "**¿Cómo funciona?**\n" .
+                   "1. Completas el formulario de reserva/préstamo\n" .
+                   "2. Recibes un código de 6 dígitos por SMS\n" .
+                   "3. Ingresas el código en el sistema\n" .
+                   "4. Se confirma tu solicitud\n\n" .
+                   "💡 Si no recibes el SMS, verifica tu número en tu perfil.";
+        }
+        
+        // Palabras clave relacionadas con PERMISOS/FUNCIONES
+        if (preg_match('/(qu(e|é)\s+(puedo|funciones|permisos|hacer)|mis\s+(funciones|permisos))/i', $lower)) {
+            return "🔐 **TUS FUNCIONES COMO PROFESOR:**\n\n" .
+                   "✅ **Puedes hacer:**\n" .
+                   "• Hacer reservas de aulas (mínimo 1 día de anticipación)\n" .
+                   "• Solicitar préstamos de equipos\n" .
+                   "• Ver tu historial de reservas y préstamos\n" .
+                   "• Consultar equipos y aulas disponibles\n" .
+                   "• Ver notificaciones y recordatorios\n" .
+                   "• Editar tu perfil y cambiar contraseña\n" .
+                   "• Verificar tu cuenta por SMS\n\n" .
+                   "❌ **NO puedes hacer:**\n" .
+                   "• Gestionar otros usuarios\n" .
+                   "• Administrar equipos o aulas\n" .
+                   "• Registrar devoluciones\n" .
+                   "• Ver historial de otros profesores\n\n" .
+                   "💡 Pregúntame sobre cualquier función específica.";
+        }
+        
+        // Palabras clave relacionadas con ANTICIPACIÓN/TIEMPOS
+        if (preg_match('/(anticipaci(o|ó)n|cu(a|á)nto\s+tiempo|cu(a|á)ndo|plazo)/i', $lower)) {
+            return "⏰ **TIEMPOS Y ANTICIPACIÓN:**\n\n" .
+                   "**Reservas de aula:**\n" .
+                   "• Mínimo 1 día de anticipación\n" .
+                   "• Máximo 2 semanas de anticipación\n\n" .
+                   "**Préstamos de equipos:**\n" .
+                   "• Mínimo 1 día de anticipación\n" .
+                   "• Duración: 1 día (devolución al día siguiente)\n\n" .
+                   "**¿Por qué mínimo 1 día?**\n" .
+                   "Para que el sistema pueda verificar disponibilidad y preparar los recursos.\n\n" .
+                   "💡 Planifica con tiempo tus clases.";
+        }
+        
+        // GUÍA/AYUDA/TUTORIAL DEL SISTEMA - DETECCIÓN AMPLIA
+        if (preg_match('/(gu(i|í)a|ayuda|tutorial|manual|instrucciones|orientaci(o|ó)n)/i', $lower) &&
+            preg_match('/(sistema|completo|todo|general)/i', $lower)) {
+            return self::GUIDE_MANEJO_SISTEMA_PROFESOR;
+        }
+        
+        // Solo "ayuda" o "ayudame" sin especificar qué
+        if (preg_match('/^(ayuda|ay(u|ú)dame|necesito\s+ayuda|tengo\s+duda)$/i', trim($lower))) {
+            return self::GUIDE_MANEJO_SISTEMA_PROFESOR;
+        }
+        
+        // DETECCIÓN AMPLIA: Preguntas con verbos interrogativos (cómo, qué, cuándo, dónde, por qué)
+        if (preg_match('/(c(o|ó)mo|qu(e|é)|cu(a|á)ndo|d(o|ó)nde|por\s+qu(e|é)|cu(a|á)nto)/i', $lower)) {
+            // Detectar tema de la pregunta
+            if (preg_match('/(reserva|reservar|aula|sal(o|ó)n)/i', $lower)) {
+                return self::GUIDE_RESERVA;
+            }
+            if (preg_match('/(pr(e|é)stamo|prestar|equipo|laptop|proyector|dispositivo|material)/i', $lower)) {
+                return self::GUIDE_PRESTAMO;
+            }
+            if (preg_match('/(historial|registro|consultar|mis\s+(reservas|pr(e|é)stamos))/i', $lower)) {
+                return self::GUIDE_VER_HISTORIAL_PROFESOR;
+            }
+            if (preg_match('/(descargar|pdf|reporte|exportar)/i', $lower)) {
+                return self::GUIDE_DESCARGAR_PDF_PROFESOR;
+            }
+            if (preg_match('/(contrase(ñ|n)a|clave|password)/i', $lower)) {
+                return self::GUIDE_CAMBIAR_CLAVE;
+            }
+            if (preg_match('/(sms|c(o|ó)digo|verificaci(o|ó)n)/i', $lower)) {
+                return "📱 **VERIFICACIÓN SMS:**\n\nEs un código de seguridad enviado a tu celular para confirmar tu identidad.\n\n**Se usa al:**\n• Hacer una reserva de aula\n• Solicitar un préstamo de equipos\n\n**¿Cómo funciona?**\n1. Completas el formulario de reserva/préstamo\n2. Recibes un código de 6 dígitos por SMS\n3. Ingresas el código en el sistema\n4. Se confirma tu solicitud\n\n💡 Si no recibes el SMS, verifica tu número en tu perfil.";
+            }
+            // Si pregunta con verbo interrogativo pero no detectamos el tema, dar guía completa
+            return self::GUIDE_MANEJO_SISTEMA_PROFESOR;
+        }
+        
+        // DETECCIÓN AMPLIA: Verbos de acción (hacer, realizar, ejecutar, crear, solicitar)
+        if (preg_match('/(hacer|realizar|ejecutar|crear|solicitar|pedir|necesito|quiero|quisiera|puedo)/i', $lower)) {
+            if (preg_match('/(reserva|aula|sal(o|ó)n)/i', $lower)) {
+                return self::GUIDE_RESERVA;
+            }
+            if (preg_match('/(pr(e|é)stamo|equipo|laptop|proyector|dispositivo|material)/i', $lower)) {
+                return self::GUIDE_PRESTAMO;
+            }
+            // Si tiene verbo de acción pero no detectamos el tema, dar guía completa
+            return self::GUIDE_MANEJO_SISTEMA_PROFESOR;
+        }
+        
+        // DETECCIÓN AMPLIA: Keywords sueltas importantes
+        if (preg_match('/(equipos|dispositivos|laptop|proyector|mouse|teclado|material)/i', $lower)) {
+            // Si solo menciona equipos sin contexto claro, preguntar si quiere préstamo o lista
+            if (preg_match('/(disponible|hay|tenemos|ver|lista|cu(a|á)les)/i', $lower)) {
+                return $this->getEquiposList($lower);
+            }
+            return self::GUIDE_PRESTAMO; // Por defecto, asume que quiere pedir préstamo
+        }
+        
+        if (preg_match('/(aula|sal(o|ó)n|sala)/i', $lower)) {
+            if (preg_match('/(disponible|hay|tenemos|ver|lista|cu(a|á)les)/i', $lower)) {
+                return $this->getAulasList($lower);
+            }
+            return self::GUIDE_RESERVA; // Por defecto, asume que quiere hacer reserva
+        }
+        
+        return null;
+    }
+
+    /**
+     * Analiza palabras clave para responder preguntas del Administrador de forma inteligente
+     */
+    private function analyzeAdministradorKeywords($lower) {
+        // Palabras clave relacionadas con GESTIÓN DE USUARIOS
+        if (preg_match('/(usuario|usuarios|profesor|profesores|encargado|encargados)/i', $lower) &&
+            !preg_match('/(historial|estad(i|í)stica)/i', $lower)) {
+            return self::GUIDE_GESTIONAR_USUARIOS;
+        }
+        
+        // Palabras clave relacionadas con GESTIÓN DE EQUIPOS
+        if (preg_match('/(gestionar|administrar|crear|editar|eliminar|agregar|añadir|a(ñ|n)adir)/i', $lower) &&
+            preg_match('/(equipo|equipos|dispositivo|laptop|proyector)/i', $lower)) {
+            return self::GUIDE_GESTIONAR_EQUIPOS;
+        }
+        
+        // Palabras clave relacionadas con GESTIÓN DE AULAS
+        if (preg_match('/(gestionar|administrar|crear|editar|eliminar|agregar|añadir|a(ñ|n)adir)/i', $lower) &&
+            preg_match('/(aula|aulas|sal(o|ó)n|salones)/i', $lower)) {
+            return self::GUIDE_GESTIONAR_AULAS;
+        }
+        
+        // Palabras clave relacionadas con HISTORIAL GLOBAL
+        if (preg_match('/(historial|registro|log|auditoria|auditor(i|í)a)/i', $lower) &&
+            preg_match('/(global|completo|todo|general|sistema)/i', $lower)) {
+            return self::GUIDE_VER_HISTORIAL_GLOBAL;
+        }
+        
+        // Palabras clave relacionadas con CONTRASEÑA
+        if (preg_match('/(contrase(ñ|n)a|clave|password)/i', $lower)) {
+            return self::GUIDE_CAMBIAR_CLAVE;
+        }
+        
+        // Palabras clave relacionadas con PERMISOS/FUNCIONES
+        if (preg_match('/(qu(e|é)\s+(puedo|funciones|permisos|hacer)|mis\s+(funciones|permisos))/i', $lower)) {
+            return "🔐 **TUS FUNCIONES COMO ADMINISTRADOR:**\n\n" .
+                   "✅ **Puedes hacer TODO:**\n" .
+                   "• Gestionar usuarios (crear, editar, eliminar, verificar)\n" .
+                   "• Administrar equipos (agregar, editar, eliminar, ver stock)\n" .
+                   "• Administrar aulas (crear, editar, eliminar, ver disponibilidad)\n" .
+                   "• Ver historial global completo del sistema\n" .
+                   "• Ver estadísticas y reportes\n" .
+                   "• Hacer backups de la base de datos\n" .
+                   "• Gestionar configuración del sistema\n" .
+                   "• Hacer/cancelar reservas y préstamos\n" .
+                   "• Ver notificaciones y alertas\n" .
+                   "• Editar tu perfil y cambiar contraseña\n\n" .
+                   "👑 **Tienes acceso total al sistema.**\n\n" .
+                   "💡 Pregúntame sobre cualquier función específica.";
+        }
+        
+        // Palabras clave relacionadas con BACKUP
+        if (preg_match('/(backup|respaldo|copia|exportar|descargar).*(base\s+de\s+datos|bd|database)/i', $lower) || 
+            preg_match('/(cada\s+cu(a|á)nto|cu(a|á)ndo|frecuencia|tiempo).*(backup|respaldo|copia)/i', $lower)) {
+            return "💾 **BACKUP DE BASE DE DATOS:**\n\n" .
+                   "**Cómo hacer un backup manual:**\n" .
+                   "1. Ve al panel de Administrador\n" .
+                   "2. Haz clic en 'Configuración del Sistema'\n" .
+                   "3. Busca la sección 'Backup de Base de Datos'\n" .
+                   "4. Haz clic en el botón '💾 Descargar Backup'\n" .
+                   "5. Se descargará un archivo .sql con toda la base de datos\n" .
+                   "6. Guarda el archivo en un lugar seguro (nube o disco externo)\n\n" .
+                   "**📅 FRECUENCIA RECOMENDADA:**\n" .
+                   "• **Mínimo:** 1 vez por semana (cada 7 días)\n" .
+                   "• **Recomendado:** 2 veces por semana (lunes y jueves)\n" .
+                   "• **Ideal:** Diariamente (al final de cada jornada)\n" .
+                   "• **Crítico:** Antes de cualquier actualización del sistema\n\n" .
+                   "**⏰ TIEMPO DE GENERACIÓN:**\n" .
+                   "• El backup tarda aproximadamente **5-15 segundos**\n" .
+                   "• Depende de la cantidad de datos almacenados\n" .
+                   "• Puedes hacer backups **tantas veces como quieras**\n" .
+                   "• No hay límite de tiempo entre backups\n\n" .
+                   "**¿Para qué sirve?**\n" .
+                   "• 🛡️ Proteger todos los datos del sistema\n" .
+                   "• 🔄 Restaurar el sistema en caso de error\n" .
+                   "• 📦 Migrar datos a otro servidor\n" .
+                   "• 📊 Auditar datos históricos\n\n" .
+                   "**💡 CONSEJOS:**\n" .
+                   "• Nombra tus backups con fecha: backup_2024_11_29.sql\n" .
+                   "• Guarda copias en múltiples lugares (PC + Nube)\n" .
+                   "• Verifica que el archivo .sql se descargó correctamente\n" .
+                   "• Mantén al menos las últimas 3 copias\n\n" .
+                   "⚠️ **IMPORTANTE:** El sistema NO hace backups automáticos, debes hacerlos manualmente.";
+        }
+        
+        // Palabras clave relacionadas con MANTENIMIENTO DEL SISTEMA
+        if (preg_match('/(mantenimiento|mantener|optimizar|limpiar).*(sistema|base\s+de\s+datos|bd)/i', $lower) ||
+            preg_match('/(cada\s+cu(a|á)nto|cu(a|á)ndo|frecuencia|tiempo|por\s+qu(e|é)).*(mantenimiento)/i', $lower) ||
+            preg_match('/(qu(e|é)\s+hace|para\s+qu(e|é)\s+sirve|c(o|ó)mo\s+funciona).*(mantenimiento)/i', $lower)) {
+            return "🔧 **MANTENIMIENTO DEL SISTEMA:**\n\n" .
+                   "**Cómo ejecutar mantenimiento:**\n" .
+                   "1. Ve al panel de Administrador\n" .
+                   "2. Haz clic en 'Configuración del Sistema'\n" .
+                   "3. Busca la sección 'Mantenimiento del Sistema'\n" .
+                   "4. Haz clic en el botón '🔧 Ejecutar Mantenimiento'\n" .
+                   "5. Confirma la acción en el popup\n" .
+                   "6. Espera a que termine (15-30 segundos)\n" .
+                   "7. Verás mensaje de confirmación con las tareas realizadas\n\n" .
+                   "**📅 FRECUENCIA RECOMENDADA:**\n" .
+                   "• **Mínimo:** 1 vez al mes (cada 30 días)\n" .
+                   "• **Recomendado:** 1 vez cada 2 semanas\n" .
+                   "• **Ideal:** 1 vez por semana\n" .
+                   "• **Límite del sistema:** Máximo 1 vez cada 30 días (restricción automática)\n\n" .
+                   "**⏰ TIEMPO DE EJECUCIÓN:**\n" .
+                   "• Normalmente: 15-30 segundos\n" .
+                   "• Depende de la cantidad de datos a limpiar\n" .
+                   "• El sistema mostrará un indicador de progreso\n\n" .
+                   "**🎯 ¿QUÉ HACE EL MANTENIMIENTO? (Tareas automáticas):**\n\n" .
+                   "**1. 🗜️ Optimización de Tablas (OPTIMIZE TABLE):**\n" .
+                   "   • Reorganiza y compacta las tablas de la base de datos\n" .
+                   "   • Libera espacio en disco desperdiciado\n" .
+                   "   • Mejora la velocidad de consultas SQL\n" .
+                   "   • Reduce fragmentación de datos\n" .
+                   "   • Tablas optimizadas: usuarios, equipos, aulas, reservas, prestamos, etc.\n\n" .
+                   "**2. 🧹 Limpieza de Notificaciones Antiguas:**\n" .
+                   "   • Elimina notificaciones con más de 3 meses de antigüedad\n" .
+                   "   • Solo notificaciones ya leídas\n" .
+                   "   • Reduce tamaño de tabla 'notificaciones'\n" .
+                   "   • Mejora rendimiento de consultas de notificaciones\n\n" .
+                   "**3. 🔐 Limpieza de Sesiones Expiradas:**\n" .
+                   "   • Elimina sesiones PHP inactivas (>24 horas)\n" .
+                   "   • Libera memoria del servidor\n" .
+                   "   • Mejora seguridad del sistema\n\n" .
+                   "**4. 💾 Backup Automático de Base de Datos:**\n" .
+                   "   • Crea copia de seguridad .sql automáticamente\n" .
+                   "   • Se guarda en carpeta backups/database/\n" .
+                   "   • Nombre: backup_YYYY_MM_DD_HHmmss.sql\n" .
+                   "   • Conserva las últimas 5 copias automáticas\n\n" .
+                   "**5. 📊 Registro de Auditoría:**\n" .
+                   "   • Guarda log en tabla 'mantenimiento_sistema'\n" .
+                   "   • Registra fecha, usuario admin, tareas realizadas\n" .
+                   "   • Permite ver historial de mantenimientos\n\n" .
+                   "**🔍 ¿POR QUÉ ES IMPORTANTE?**\n" .
+                   "• ⚡ **Rendimiento:** Sistema más rápido y eficiente\n" .
+                   "• 💾 **Espacio:** Libera espacio en disco ocupado innecesariamente\n" .
+                   "• 🛡️ **Seguridad:** Elimina sesiones y datos obsoletos\n" .
+                   "• 🔄 **Estabilidad:** Previene errores por fragmentación\n" .
+                   "• 💼 **Backup:** Genera copia de seguridad automática\n\n" .
+                   "**⚠️ RESTRICCIONES:**\n" .
+                   "• Solo puede ejecutarlo un ADMINISTRADOR\n" .
+                   "• No se puede ejecutar más de 1 vez cada 30 días\n" .
+                   "• Si intentas ejecutar antes de tiempo, verás mensaje de error\n" .
+                   "• El sistema bloquea automáticamente ejecuciones frecuentes\n\n" .
+                   "**💡 MEJORES PRÁCTICAS:**\n" .
+                   "• Ejecuta mantenimiento en horarios de baja actividad (noche/fin de semana)\n" .
+                   "• Verifica el mensaje de confirmación al terminar\n" .
+                   "• Revisa que el backup automático se haya creado correctamente\n" .
+                   "• Anota la fecha del último mantenimiento\n" .
+                   "• Si hay muchos usuarios conectados, espera a que salgan\n\n" .
+                   "**📋 DIFERENCIA CON BACKUP MANUAL:**\n" .
+                   "• **Mantenimiento:** Optimiza BD + Limpia datos + Backup automático (1 vez/mes máx.)\n" .
+                   "• **Backup Manual:** Solo descarga .sql sin optimizar (sin límite de frecuencia)\n\n" .
+                   "🎯 **RESUMEN:** El mantenimiento mantiene el sistema limpio, rápido y seguro. Ejecútalo mensualmente.";
+        }
+        
+        // Palabras clave relacionadas con ESTADÍSTICAS
+        if (preg_match('/(estad(i|í)stica|reporte|gr(a|á)fica|dashboard|resumen)/i', $lower)) {
+            return "📊 **ESTADÍSTICAS DEL SISTEMA:**\n\n" .
+                   "**Cómo ver estadísticas:**\n" .
+                   "1. Ve al Dashboard de Administrador\n" .
+                   "2. Verás gráficas y métricas en la página principal\n" .
+                   "3. Para reportes detallados, ve a 'Historial Global'\n\n" .
+                   "**Métricas disponibles:**\n" .
+                   "• Total de usuarios (por rol)\n" .
+                   "• Total de equipos (disponibles vs prestados)\n" .
+                   "• Total de aulas (disponibles vs reservadas)\n" .
+                   "• Préstamos activos y vencidos\n" .
+                   "• Reservas activas y futuras\n" .
+                   "• Equipos más solicitados\n" .
+                   "• Usuarios más activos\n\n" .
+                   "💡 Puedes exportar reportes en PDF.";
+        }
+        
+        // Palabras clave relacionadas con TIPOS DE EQUIPO
+        if (preg_match('/(tipo|tipos|categor(i|í)a|categor(i|í)as).*(equipo|equipos)/i', $lower)) {
+            return "🏷️ **TIPOS DE EQUIPOS:**\n\n" .
+                   "**Cómo gestionar tipos de equipos:**\n" .
+                   "1. Ve al panel de Administrador\n" .
+                   "2. Haz clic en 'Tipos de Equipo' o 'Gestión de Tipos'\n" .
+                   "3. Puedes:\n" .
+                   "   - Crear nuevos tipos (ej: 'Tablet', 'Cámara')\n" .
+                   "   - Editar tipos existentes\n" .
+                   "   - Eliminar tipos (si no tienen equipos asociados)\n\n" .
+                   "**Tipos comunes:**\n" .
+                   "• Laptop\n" .
+                   "• Proyector\n" .
+                   "• Mouse\n" .
+                   "• Teclado\n" .
+                   "• Cargador\n" .
+                   "• Cable HDMI\n\n" .
+                   "💡 Los tipos ayudan a organizar el inventario.";
+        }
+        
+        // GUÍA/AYUDA/TUTORIAL DEL SISTEMA - DETECCIÓN AMPLIA
+        if (preg_match('/(gu(i|í)a|ayuda|tutorial|manual|instrucciones|orientaci(o|ó)n)/i', $lower) &&
+            preg_match('/(sistema|completo|todo|general)/i', $lower)) {
+            return self::GUIDE_COMO_FUNCIONA_SISTEMA; // Guía completa del sistema
+        }
+        
+        // Solo "ayuda" o "ayudame" sin especificar qué
+        if (preg_match('/^(ayuda|ay(u|ú)dame|necesito\s+ayuda|tengo\s+duda)$/i', trim($lower))) {
+            return self::GUIDE_COMO_FUNCIONA_SISTEMA; // Guía completa para admin
+        }
+        
+        // DETECCIÓN AMPLIA: Preguntas con verbos interrogativos (cómo, qué, cuándo, dónde, por qué)
+        if (preg_match('/(c(o|ó)mo|qu(e|é)|cu(a|á)ndo|d(o|ó)nde|por\s+qu(e|é)|cu(a|á)nto)/i', $lower)) {
+            // Detectar tema de la pregunta
+            if (preg_match('/(usuario|usuarios|profesor|encargado|crear|registrar)/i', $lower)) {
+                return self::GUIDE_GESTIONAR_USUARIOS;
+            }
+            if (preg_match('/(equipo|equipos|dispositivo|agregar|a(ñ|n)adir)/i', $lower)) {
+                return self::GUIDE_GESTIONAR_EQUIPOS;
+            }
+            if (preg_match('/(aula|aulas|sal(o|ó)n)/i', $lower)) {
+                return self::GUIDE_GESTIONAR_AULAS;
+            }
+            if (preg_match('/(historial|registro|log)/i', $lower)) {
+                return self::GUIDE_VER_HISTORIAL_GLOBAL;
+            }
+            if (preg_match('/(contrase(ñ|n)a|clave)/i', $lower)) {
+                return self::GUIDE_CAMBIAR_CLAVE;
+            }
+            // Si pregunta con verbo interrogativo pero no detectamos el tema, dar guía completa
+            return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+        }
+        
+        // DETECCIÓN AMPLIA: Verbos de acción (hacer, realizar, ejecutar, crear, gestionar)
+        if (preg_match('/(hacer|realizar|ejecutar|crear|gestionar|administrar|necesito|quiero|quisiera|puedo)/i', $lower)) {
+            if (preg_match('/(usuario|profesor|encargado)/i', $lower)) {
+                return self::GUIDE_GESTIONAR_USUARIOS;
+            }
+            if (preg_match('/(equipo|dispositivo|laptop|proyector)/i', $lower)) {
+                return self::GUIDE_GESTIONAR_EQUIPOS;
+            }
+            if (preg_match('/(aula|sal(o|ó)n)/i', $lower)) {
+                return self::GUIDE_GESTIONAR_AULAS;
+            }
+            if (preg_match('/(mantenimiento)/i', $lower)) {
+                return "🔧 **MANTENIMIENTO DEL SISTEMA:**\n\n" .
+                       "**Cómo ejecutar:**\n" .
+                       "1. Panel de Administrador → Configuración\n" .
+                       "2. Sección 'Mantenimiento del Sistema'\n" .
+                       "3. Click en '🔧 Ejecutar Mantenimiento'\n\n" .
+                       "**📅 Frecuencia:** 1 vez al mes (máximo)\n" .
+                       "**⏰ Tiempo:** 15-30 segundos\n\n" .
+                       "**Tareas automáticas:**\n" .
+                       "• Optimiza tablas de BD\n" .
+                       "• Limpia notificaciones antiguas\n" .
+                       "• Elimina sesiones expiradas\n" .
+                       "• Crea backup automático\n\n" .
+                       "💡 Pregunta '¿Qué hace el mantenimiento?' para más detalles.";
+            }
+            if (preg_match('/(backup|respaldo)/i', $lower)) {
+                return "💾 **BACKUP DE BASE DE DATOS:**\n\n" .
+                       "**Cómo hacer un backup manual:**\n" .
+                       "1. Ve al panel de Administrador\n" .
+                       "2. Haz clic en 'Configuración del Sistema'\n" .
+                       "3. Busca la sección 'Backup de Base de Datos'\n" .
+                       "4. Haz clic en '💾 Descargar Backup'\n" .
+                       "5. Se descargará un archivo .sql\n\n" .
+                       "**📅 FRECUENCIA:**\n" .
+                       "• Mínimo: 1 vez por semana\n" .
+                       "• Recomendado: 2-3 veces por semana\n" .
+                       "• Ideal: Diariamente\n\n" .
+                       "**⏰ TIEMPO:** 5-15 segundos por backup\n" .
+                       "**🔄 LÍMITE:** Sin límite, puedes hacer backups cuando quieras\n\n" .
+                       "💡 El sistema NO hace backups automáticos.";
+            }
+            // Si tiene verbo de acción pero no detectamos el tema, dar guía completa
+            return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+        }
+        
+        // DETECCIÓN AMPLIA: Keywords sueltas importantes para Administrador
+        if (preg_match('/(listado|lista|muestra|dame).*(usuario|equipo|aula)/i', $lower)) {
+            // Esto será manejado por handleAdvancedAdminQuery, pero si llega aquí:
+            if (preg_match('/usuario/i', $lower)) {
+                return self::GUIDE_GESTIONAR_USUARIOS;
+            }
+            if (preg_match('/equipo/i', $lower)) {
+                return self::GUIDE_GESTIONAR_EQUIPOS;
+            }
+            if (preg_match('/aula/i', $lower)) {
+                return self::GUIDE_GESTIONAR_AULAS;
+            }
         }
         
         return null;
@@ -3488,6 +4387,221 @@ El sistema envía notificaciones por:
     }
     
     /**
+     * Guía completa para Administrador - Cómo usar el sistema
+     */
+    private function getGuiaAdministrador() {
+        return "
+## 👨‍💼 **GUÍA COMPLETA: Sistema para ADMINISTRADOR**
+
+### 🎯 **TUS FUNCIONES COMO ADMINISTRADOR**
+
+Como Administrador tienes el control total del sistema:
+
+✅ **Gestionar Usuarios** - Crear, editar, activar/desactivar profesores, encargados y otros admins
+✅ **Gestionar Equipos** - Agregar, editar stock, tipos de equipo, marcar como disponible/prestado
+✅ **Gestionar Aulas** - Crear, editar, activar/desactivar aulas AIP y regulares
+✅ **Ver Historial Global** - Consultar reservas y préstamos de TODOS los usuarios
+✅ **Exportar Reportes** - PDF y Excel de historiales, estadísticas
+✅ **Configurar Sistema** - Backups de base de datos, mantenimiento
+✅ **Ver Estadísticas** - Gráficos y reportes completos del sistema
+
+❌ **NO puedes hacer reservas ni préstamos** - Eres gestor del sistema, no usuario final
+
+---
+
+### 📊 **MÓDULOS PRINCIPALES**
+
+#### 1️⃣ **GESTIÓN DE USUARIOS**
+📍 **Ubicación:** Admin → Usuarios
+
+**¿Qué puedes hacer?**
+- Ver listado completo de usuarios (profesores, encargados, admins)
+- Crear nuevos usuarios
+- Editar datos (nombre, correo, teléfono, rol)
+- Activar/desactivar cuentas
+- Ver estado de verificación (correo verificado o no)
+
+**Tipos de usuario que puedes crear:**
+- 👨‍🏫 **Profesor** - Puede reservar aulas y solicitar préstamos (requiere SMS)
+- 📦 **Encargado** - Registra devoluciones e inspecciona equipos
+- 👨‍💼 **Administrador** - Control total del sistema
+
+---
+
+#### 2️⃣ **GESTIÓN DE EQUIPOS**
+📍 **Ubicación:** Admin → Equipos
+
+**¿Qué puedes hacer?**
+- Ver inventario completo de equipos
+- Agregar nuevos equipos (laptops, proyectores, extensiones, etc.)
+- Editar información (nombre, marca, modelo, stock)
+- Marcar como disponible/prestado/dañado
+- Ver historial de cada equipo
+
+**Tipos de equipo comunes:**
+- 💻 Laptops
+- 📽️ Proyectores
+- 🔌 Extensiones eléctricas
+- 🖱️ Mouse inalámbricos
+- ⌨️ Teclados
+- 🎧 Audífonos
+- 📷 Cámaras web
+
+---
+
+#### 3️⃣ **GESTIÓN DE AULAS**
+📍 **Ubicación:** Admin → Aulas
+
+**¿Qué puedes hacer?**
+- Ver listado de aulas (AIP y REGULARES)
+- Crear nuevas aulas
+- Editar capacidad, tipo, piso
+- Activar/desactivar aulas
+- Ver reservas de cada aula
+
+**Tipos de aula:**
+- 🏫 **AIP** - Aulas de Innovación Pedagógica (SE PUEDEN RESERVAR)
+- 📚 **REGULAR** - Aulas normales (NO reservables, solo informativas)
+
+---
+
+#### 4️⃣ **HISTORIAL GLOBAL**
+📍 **Ubicación:** Admin → Historial General
+
+**¿Qué puedes ver?**
+- Todas las reservas del sistema (de todos los profesores)
+- Todos los préstamos (pendientes, completados, vencidos)
+- Filtrar por fecha, usuario, estado
+- Exportar a PDF o Excel
+
+---
+
+#### 5️⃣ **REPORTES Y ESTADÍSTICAS**
+📍 **Ubicación:** Admin → Reportes
+
+**¿Qué incluye?**
+- 📊 Gráficos de reservas por mes
+- 📈 Equipos más solicitados
+- 👥 Usuarios más activos
+- ⏰ Préstamos vencidos
+- 📅 Horarios más ocupados
+
+---
+
+### 💾 **BACKUPS DE BASE DE DATOS**
+
+📍 **Ubicación:** Admin → Configuración → Backup
+
+**¿Qué es?**
+Crea una copia de seguridad completa de toda la base de datos (usuarios, reservas, préstamos, equipos, aulas).
+
+**Frecuencia recomendada:**
+- ⏰ Mínimo: 1 vez por semana
+- ✅ Recomendado: 2-3 veces por semana
+- 🌟 Ideal: Diariamente (al final de la jornada)
+
+**Tiempo:** 5-15 segundos por backup
+
+**Límite:** Sin límite - puedes hacer backups tantas veces como quieras
+
+⚠️ **IMPORTANTE:** El sistema NO hace backups automáticos, debes hacerlos manualmente
+
+💡 **Consejo:** Guarda las copias en un lugar seguro (nube o disco externo)
+
+---
+
+### 🔧 **MANTENIMIENTO DEL SISTEMA**
+
+📍 **Ubicación:** Admin → Configuración → Mantenimiento
+
+**¿Qué hace?**
+Ejecuta tareas de optimización y limpieza automáticas:
+
+1. ✅ Optimiza todas las tablas de la base de datos (mejora velocidad)
+2. 🧹 Limpia notificaciones antiguas (>3 meses)
+3. 🗑️ Elimina sesiones PHP expiradas (>24 horas)
+4. 💾 Crea backup automático de la BD
+5. 📝 Registra log de mantenimiento
+
+**Frecuencia recomendada:**
+- ⏰ Mínimo: 1 vez al mes
+- ✅ Recomendado: 1 vez cada 2 semanas
+- 🌟 Ideal: 1 vez por semana
+
+**Tiempo:** 15-30 segundos por ejecución
+
+**Límite:** Máximo 1 vez cada 30 días (restricción del sistema)
+
+**¿Por qué hacerlo?**
+- Mejora la velocidad del sistema
+- Libera espacio en disco
+- Previene errores y corrupción de datos
+- Mantiene la BD en óptimas condiciones
+
+---
+
+### 🔐 **PERMISOS Y ACCESO**
+
+**¿Qué NO puedes hacer como Admin?**
+- ❌ Hacer reservas de aulas (solo Profesores)
+- ❌ Solicitar préstamos de equipos (solo Profesores)
+- ❌ Registrar devoluciones (solo Encargados)
+
+**¿Por qué?**
+El Administrador es el **gestor del sistema**, no un usuario final. Tu rol es supervisar, configurar y mantener el sistema funcionando correctamente.
+
+---
+
+### 📋 **FLUJO DE TRABAJO RECOMENDADO**
+
+**Al inicio del día:**
+1. Verifica préstamos vencidos (Admin → Reportes)
+2. Revisa notificaciones pendientes
+3. Verifica stock de equipos
+
+**Semanalmente:**
+1. Ejecuta mantenimiento del sistema
+2. Crea backup de la base de datos
+3. Revisa estadísticas de uso
+
+**Mensualmente:**
+1. Exporta reportes completos a PDF
+2. Revisa usuarios inactivos
+3. Actualiza inventario de equipos
+
+---
+
+### ❓ **PREGUNTAS FRECUENTES**
+
+**¿Puedo eliminar usuarios?**
+No se eliminan, se desactivan. Esto preserva el historial.
+
+**¿Cómo sé si un equipo está disponible?**
+En Admin → Equipos, mira la columna \"Disponibles\". Si es > 0, hay stock.
+
+**¿Puedo ver los préstamos de un profesor específico?**
+Sí, en Historial Global filtra por nombre de usuario.
+
+**¿Cómo exporto el historial completo?**
+Historial Global → Botón \"Exportar PDF\" o \"Exportar Excel\"
+
+**¿Qué hago si la BD está lenta?**
+Ejecuta Mantenimiento del Sistema (optimiza tablas automáticamente)
+
+---
+
+💡 **CONSEJO FINAL:**
+Como Administrador, tu responsabilidad principal es mantener el sistema funcionando correctamente. Haz backups regularmente y ejecuta mantenimiento periódico para evitar problemas.
+
+🚀 **¿Necesitas ayuda con algo específico?** Pregúntame:
+- \"¿Cómo gestiono usuarios?\"
+- \"¿Cómo administro equipos?\"
+- \"¿Cómo ver el historial global?\"
+- \"¿Qué roles existen en el sistema?\"
+";
+    }
+    
+    /**
      * Muestra consultas rápidas para el Profesor (con botones clicables)
      */
     private function getConsultasRapidasProfesor() {
@@ -3613,9 +4727,9 @@ El sistema envía notificaciones por:
                 return $this->getGuiaRapidaRegistrarUsuario();
             }
             
-            // "Cómo usar el sistema" 
+            // "Cómo usar el sistema" - GUÍA ESPECÍFICA PARA ADMINISTRADOR
             if (preg_match('/(como|cómo).*(usar|utilizar|trabajar con).*(sistema)/i', $userMessage)) {
-                return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+                return $this->getGuiaAdministrador();
             }
         }
         
@@ -3660,12 +4774,12 @@ El sistema envía notificaciones por:
                 return self::GUIDE_VER_HISTORIAL_GLOBAL;
             }
             
-            // GUÍA: Cómo funciona el sistema
+            // GUÍA: Cómo funciona el sistema - ESPECÍFICA PARA ADMIN
             if (preg_match('/(como|cómo).*(funciona|trabaja|opera).*(sistema|todo)/i', $userMessage) ||
                 preg_match('/(explicame|dime|cuentame).*(sistema|como funciona|funcionamiento)/i', $userMessage) ||
                 preg_match('/(informacion|información).*(sistema|completo|todo)/i', $userMessage) ||
                 preg_match('/(dame informacion|brindame informacion)/i', $userMessage)) {
-                return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+                return $this->getGuiaAdministrador();
             }
             
             // RESPUESTA: Roles del sistema
@@ -3816,16 +4930,118 @@ El sistema envía notificaciones por:
         // ========================================
         
         if ($userRole === 'Encargado') {
-            // Botón: "Cómo registrar devolución (PASO A PASO)"
-            if (preg_match('/c(o|ó)mo registro.*devoluci(o|ó)n.*paso.*paso/i', $userMessage) ||
-                preg_match('/registrar.*devoluci(o|ó)n.*paso/i', $userMessage)) {
+            // VALIDACIÓN: Detectar preguntas fuera del alcance de Encargado
+            if (preg_match('/(c(o|ó)mo|ayuda|ayudame|ayúdame|qu(e|é)|hacer|solicitar|crear|registrar).*(reserva|reservar)/i', $userMessage)) {
+                return "❌ **Función no disponible para tu rol**\n\n" .
+                       "Como **Encargado**, NO puedes hacer reservas.\n\n" .
+                       "**Tus funciones son:**\n" .
+                       "✅ Registrar devoluciones\n" .
+                       "✅ Inspeccionar equipos\n" .
+                       "✅ Validar préstamos\n" .
+                       "✅ Reportar problemas\n" .
+                       "✅ Ver historial\n\n" .
+                       "💡 **Solo los Profesores pueden hacer reservas.**";
+            }
+            
+            if (preg_match('/(c(o|ó)mo|ayuda|ayudame|ayúdame|qu(e|é)|hacer|solicitar|crear|registrar).*(pr(e|é)stamo|prestar|pedir|equipo)/i', $userMessage) &&
+                !preg_match('/(validar|devol|historial|vencido|activo|disponible|reportar|reporte|da(ñ|n)ado|problema)/i', $userMessage)) {
+                return "❌ **Función no disponible para tu rol**\n\n" .
+                       "Como **Encargado**, NO puedes solicitar préstamos.\n\n" .
+                       "**Tus funciones son:**\n" .
+                       "✅ Registrar devoluciones\n" .
+                       "✅ Inspeccionar equipos\n" .
+                       "✅ Validar préstamos (verificar devoluciones)\n" .
+                       "✅ Reportar problemas\n" .
+                       "✅ Ver historial\n\n" .
+                       "💡 **Solo los Profesores pueden solicitar préstamos.**";
+            }
+            
+            // Botón: "Cómo valido un préstamo"
+            if (preg_match('/c(o|ó)mo valido.*pr(e|é)stamo/i', $userMessage) ||
+                preg_match('/validar.*pr(e|é)stamo/i', $userMessage) ||
+                preg_match('/validaci(o|ó)n.*pr(e|é)stamo/i', $userMessage)) {
+                return "✅ **VALIDAR PRÉSTAMO (Paso a Paso):**\n\n" .
+                       "### ¿Qué significa validar un préstamo?\n" .
+                       "Verificar que el profesor devolvió TODOS los equipos en buen estado antes de cerrar el préstamo.\n\n" .
+                       "### Proceso de Validación:\n" .
+                       "1. **El profesor te entrega los equipos**\n" .
+                       "   - Revisa que sean TODOS los equipos del préstamo\n" .
+                       "   - Ejemplo: Si prestó 2 laptops + 2 mouse, debe devolver TODO\n\n" .
+                       "2. **Cuenta los equipos:**\n" .
+                       "   - Ve al módulo **Devolución**\n" .
+                       "   - Busca el préstamo del profesor\n" .
+                       "   - El sistema te muestra cuántos equipos debe devolver\n\n" .
+                       "3. **Inspecciona CADA equipo:**\n" .
+                       "   - ✅ **OK**: Funciona perfectamente\n" .
+                       "   - ⚠️ **Dañado**: Tiene fallas (describe el problema)\n" .
+                       "   - 🔴 **Falta accesorio**: Le falta cable, cargador, etc.\n\n" .
+                       "4. **Registra la devolución:**\n" .
+                       "   - Selecciona el estado de cada equipo\n" .
+                       "   - Agrega comentarios (si hay daños)\n" .
+                       "   - Haz clic en 'Guardar Devolución'\n\n" .
+                       "### ¿Qué pasa después?\n" .
+                       "- ✅ Préstamo marcado como DEVUELTO\n" .
+                       "- ✅ Stock actualizado automáticamente\n" .
+                       "- ✅ Si marcaste 'Dañado', el Admin recibe notificación\n" .
+                       "- ⚠️ Equipos dañados NO se pueden prestar hasta que sean reparados\n\n" .
+                       "💡 **Importante:** Sé cuidadoso al inspeccionar. Una vez registrada la devolución, NO se puede editar.";
+            }
+            
+            // Botón: "¿Cómo reporto un equipo dañado?" - TODAS LAS VARIACIONES POSIBLES
+            if (preg_match('/c(o|ó)mo\s+(reporto|reportar|reporte|informo|informar|aviso|avisar)/i', $userMessage) ||
+                preg_match('/(reporto|reportar|reporte|informo|informar|aviso|avisar)\s+(un|el|los|)?\s*(problema|equipo|da(ñ|n)o)/i', $userMessage) ||
+                preg_match('/(problema|equipo)\s+(da(ñ|n)ado|roto|mal|falla)/i', $userMessage) ||
+                preg_match('/qu(e|é)\s+hago\s+.*problema/i', $userMessage) ||
+                preg_match('/c(o|ó)mo\s+.*\s*(problema|da(ñ|n)o|falla)/i', $userMessage)) {
+                return "⚠️ **REPORTAR EQUIPO DAÑADO:**\n\n" .
+                       "Hay 2 formas de reportar un equipo dañado:\n\n" .
+                       "### 📦 **OPCIÓN 1: Durante la Devolución (RECOMENDADO)**\n" .
+                       "1. Al registrar la devolución, inspecciona el equipo\n" .
+                       "2. Si está dañado, selecciona estado **'Dañado'**\n" .
+                       "3. Describe el problema en el campo de comentarios\n" .
+                       "   - Ejemplo: 'Pantalla tiene grieta en esquina superior'\n" .
+                       "   - Ejemplo: 'Teclado con teclas sueltas (Q, W, E)'\n" .
+                       "4. Guarda la devolución\n" .
+                       "5. El Admin recibirá notificación automática\n\n" .
+                       "**Resultado:**\n" .
+                       "- ✅ Equipo automáticamente fuera de stock\n" .
+                       "- ✅ NO se podrá prestar hasta reparación\n" .
+                       "- ✅ Admin notificado de inmediato\n\n" .
+                       "### 📧 **OPCIÓN 2: Reporte Manual**\n" .
+                       "Si detectas un problema después:\n" .
+                       "1. Ve a **Notificaciones** (icono 🔔)\n" .
+                       "2. Haz clic en **'Reportar Problema'**\n" .
+                       "3. Describe el equipo y el problema\n" .
+                       "4. Envía el reporte al Admin\n\n" .
+                       "### 💡 **CONSEJOS:**\n" .
+                       "✅ **Sé específico:** No digas solo 'está roto', describe QUÉ está roto\n" .
+                       "✅ **Reporta de inmediato:** No esperes a acumular problemas\n" .
+                       "✅ **Incluye detalles:** Ayuda al Admin a tomar decisiones\n\n" .
+                       "⚠️ **IMPORTANTE:** Una vez marcado como dañado, el equipo NO estará disponible hasta que el Admin lo repare y reactive.";
+            }
+            
+            // Botón: "Cómo funciona el sistema" - Guía específica para Encargado
+            if (preg_match('/c(o|ó)mo funciona.*sistema/i', $userMessage) ||
+                preg_match('/gu(i|í)a.*completa/i', $userMessage) ||
+                preg_match('/gu(i|í)a.*sistema/i', $userMessage)) {
+                return self::GUIDE_ENCARGADO; // Guía personalizada solo para Encargado
+            }
+            
+            // Botón: "Cómo registrar devolución (PASO A PASO)" - TODAS LAS VARIACIONES
+            if (preg_match('/c(o|ó)mo\s+(registro|registrar|registra|hago)\s+.*devoluci(o|ó)n/i', $userMessage) ||
+                preg_match('/registrar.*devoluci(o|ó)n/i', $userMessage) ||
+                preg_match('/registro.*devoluci(o|ó)n/i', $userMessage) ||
+                preg_match('/hacer.*devoluci(o|ó)n/i', $userMessage) ||
+                preg_match('/paso.*paso.*devoluci(o|ó)n/i', $userMessage) ||
+                preg_match('/devoluci(o|ó)n.*paso/i', $userMessage) ||
+                preg_match('/devolver.*equipo/i', $userMessage)) {
                 return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO;
             }
             
-            // Botón: "Cómo inspecciono los equipos"
-            if (preg_match('/c(o|ó)mo inspecciono.*equipos/i', $userMessage) ||
-                preg_match('/inspeccionar.*equipos/i', $userMessage) ||
-                preg_match('/inspecci(o|ó)n.*equipos/i', $userMessage)) {
+            // Botón: "Cómo inspecciono los equipos" - TODAS LAS VARIACIONES
+            if (preg_match('/c(o|ó)mo\s+(inspecciono|inspeccionar|reviso|revisar|verifico|verificar)/i', $userMessage) ||
+                preg_match('/(inspecci(o|ó)n|revisi(o|ó)n|verificaci(o|ó)n).*equipos/i', $userMessage) ||
+                preg_match('/qu(e|é)\s+revisar.*equipos/i', $userMessage)) {
                 return self::GUIDE_DEVOLVER_EQUIPOS_ENCARGADO; // La guía incluye inspección
             }
             
@@ -3848,9 +5064,18 @@ El sistema envía notificaciones por:
                 return $this->getPrestamosVencidos();
             }
             
-            // Botón: "Ver historial completo"
-            if (preg_match('/ver.*historial.*completo/i', $userMessage) ||
-                preg_match('/c(o|ó)mo veo.*historial/i', $userMessage)) {
+            // Botón: "Ver historial completo" - TODAS LAS VARIACIONES
+            if (preg_match('/ver.*historial/i', $userMessage) ||
+                preg_match('/c(o|ó)mo veo.*historial/i', $userMessage) ||
+                preg_match('/c(o|ó)mo ver.*historial/i', $userMessage) ||
+                preg_match('/puedo.*ver.*historial/i', $userMessage) ||
+                preg_match('/se puede.*ver.*historial/i', $userMessage) ||
+                preg_match('/mostrar.*historial/i', $userMessage) ||
+                preg_match('/consultar.*historial/i', $userMessage) ||
+                preg_match('/revisar.*historial/i', $userMessage) ||
+                preg_match('/historial.*completo/i', $userMessage) ||
+                preg_match('/d(o|ó)nde.*historial/i', $userMessage) ||
+                preg_match('/acceder.*historial/i', $userMessage)) {
                 return self::GUIDE_VER_HISTORIAL_ENCARGADO;
             }
             
@@ -3920,9 +5145,144 @@ El sistema envía notificaciones por:
                 return self::GUIDE_PERMISOS_ENCARGADO;
             }
             
-            // Botón: "Cómo funciona el sistema"
-            if (preg_match('/c(o|ó)mo funciona.*sistema/i', $userMessage)) {
-                return self::GUIDE_COMO_FUNCIONA_SISTEMA;
+            // Botón: "Cómo funciona el sistema" - Guía específica para Encargado
+            if (preg_match('/c(o|ó)mo funciona.*sistema/i', $userMessage) ||
+                preg_match('/gu(i|í)a.*completa/i', $userMessage) ||
+                preg_match('/gu(i|í)a.*sistema/i', $userMessage)) {
+                return self::GUIDE_ENCARGADO; // Guía personalizada solo para Encargado
+            }
+        }
+        
+        // ========================================
+        // DETECCIONES ESPECÍFICAS DE BOTONES PARA PROFESOR
+        // ========================================
+        
+        if ($userRole === 'Profesor') {
+            // VALIDACIÓN: Detectar preguntas fuera del alcance de Profesor
+            if (preg_match('/(gestionar|administrar|crear|eliminar|activar|desactivar)\s+(usuarios|equipos|aulas)/i', $userMessage) &&
+                !preg_match('/(mi|mis|perfil|datos|información personal)/i', $userMessage)) {
+                return "❌ **Función no disponible para tu rol**\n\n" .
+                       "Como **Profesor**, NO puedes administrar usuarios, equipos o aulas.\n\n" .
+                       "**Tus funciones son:**\n" .
+                       "✅ Hacer reservas de aulas\n" .
+                       "✅ Solicitar préstamos de equipos\n" .
+                       "✅ Ver tu historial\n" .
+                       "✅ Ver notificaciones\n" .
+                       "✅ Editar tu perfil\n\n" .
+                       "💡 **Solo los Administradores pueden gestionar el sistema.**";
+            }
+            
+            // Botón: "¿Cómo hago una reserva?" - TODAS LAS VARIACIONES
+            if (preg_match('/c(o|ó)mo\s+(hago|hacer|realizo|realizar|creo|crear|registro|registrar)/i', $userMessage) && 
+                preg_match('/(reserva|reservar)/i', $userMessage)) {
+                return self::GUIDE_RESERVA;
+            }
+            
+            // Botón: "¿Cómo solicito un préstamo?" - TODAS LAS VARIACIONES
+            if (preg_match('/c(o|ó)mo\s+(solicito|solicitar|pido|pedir|solicito|solicitar|hago|hacer|registro|registrar)/i', $userMessage) && 
+                preg_match('/(pr(e|é)stamo|prestar|equipo)/i', $userMessage) &&
+                !preg_match('/(devol|historial|vencido)/i', $userMessage)) {
+                return self::GUIDE_PRESTAMO;
+            }
+            
+            // Botón: "Ver historial" / "Muéstrame mi historial" - TODAS LAS VARIACIONES
+            if (preg_match('/(ver|mostrar|consultar|revisar|mu(e|é)strame|mi)\s+(historial|mis\s+(reservas|pr(e|é)stamos))/i', $userMessage) ||
+                preg_match('/historial.*m(i|í)o/i', $userMessage) ||
+                preg_match('/d(o|ó)nde.*historial/i', $userMessage) ||
+                preg_match('/puedo.*ver.*historial/i', $userMessage)) {
+                return self::GUIDE_VER_HISTORIAL_PROFESOR;
+            }
+            
+            // Botón: "Guía del sistema" - TODAS LAS VARIACIONES
+            if (preg_match('/c(o|ó)mo\s+funciona.*sistema/i', $userMessage) ||
+                preg_match('/gu(i|í)a\s+(del\s+sistema|completa)/i', $userMessage) ||
+                preg_match('/qu(e|é)\s+es.*sistema/i', $userMessage) ||
+                preg_match('/c(o|ó)mo\s+usar.*sistema/i', $userMessage)) {
+                return self::GUIDE_MANEJO_SISTEMA_PROFESOR;
+            }
+            
+            // Botón: "Cambiar contraseña" - TODAS LAS VARIACIONES
+            if (preg_match('/c(o|ó)mo\s+(cambio|cambiar|modifico|modificar|actualizo|actualizar)/i', $userMessage) &&
+                preg_match('/(contrase(ñ|n)a|clave|password)/i', $userMessage)) {
+                return self::GUIDE_CAMBIAR_CLAVE;
+            }
+            
+            // Botón: "Equipos disponibles" - TODAS LAS VARIACIONES
+            if (preg_match('/(qu(e|é)|cu(a|á)les|mostrar|listar|ver)\s+(equipos|dispositivos)/i', $userMessage) ||
+                preg_match('/equipos\s+(disponibles|hay|tenemos|puedo\s+(solicitar|pedir))/i', $userMessage) ||
+                preg_match('/cu(a|á)ntos\s+equipos/i', $userMessage)) {
+                return $this->getEquiposList($userMessage);
+            }
+            
+            // Botón: "Verificación SMS" - TODAS LAS VARIACIONES
+            if (preg_match('/qu(e|é)\s+es.*verificaci(o|ó)n\s+sms/i', $userMessage) ||
+                preg_match('/verificaci(o|ó)n\s+(por\s+)?sms/i', $userMessage) ||
+                preg_match('/c(o|ó)mo.*verifico.*tel(e|é)fono/i', $userMessage) ||
+                preg_match('/verificar.*n(u|ú)mero/i', $userMessage) ||
+                preg_match('/c(o|ó)digo.*sms/i', $userMessage)) {
+                return "📱 **VERIFICACIÓN POR SMS:**\n\n" .
+                       "La verificación SMS es un sistema de seguridad para confirmar tu identidad.\n\n" .
+                       "### ¿Cuándo se usa?\n" .
+                       "- Al hacer una **reserva** (recibes un código)\n" .
+                       "- Al solicitar un **préstamo** (recibes un código)\n\n" .
+                       "### ¿Cómo funciona?\n" .
+                       "1. Realizas una acción (reserva/préstamo)\n" .
+                       "2. El sistema envía un **código de 6 dígitos** a tu celular\n" .
+                       "3. Debes ingresar ese código en el sistema\n" .
+                       "4. Si el código es correcto, se confirma la acción\n\n" .
+                       "### ⚠️ Problemas comunes:\n" .
+                       "**\"No recibo el SMS\"**\n" .
+                       "- Verifica que tu número esté correcto en tu perfil\n" .
+                       "- Verifica que tengas señal de celular\n" .
+                       "- Espera 1-2 minutos (a veces demora)\n\n" .
+                       "**\"El código es inválido\"**\n" .
+                       "- Asegúrate de copiar los 6 dígitos exactos\n" .
+                       "- El código expira en 10 minutos\n\n" .
+                       "**\"Quiero cambiar mi número\"**\n" .
+                       "- Ve a **Configuración → Editar Perfil**\n" .
+                       "- Actualiza tu número de teléfono\n\n" .
+                       "💡 Si persisten problemas, contacta al Administrador.";
+            }
+            
+            // Botón: "Aulas disponibles" - TODAS LAS VARIACIONES
+            if (preg_match('/(qu(e|é)|cu(a|á)les|mostrar|listar|ver)\s+(aulas|salones)/i', $userMessage) ||
+                preg_match('/aulas\s+(disponibles|hay|puedo\s+reservar)/i', $userMessage) ||
+                preg_match('/cu(a|á)ntas\s+aulas/i', $userMessage) ||
+                preg_match('/d(o|ó)nde.*aulas/i', $userMessage)) {
+                return $this->getAulasList($userMessage);
+            }
+            
+            // Preguntas sobre notificaciones
+            if (preg_match('/(c(o|ó)mo|ver|d(o|ó)nde)\s+(veo|ver|acceder|revisar)\s+(notificaciones|alertas|avisos)/i', $userMessage) ||
+                preg_match('/qu(e|é)\s+(notificaciones|alertas)\s+(recibo|tengo)/i', $userMessage)) {
+                return "🔔 **VER NOTIFICACIONES (Profesor):**\n\n" .
+                       "1. Busca el icono 🔔 en la barra superior (esquina derecha)\n" .
+                       "2. Haz clic en el icono\n" .
+                       "3. Se abrirá un panel con todas tus notificaciones\n" .
+                       "4. Haz clic en una notificación para ver detalles\n\n" .
+                       "**Recibes notificaciones sobre:**\n" .
+                       "• Reservas confirmadas\n" .
+                       "• Préstamos aprobados\n" .
+                       "• Recordatorios de devolución\n" .
+                       "• Préstamos vencidos\n" .
+                       "• Alertas del sistema";
+            }
+            
+            // Preguntas sobre perfil
+            if (preg_match('/(c(o|ó)mo|editar|modificar|cambiar)\s+(mi\s+perfil|mis\s+datos)/i', $userMessage) ||
+                preg_match('/editar\s+(informaci(o|ó)n\s+personal)/i', $userMessage)) {
+                return "✏️ **EDITAR PERFIL (Profesor):**\n\n" .
+                       "1. Haz clic en tu nombre (esquina superior derecha)\n" .
+                       "2. Selecciona 'Configuración' o 'Mi Perfil'\n" .
+                       "3. Verás tus datos actuales\n" .
+                       "4. Edita los campos que necesites cambiar\n" .
+                       "5. Haz clic en 'Guardar Cambios'\n\n" .
+                       "**Datos que puedes editar:**\n" .
+                       "• Nombre completo\n" .
+                       "• Correo electrónico\n" .
+                       "• Número de teléfono\n" .
+                       "• Foto de perfil (si está habilitado)\n\n" .
+                       "💡 Mantén tu correo actualizado para recibir notificaciones.";
             }
         }
         
@@ -4053,7 +5413,8 @@ El sistema envía notificaciones por:
             preg_match('/(enseñame|enséñame|muéstrame|muestrame).*(reservar|hacer reserva)/i', $userMessage) ||
             preg_match('/(como hago|cómo hago|como se hace|cómo se hace).*(reserva|reservar)/i', $userMessage) ||
             preg_match('/(proceso|procedimiento|forma).*(reservar|reserva de aula)/i', $userMessage) ||
-            preg_match('/(ayuda|help).*(reservar|reserva)/i', $userMessage)) {
+            preg_match('/(ayuda|ayudame|ayúdame|help).*(hacer|realizar).*(reserva|reservar)/i', $userMessage) ||
+            preg_match('/(ayuda|ayudame|ayúdame|help).*(reservar|reserva)/i', $userMessage)) {
             return self::GUIDE_RESERVA;
         }
         
@@ -4063,7 +5424,8 @@ El sistema envía notificaciones por:
             preg_match('/(enseñame|enséñame|muéstrame|muestrame).*(prestamo|préstamo|solicitar equipo)/i', $userMessage) ||
             preg_match('/(como hago|cómo hago|como se hace|cómo se hace).*(prestamo|préstamo|pido equipo)/i', $userMessage) ||
             preg_match('/(proceso|procedimiento|forma).*(prestamo|préstamo|solicitar equipo)/i', $userMessage) ||
-            preg_match('/(ayuda|help).*(prestamo|préstamo|equipos)/i', $userMessage) ||
+            preg_match('/(ayuda|ayudame|ayúdame|help).*(hacer|realizar).*(pr(e|é)stamo|pedir|solicitar)/i', $userMessage) ||
+            preg_match('/(ayuda|ayudame|ayúdame|help).*(prestamo|préstamo|equipos)/i', $userMessage) ||
             preg_match('/(como pido|cómo pido|como solicito|cómo solicito).*(laptop|proyector|equipos)/i', $userMessage)) {
             return self::GUIDE_PRESTAMO;
         }
@@ -4997,6 +6359,91 @@ El sistema envía notificaciones por:
             error_log("Error en getEquiposSinStock: " . $e->getMessage());
             return "Error al obtener equipos sin stock.";
         }
+    }
+    
+    /**
+     * Obtiene la lista actual de tipos de equipos desde la BD
+     */
+    private function getTiposEquiposActuales() {
+        try {
+            $sql = "SELECT DISTINCT tipo_equipo, COUNT(*) as cantidad, SUM(stock) as stock_total 
+                    FROM equipos 
+                    WHERE activo = 1 
+                    GROUP BY tipo_equipo 
+                    ORDER BY tipo_equipo";
+            
+            $stmt = $this->db->query($sql);
+            $tipos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (empty($tipos)) {
+                return [];
+            }
+            
+            return $tipos;
+        } catch (Exception $e) {
+            error_log("Error en getTiposEquiposActuales: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Genera un listado legible de equipos disponibles
+     */
+    private function getListadoEquiposDisponibles() {
+        $tipos = $this->getTiposEquiposActuales();
+        
+        if (empty($tipos)) {
+            return "⚠️ Actualmente NO hay equipos registrados en el sistema.\n\n💡 Contacta al administrador para que registre equipos en **Gestión de Equipos**.";
+        }
+        
+        $response = "### 📦 **Equipos Disponibles en el Sistema**\n\n";
+        $response .= "El sistema tiene registrados los siguientes tipos de equipos que puedes solicitar en **Préstamo de Equipos**:\n\n";
+        
+        $emojis = [
+            'LAPTOP' => '💻',
+            'PROYECTOR' => '📽',
+            'MOUSE' => '🖱',
+            'EXTENSION' => '🔌',
+            'PARLANTE' => '🔊',
+            'TABLET' => '📱',
+            'TECLADO' => '⌨️',
+            'CAMARA' => '🎥',
+            'MICROFONO' => '🎤',
+            'CABLE' => '🔗',
+            'ADAPTADOR' => '🔄',
+            'DEFAULT' => '📦'
+        ];
+        
+        foreach ($tipos as $tipo) {
+            $tipoNombre = $tipo['tipo_equipo'];
+            $cantidad = $tipo['cantidad'];
+            $stockTotal = $tipo['stock_total'];
+            
+            // Buscar emoji apropiado
+            $emoji = $emojis['DEFAULT'];
+            foreach ($emojis as $key => $value) {
+                if (stripos($tipoNombre, $key) !== false) {
+                    $emoji = $value;
+                    break;
+                }
+            }
+            
+            $response .= "{$emoji} **{$tipoNombre}**\n";
+            $response .= "   • Unidades registradas: {$cantidad}\n";
+            $response .= "   • Stock disponible actualmente: {$stockTotal}\n\n";
+        }
+        
+        $response .= "---\n\n";
+        $response .= "💡 **¿Cómo solicitar equipos?**\n";
+        $response .= "1. Ve a **Préstamo de Equipos** desde el menú\n";
+        $response .= "2. Verifica tu identidad con el código SMS\n";
+        $response .= "3. Selecciona los equipos que necesites de la lista\n";
+        $response .= "4. Elige la fecha, hora y aula\n";
+        $response .= "5. Confirma tu solicitud\n\n";
+        $response .= "⚠️ **Nota:** El stock se actualiza automáticamente según los préstamos activos. Los equipos mostrados arriba son los tipos disponibles, pero la disponibilidad específica depende de la fecha que elijas.\n\n";
+        $response .= "_Esta información se actualiza en tiempo real desde la base de datos._";
+        
+        return $response;
     }
     
     /**

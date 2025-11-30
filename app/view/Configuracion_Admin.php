@@ -295,9 +295,146 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
         </div>
     </div>
 
+    <!-- Actualizaciones del Chatbot Tommibot -->
+    <div class="config-section">
+        <h4>🤖 Actualizaciones del Chatbot Tommibot</h4>
+        <div class="alert alert-info mb-3" style="font-size:1.05em;">
+            <b>¿Qué es esto?</b> Aquí puedes actualizar el chatbot mensualmente, ver el historial de cambios y activar la voz.<br>
+            <ul class="mb-0 ps-4">
+                <li>Cada actualización mensual agrega nuevas funciones, preguntas y respuestas inteligentes.</li>
+                <li id="changelog-desc"></li>
+                <li>Activa la <b>lectura por voz (TTS)</b> para que el chatbot lea sus respuestas.</li>
+            </ul>
+        </div>
+        <form method="POST" class="mb-3 d-flex align-items-center gap-3 flex-wrap">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="toggleTTS" name="toggle_tts" value="1" <?= isset($_SESSION['tts_enabled']) && $_SESSION['tts_enabled'] ? 'checked' : '' ?> onclick="mostrarDemoTTS()">
+                <label class="form-check-label" for="toggleTTS">Activar lectura por voz (TTS) en respuestas del chatbot</label>
+            </div>
+            <div class="w-100">
+                <small class="text-muted">
+                    <b>¿Qué es TTS?</b> TTS significa <b>Text-to-Speech</b> (texto a voz). Si activas esta opción, el chatbot leerá en voz alta sus respuestas, facilitando la accesibilidad y permitiendo que escuches la información sin necesidad de leerla.
+                </small>
+            </div>
+            <button type="button" class="btn btn-success" id="btnActualizarChatbot" onclick="actualizarChatbotReal()" disabled>
+                <i class="bi bi-arrow-repeat"></i> Actualizar Chatbot ahora
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="mostrarChangelog()">
+                <i class="bi bi-clock-history"></i> Ver historial de actualizaciones (changelog)
+            </button>
+        </form>
+        <div id="alerta-actualizacion" class="alert alert-warning d-none"></div>
+        <div class="mb-2">
+            <span class="text-muted">¿Tienes dudas? Pregúntale a Tommibot: <b>¿Cómo se actualiza el chatbot?</b>, <b>¿Qué trae la nueva actualización?</b>, <b>¿Para qué sirve la actualización mensual?</b>, <b>¿Cómo activo la voz?</b> y más.</span>
+        </div>
+        <div id="changelog-modal" class="modal fade" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-brand text-white">
+                        <h5 class="modal-title">📝 Historial de actualizaciones del Chatbot</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="changelog-body">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-brand" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Acciones de Administrador -->
     <div class="config-section">
         <h4>⚙️ Acciones de Configuración</h4>
+        <script>
+        // Mostrar texto correcto sobre el changelog según si hay registros
+        window.addEventListener('DOMContentLoaded', function() {
+            let changelog = [];
+            try {
+                changelog = JSON.parse(localStorage.getItem('tommibot_changelog')||'[]');
+            } catch(e) { changelog = []; }
+            const desc = document.getElementById('changelog-desc');
+            if (desc) {
+                if (changelog.length > 0) {
+                    desc.innerHTML = 'Puedes consultar el <b>historial de actualizaciones</b> para ver qué trae cada versión.';
+                } else {
+                    desc.innerHTML = 'El historial de actualizaciones aparecerá aquí cuando se realice la primera actualización.';
+                }
+            }
+        });
+        // Mostrar changelog en modal
+        function mostrarChangelog() {
+            const modal = new bootstrap.Modal(document.getElementById('changelog-modal'));
+            const body = document.getElementById('changelog-body');
+            body.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-brand" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
+            fetch('../../app/lib/tommibot_changelog.php')
+                .then(r => r.text())
+                .then(txt => {
+                    let cambios = [];
+                    try {
+                        const arr = txt.match(/return \[(.*)\];/s);
+                        if (arr && arr[1]) {
+                            const json = arr[1]
+                                .replace(/'version'/g, '"version"')
+                                .replace(/'fecha'/g, '"fecha"')
+                                .replace(/'cambios'/g, '"cambios"')
+                                .replace(/'/g, '"');
+                            cambios = JSON.parse('[' + json + ']');
+                        }
+                    } catch(e) { body.innerHTML = '<div class="alert alert-danger">No se pudo cargar el changelog.</div>'; return; }
+                    if (!cambios.length) { body.innerHTML = '<div class="alert alert-info">No hay actualizaciones registradas.</div>'; return; }
+                    let html = '<ul class="list-group">';
+                    cambios.forEach(ver => {
+                        html += `<li class="list-group-item">
+                            <strong>Versión ${ver.version}</strong> <span class="text-muted">(${ver.fecha})</span>
+                            <ul>`;
+                        ver.cambios.forEach(c => { html += `<li>${c}</li>`; });
+                        html += '</ul></li>';
+                    });
+                    html += '</ul>';
+                    body.innerHTML = html;
+                })
+                .catch(() => { body.innerHTML = '<div class="alert alert-danger">No se pudo cargar el changelog.</div>'; });
+            modal.show();
+        }
+
+        // Simular actualización mensual del chatbot
+        function actualizarChatbot() {
+            const btn = document.getElementById('btnActualizarChatbot');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Actualizando...';
+            setTimeout(() => {
+                // Simular nueva versión
+                const now = new Date();
+                const version = `${now.getFullYear()}.${(now.getMonth()+1).toString().padStart(2,'0')}`;
+                const fecha = now.toISOString().slice(0,10);
+                const nuevasFunciones = [
+                    'Reconocimiento de nuevas preguntas frecuentes',
+                    'Mejoras en la navegación por comandos',
+                    'Respuestas más detalladas y personalizadas',
+                    'Mayor seguridad y estabilidad',
+                    'Soporte para nuevas funciones administrativas',
+                ];
+                // Guardar en localStorage (simulación, en producción sería por backend)
+                let changelog = JSON.parse(localStorage.getItem('tommibot_changelog')||'[]');
+                changelog.unshift({version,fecha,cambios:nuevasFunciones});
+                localStorage.setItem('tommibot_changelog',JSON.stringify(changelog));
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> ¡Actualizado!';
+                setTimeout(()=>{btn.innerHTML='<i class="bi bi-arrow-repeat"></i> Actualizar Chatbot ahora';btn.disabled=false;},2000);
+                Swal.fire({
+                    icon:'success',
+                    title:'¡Chatbot actualizado!',
+                    html:`<b>Versión ${version}</b> instalada.<br>Funciones nuevas:<ul style='text-align:left;'>${nuevasFunciones.map(f=>`<li>${f}</li>`).join('')}</ul>`,
+                    confirmButtonText:'Ver changelog',
+                    showCancelButton:true,
+                    cancelButtonText:'Cerrar'
+                }).then(r=>{if(r.isConfirmed)mostrarChangelog();});
+            }, 1800);
+        }
+        </script>
         <div class="admin-actions-grid">
             <a href="Admin.php?view=usuarios" class="action-card">
                 <div class="action-card-icon">👥</div>
@@ -378,6 +515,85 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
 </div>
 
 <script>
+// --- Control de actualización mensual real ---
+const btnActualizar = document.getElementById('btnActualizarChatbot');
+const alertaActualizacion = document.getElementById('alerta-actualizacion');
+let now = new Date();
+let lastUpdate = localStorage.getItem('tommibot_last_update');
+// Si nunca se ha actualizado, inicializar la fecha desde hoy
+if (!lastUpdate) {
+    localStorage.setItem('tommibot_last_update', now.toISOString());
+    lastUpdate = now.toISOString();
+}
+let lastDate = new Date(lastUpdate);
+let diffDays = Math.floor((now - lastDate) / (1000*60*60*24));
+if(diffDays >= 30) {
+    btnActualizar.disabled = false;
+    alertaActualizacion.classList.remove('d-none');
+    alertaActualizacion.innerHTML = '<b>¡Actualización disponible!</b> Han pasado más de 30 días desde la última actualización del chatbot. Haz clic en "Actualizar Chatbot ahora" para instalar las nuevas funciones.';
+    // Notificación tipo alerta (puedes mejorar con tu sistema de notificaciones)
+    if(!localStorage.getItem('tommibot_alerta_mostrada_'+now.toISOString().slice(0,7))) {
+        Swal.fire({
+            icon:'info',
+            title:'Actualización mensual disponible',
+            html:'Han pasado más de 30 días desde la última actualización del chatbot. ¡Instala las nuevas funciones ahora!',
+            confirmButtonText:'Entendido'
+        });
+        localStorage.setItem('tommibot_alerta_mostrada_'+now.toISOString().slice(0,7), '1');
+    }
+} else {
+    btnActualizar.disabled = true;
+    alertaActualizacion.classList.add('d-none');
+}
+
+// --- Confirmación tipo mantenimiento y actualización real ---
+function actualizarChatbotReal() {
+    Swal.fire({
+        icon:'question',
+        title:'¿Actualizar Chatbot?',
+        html:'¿Deseas instalar la actualización mensual del chatbot?<br><b>Esta versión incluye:</b><ul style="text-align:left"><li>Lectura por voz (TTS) activada</li><li>Reconocimiento de nuevas preguntas frecuentes</li><li>Mejoras en la navegación por comandos</li><li>Respuestas más detalladas y personalizadas</li><li>Mayor seguridad y estabilidad</li><li>Soporte para nuevas funciones administrativas</li></ul>',
+        showCancelButton:true,
+        confirmButtonText:'Sí, actualizar',
+        cancelButtonText:'Cancelar',
+        focusConfirm:true
+    }).then(r=>{
+        if(r.isConfirmed) {
+            btnActualizar.disabled = true;
+            btnActualizar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Actualizando...';
+            fetch('../../app/api/actualizar_chatbot.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.error) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.mensaje || 'No se pudo actualizar el chatbot.' });
+                    btnActualizar.disabled = false;
+                    btnActualizar.innerHTML = '<i class="bi bi-arrow-repeat"></i> Actualizar Chatbot ahora';
+                    return;
+                }
+                // Actualización exitosa: refrescar changelog y estado
+                Swal.fire({
+                    icon:'success',
+                    title:'¡Chatbot actualizado!',
+                    html:`<b>Versión ${data.version}</b> instalada.<br>Todas las funciones nuevas están activas.`,
+                    confirmButtonText:'Ver changelog',
+                    showCancelButton:true,
+                    cancelButtonText:'Cerrar'
+                }).then(r=>{if(r.isConfirmed)mostrarChangelog();});
+                btnActualizar.innerHTML = '<i class="bi bi-check-circle"></i> ¡Actualizado!';
+                setTimeout(()=>{btnActualizar.innerHTML='<i class="bi bi-arrow-repeat"></i> Actualizar Chatbot ahora';},2000);
+                // Opcional: recargar la página para mostrar nuevas funciones
+                setTimeout(()=>{location.reload();}, 2200);
+            })
+            .catch(()=>{
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con el servidor.' });
+                btnActualizar.disabled = false;
+                btnActualizar.innerHTML = '<i class="bi bi-arrow-repeat"></i> Actualizar Chatbot ahora';
+            });
+        }
+    });
+}
 // Auto-submit al seleccionar foto
 document.getElementById('inputFoto')?.addEventListener('change', function() {
     if (this.files.length > 0) {
@@ -725,12 +941,31 @@ async function confirmarMantenimiento() {
     
     // Enviar el formulario
     document.getElementById('formMantenimiento').submit();
-}
-</script>
 
-<?php if (!defined('EMBEDDED_VIEW')): ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../Public/js/theme.js"></script>
-</body>
-</html>
-<?php endif; ?>
+    }
+
+    // --- Demo TTS sin recarga ---
+    function mostrarDemoTTS() {
+        const ttsSwitch = document.getElementById('toggleTTS');
+        if (ttsSwitch.checked) {
+            Swal.fire({
+                icon:'info',
+                title:'Lectura por voz activada (demo)',
+                text:'Esta opción es solo de muestra. Cuando la actualización esté disponible, el chatbot leerá sus respuestas en voz alta.',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({
+                icon:'info',
+                title:'Lectura por voz desactivada (demo)',
+                text:'La lectura por voz está desactivada. Esta opción es solo de muestra.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    }
+
+    </script>
+    </body>
+    </html>

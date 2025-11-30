@@ -30,7 +30,13 @@
     }
     
     wrap.appendChild(div); wrap.scrollTop = wrap.scrollHeight;
+    
+    // TTS DESACTIVADO - El bot solo responde por texto
+    // NO se llama a speak() - el bot NO hablará
   }
+  
+  // Exponer appendMsg globalmente para el saludo automático
+  window.tomibot_appendMsg = appendMsg;
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
   }
@@ -41,6 +47,15 @@
    */
   function executeVoiceCommand(text) {
     const lower = text.toLowerCase().trim();
+    
+    // IMPORTANTE: Solo ejecutar comandos de navegación si hay palabras EXPLÍCITAS de navegación
+    const hasNavigationIntent = /\b(ir a|abre|abrir|muéstrame|navega a|llévame a|ve a|vamos a)\b/i.test(lower);
+    
+    // Si NO hay intención de navegación, NO ejecutar comandos, dejar que el chatbot responda
+    if (!hasNavigationIntent && !lower.includes('descargar') && !lower.includes('qué puedes hacer') && !lower.includes('comandos de voz')) {
+      console.log('💬 No hay comando de navegación, enviando al chatbot para respuesta');
+      return false; // Dejar que el chatbot responda
+    }
     
     // Utilidad: intentar hacer clic en enlaces/botones con ciertos textos
     function tryClickByText(texts){
@@ -55,16 +70,16 @@
       return false;
     }
     
-    // Comandos de navegación (con sinónimos y variantes)
+    // Comandos de navegación (SOLO con palabras explícitas)
     const synonyms = {
       reservas: [
-        'ir a reservas','abre reservas','muéstrame reservas','navega a reservas','quiero reservar','haz una reserva','hacer una reserva','reservar aula','llévame a reservas','llevarme a reservas','ve a reservas'
+        'ir a reservas','abre reservas','abrir reservas','muéstrame reservas','navega a reservas','llévame a reservas','ve a reservas','vamos a reservas'
       ],
       prestamo: [
-        'ir a préstamos','ir a prestamo','abre préstamos','muéstrame préstamos','solicitar préstamo','pedir equipo','hacer un préstamo','llévame a préstamos','llevarme a préstamos','ve a préstamos'
+        'ir a préstamos','ir a prestamo','abre préstamos','abrir préstamos','muéstrame préstamos','llévame a préstamos','ve a préstamos','vamos a préstamos'
       ],
       historial: [
-        'ir a historial','abre historial','muéstrame historial','ver mi historial','mis reservas','mis préstamos','mis prestamos','historia','llévame a historial','llevarme a historial','ve a historial','llévame a historia','llevarme a historia'
+        'ir a historial','abre historial','abrir historial','muéstrame historial','llévame a historial','ve a historial','vamos a historial','llévame a historia','ve a historia'
       ],
       password: [
         'cambiar contraseña','ir a contraseña','modificar contraseña','actualizar contraseña','cambiar mi contraseña'
@@ -73,16 +88,16 @@
         'abrir tommibot','ir a tommibot','chat'
       ],
       usuarios: [
-        'gestionar usuarios','administrar usuarios','ir a usuarios'
+        'gestionar usuarios','administrar usuarios','ir a usuarios','abre usuarios'
       ],
       reportes: [
-        'ver reportes','ir a reportes','abrir reportes','reportes y filtros'
+        'ver reportes','ir a reportes','abrir reportes','abre reportes'
       ],
       estadisticas: [
         'ver estadísticas','ir a estadísticas','gráficos','analytics'
       ],
       devolucion: [
-        'gestionar devoluciones','ir a devoluciones','registrar devolución','devolución'
+        'gestionar devoluciones','ir a devoluciones','registrar devolución','abre devoluciones'
       ]
     };
     
@@ -128,11 +143,9 @@
         const allow = allowedByRole[role] ? allowedByRole[role].has(dest) : true;
         if (!allow){
           appendMsg('bot', '⚠️ Esta acción no está disponible para tu rol.');
-          if (elSpeak() && elSpeak().checked) speak('Acción no disponible para tu rol');
           return true;
         }
         appendMsg('bot', `📦 Navegando a ${dest.charAt(0).toUpperCase() + dest.slice(1)}...`);
-        speak(`Abriendo ${dest}`);
         setTimeout(() => {
           // 1) Intentar clic en UI visible (mantener dentro del panel actual)
           const clicked = tryClickByText(dest === 'historial' ? ['Historial','Mis reservas','Mis préstamos','Mis prestamos']
@@ -156,7 +169,6 @@
     // Comando de descarga PDF
     if (lower.includes('descargar') && (lower.includes('pdf') || lower.includes('historial') || lower.includes('reporte'))) {
       appendMsg('bot', '📎 Descargando PDF del historial...');
-      speak('Descargando PDF');
       setTimeout(() => {
         const downloadBtn = document.querySelector('[data-action="download-pdf"]') || 
                            document.querySelector('.btn-download-pdf') ||
@@ -170,7 +182,7 @@
       return true;
     }
     
-    // Comando de ayuda
+    // Comando de ayuda (NUNCA debe navegar)
     if (lower.includes('qué puedes hacer') || lower.includes('comandos de voz') || (lower.includes('ayuda') && lower.includes('voz'))) {
       const helpMsg = '🎯 Comandos de voz disponibles:\n' +
         '• "Ir a [Reservas/Préstamos/Historial]" - Navegar a módulos\n' +
@@ -178,7 +190,6 @@
         '• "Cambiar contraseña" - Abrir cambio de contraseña\n' +
         '• También puedo responder preguntas sobre el sistema o temas generales. 😊';
       appendMsg('bot', helpMsg);
-      speak('Te muestro los comandos disponibles');
       return true;
     }
     
@@ -219,7 +230,7 @@
       
       const reply = data && data.reply ? data.reply : 'No pude procesar tu solicitud por ahora.';
       appendMsg('bot', reply);
-      if (elSpeak() && elSpeak().checked) speak(reply);
+      
       if (data && Array.isArray(data.actions) && data.actions.length){
         executeActions(data.actions);
       }
@@ -434,73 +445,401 @@
   }
 
   // Voice: Web Speech API
-  let recog = null; let listening = false; let selectedVoice = null;
+  let recog = null; 
+  let listening = false; 
+  let selectedVoice = null; 
+  let isSpeaking = false; // IMPORTANTE: Iniciar en false
+  let silenceTimer = null; // Timer para detectar fin de frase
+  const SILENCE_DELAY = 1500; // 1.5 segundos de silencio = fin de frase
+  
   function initVoice(){
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) return;
+    console.log('🎬 ========== INICIALIZANDO RECONOCIMIENTO DE VOZ ==========');
+    console.log('👤 Rol del usuario:', window.__tbUserRole || 'No detectado');
+    console.log('👤 Nombre del usuario:', window.__tbUserName || 'No detectado');
+    console.log('🎯 Clase del body:', document.body.className);
+    console.log('🎯 Es admin?:', document.body.classList.contains('admin-dashboard'));
+    
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition; 
+    if (!SR) {
+      console.error('❌ Speech Recognition NO disponible en este navegador');
+      console.error('  → SpeechRecognition:', window.SpeechRecognition);
+      console.error('  → webkitSpeechRecognition:', window.webkitSpeechRecognition);
+      return;
+    }
+    
+    console.log('✅ Speech Recognition disponible');
     recog = new SR();
-    recog.lang = 'es-PE';
-    recog.interimResults = false; recog.maxAlternatives = 1;
+    recog.lang = 'es-ES';
+    recog.continuous = true;
+    recog.interimResults = true;
+    recog.maxAlternatives = 3;
+    
+    console.log('✅ Configuración de reconocimiento:');
+    console.log('  → lang:', recog.lang);
+    console.log('  → continuous:', recog.continuous);
+    console.log('  → interimResults:', recog.interimResults);
+    console.log('  → maxAlternatives:', recog.maxAlternatives);
+    
     recog.onstart = () => { 
-      listening = true; 
-      if(elMicState()) elMicState().textContent = '🎙️ Escuchando...';
-      // Solo saludar la primera vez
-      if (!hasGreeted) {
-        if (userName) { 
-          speak('Hola ' + userName + ', te escucho.'); 
-        } else { 
-          speak('Te escucho.'); 
-        }
-        hasGreeted = true;
+      listening = true;
+      isSpeaking = false; // IMPORTANTE: Asegurar que esté en false al iniciar
+      console.log('✅ ========== RECONOCIMIENTO INICIADO ==========');
+      console.log('  → listening:', listening);
+      console.log('  → isSpeaking:', isSpeaking);
+      console.log('  → Idioma:', recog.lang);
+      
+      if(elMicState()) {
+        elMicState().textContent = '🎤️ Escuchando...';
+        elMicState().style.color = '#ff0000'; // Rojo para indicar grabación
+      }
+      if(elMic()) {
+        elMic().classList.add('recording'); // Agregar clase para animación
+      }
+      
+      console.log('👂 Micrófono ACTIVO - Habla ahora (se reiniciará automáticamente si no detecta voz)');
+    };
+    
+    recog.onend = () => { 
+      listening = false; 
+      
+      // Limpiar timer de silencio si existe
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+      }
+      
+      if(elMicState()) {
+        elMicState().textContent = 'Pulsa para hablar';
+        elMicState().style.color = '#667eea'; // Restaurar color original
+      }
+      if(elMic()) {
+        elMic().classList.remove('recording');
       }
     };
-    recog.onend = () => { listening = false; if(elMicState()) elMicState().textContent = 'Pulsa para hablar'; };
+    
     recog.onerror = (err) => { 
       listening = false; 
-      if(elMicState()) elMicState().textContent = 'Error de micrófono';
-      console.error('Speech recognition error:', err);
+      console.error('❌ ========== ERROR DE SPEECH RECOGNITION ==========');
+      console.error('  → Tipo de error:', err.error);
+      console.error('  → Mensaje:', err.message);
+      console.error('  → Rol del usuario:', window.__tbUserRole || 'No detectado');
+      
+      // NO quitar la clase 'recording' ni cambiar el estado visual para no-speech
+      // porque vamos a reiniciar automáticamente
+      if (err.error !== 'no-speech') {
+        if(elMicState()) {
+          elMicState().style.color = '#667eea';
+        }
+        if(elMic()) {
+          elMic().classList.remove('recording');
+        }
+      }
+      
+      // Mensajes de error específicos
+      let errorMsg = '';
+      switch(err.error) {
+        case 'no-speech':
+          // Ignorar este error - es normal si el usuario no habla inmediatamente
+          console.log('ℹ️ No se detectó voz (timeout normal - no es error real)');
+          console.log('🔄 Reiniciando reconocimiento automáticamente...');
+          console.log('⚠️ ADMINISTRADOR: Si no funciona, verifica:');
+          console.log('  1. Permite el micrófono en la configuración del navegador');
+          console.log('  2. Habla MÁS FUERTE y más CERCA del micrófono');
+          console.log('  3. Verifica que el micrófono funcione (prueba en otra app)');
+          console.log('  4. Usa Chrome o Edge (mejor compatibilidad)');
+          
+          // Reiniciar reconocimiento automáticamente (sin verificar el botón)
+          setTimeout(() => {
+            if (recog) {
+              try {
+                recog.start();
+                console.log('✅ Reconocimiento reiniciado - HABLA AHORA MÁS FUERTE');
+              } catch(e) {
+                // Si falla porque ya está activo, ignorar
+                if (e.name !== 'InvalidStateError') {
+                  console.error('❌ Error al reiniciar:', e);
+                }
+              }
+            }
+          }, 100);
+          return; // No mostrar mensaje al usuario
+          break;
+        case 'audio-capture':
+          errorMsg = '🎙️ **Error al acceder al micrófono**\n\n' +
+                     '⚠️ No se pudo capturar audio.\n\n' +
+                     '**Soluciones:**\n' +
+                     '1. Verifica que tu micrófono esté conectado\n' +
+                     '2. Cierra otras aplicaciones que usen el micrófono\n' +
+                     '3. Recarga la página (F5)\n' +
+                     '4. Intenta con otro navegador (Chrome recomendado)';
+          break;
+        case 'not-allowed':
+          errorMsg = '🎙️ **Permiso de micrófono DENEGADO**\n\n' +
+                     '⚠️ Debes permitir el acceso al micrófono.\n\n' +
+                     '**Cómo permitir acceso:**\n' +
+                     '1. Haz clic en el ícono de candado 🔒 en la barra de direcciones\n' +
+                     '2. Busca "Micrófono" en permisos\n' +
+                     '3. Selecciona "Permitir"\n' +
+                     '4. Recarga la página (F5)\n\n' +
+                     '💡 El sistema necesita el micrófono para reconocimiento de voz.';
+          break;
+        case 'network':
+          errorMsg = '🎙️ **Error de red**\n\nVerifica tu conexión a internet.';
+          break;
+        case 'aborted':
+          // Silenciar este error (ocurre al detener manualmente)
+          console.log('ℹ️ Reconocimiento detenido manualmente (normal)');
+          return;
+        default:
+          errorMsg = '🎙️ **Error: ' + err.error + '**\n\nIntenta nuevamente o usa el teclado para escribir.';
+      }
+      
+      if (errorMsg) {
+        appendMsg('bot', errorMsg);
+        // NO llamar speak() aquí - appendMsg() ya lo hace automáticamente
+      }
     };
+    
     recog.onresult = (ev) => {
       try{
-        const text = ev.results[0][0].transcript;
-        if (elInput()) elInput().value = text;
-        lastMode = 'voice';
-        sendText();
-      }catch(_){ /* noop */ }
+        console.log('🎤 ========== VOZ DETECTADA ==========');
+        console.log('  → Rol:', window.__tbUserRole);
+        console.log('  → Número de resultados:', ev.results.length);
+        
+        const last = ev.results.length - 1;
+        const text = ev.results[last][0].transcript;
+        const confidence = ev.results[last][0].confidence;
+        const isFinal = ev.results[last].isFinal;
+        
+        console.log('📝 Transcripción:', text);
+        console.log('  → Confianza:', confidence);
+        console.log('  → Final:', isFinal);
+        console.log('  → isSpeaking:', isSpeaking);
+        
+        // Ignorar TODO si el bot está hablando
+        if (isSpeaking) {
+          console.log('⚠️ Ignorando transcripción porque el bot está hablando');
+          return;
+        }
+        
+        // Mostrar transcripción en tiempo real en el input
+        if (elInput()) {
+          elInput().value = text;
+        }
+        
+        // Limpiar timer anterior si existe
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+        
+        // Si es resultado FINAL, iniciar timer de silencio
+        if (isFinal) {
+          console.log('✅ Resultado final detectado, esperando silencio...');
+          
+          // Esperar SILENCE_DELAY ms de silencio antes de enviar
+          silenceTimer = setTimeout(() => {
+            console.log('🚀 Silencio detectado, enviando mensaje automáticamente');
+            
+            // NO detenemos el reconocimiento, solo enviamos el mensaje
+            // El reconocimiento continúa activo para la siguiente pregunta
+            
+            // Enviar el mensaje automáticamente
+            lastMode = 'voice';
+            sendText();
+            
+            silenceTimer = null;
+          }, SILENCE_DELAY);
+        }
+      }catch(e){ 
+        console.error('❌ Error procesando resultado de voz:', e);
+        appendMsg('bot', '❌ Error al procesar el audio. Intenta nuevamente.');
+        
+        // Limpiar timer
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+      }
     };
   }
+  
   function toggleMic(){ 
+    console.log('🎬 ========== TOGGLE MIC ==========');
+    console.log('  → recog existe:', !!recog);
+    console.log('  → listening:', listening);
+    console.log('  → isSpeaking:', isSpeaking);
+    console.log('  → Rol del usuario:', window.__tbUserRole || 'No detectado');
+    
     if(!recog){ 
+      console.log('🔄 Inicializando reconocimiento por primera vez...');
       initVoice(); 
       if(!recog){ 
-        if (typeof showWarning === 'function') {
-          showWarning('Navegador no compatible', 'El reconocimiento de voz no está disponible. Usa Chrome, Edge o Safari.');
+        console.error('❌ NO se pudo inicializar el reconocimiento de voz');
+        const errorMsg = '❌ **Reconocimiento de voz no disponible**\n\n' +
+                        'Tu navegador no soporta reconocimiento de voz.\n\n' +
+                        '✅ **Navegadores compatibles:**\n' +
+                        '• Google Chrome (recomendado)\n' +
+                        '• Microsoft Edge\n' +
+                        '• Safari (macOS/iOS)\n\n' +
+                        '💡 Actualiza tu navegador o usa uno compatible.';
+        
+        appendMsg('bot', errorMsg);
+        
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Navegador no compatible',
+            html: 'El reconocimiento de voz no está disponible.<br><br>' +
+                  '<strong>Usa:</strong><br>' +
+                  '• Google Chrome (recomendado)<br>' +
+                  '• Microsoft Edge<br>' +
+                  '• Safari (macOS/iOS)',
+            confirmButtonText: 'Entendido'
+          });
         } else {
-          alert('Reconocimiento de voz no soportado en este navegador. Usa Chrome, Edge o Safari.');
+          alert('Reconocimiento de voz no soportado. Usa Chrome, Edge o Safari.');
         }
         return; 
-      } 
+      }
+      console.log('✅ Reconocimiento inicializado exitosamente');
     }
+    
+    // IMPORTANTE: Si el chatbot está hablando, detener la síntesis de voz primero
+    if (isSpeaking && window.speechSynthesis) {
+      console.log('🛑 Deteniendo TTS porque el usuario activó el micrófono');
+      window.speechSynthesis.cancel();
+      isSpeaking = false;
+    }
+    
     if(listening){ 
-      try{ recog.stop(); }catch(_){ } 
-    } else { 
-      try{ recog.start(); }catch(err){ 
-        console.error('Error starting recognition:', err);
-        if(elMicState()) elMicState().textContent = 'Error al iniciar';
+      console.log('🛑 Deteniendo reconocimiento...');
+      try{ 
+        recog.stop(); 
+        console.log('✅ Reconocimiento detenido');
+      }catch(e){ 
+        console.error('❌ Error al detener reconocimiento:', e);
       } 
+    } else { 
+      console.log('▶️ Iniciando reconocimiento...');
+      console.log('  → Rol del usuario:', window.__tbUserRole || 'No detectado');
+      console.log('  → Verificando permisos de micrófono...');
+      
+      // VERIFICACIÓN PROACTIVA DE PERMISOS (solo navegadores compatibles)
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'microphone' })
+          .then(permissionStatus => {
+            console.log('🎤 Estado del permiso de micrófono:', permissionStatus.state);
+            
+            if (permissionStatus.state === 'denied') {
+              console.error('❌ Permiso de micrófono DENEGADO por el usuario');
+              const errorMsg = '🎙️ **Permiso de micrófono DENEGADO**\n\n' +
+                             '⚠️ Debes permitir el acceso al micrófono.\n\n' +
+                             '**Cómo permitir acceso:**\n' +
+                             '1. Haz clic en el ícono de candado 🔒 en la barra de direcciones\n' +
+                             '2. Busca "Micrófono" en permisos\n' +
+                             '3. Selecciona "Permitir"\n' +
+                             '4. Recarga la página (F5)';
+              appendMsg('bot', errorMsg);
+              return;
+            }
+            
+            // Intentar iniciar reconocimiento
+            try{ 
+              recog.start(); 
+              console.log('✅ Comando start() ejecutado correctamente');
+            } catch(err) {
+              console.error('❌ Error al iniciar:', err);
+              handleMicrophoneError(err);
+            }
+          })
+          .catch(err => {
+            console.warn('⚠️ No se pudo verificar permisos (navegador antiguo), intentando iniciar...');
+            // Si falla la verificación, intentar de todas formas
+            try{ 
+              recog.start(); 
+              console.log('✅ Comando start() ejecutado');
+            } catch(startErr) {
+              console.error('❌ Error al iniciar:', startErr);
+              handleMicrophoneError(startErr);
+            }
+          });
+      } else {
+        // Navegador sin API de permisos, intentar directamente
+        console.log('ℹ️ API de permisos no disponible, iniciando directamente...');
+        try{ 
+          recog.start(); 
+          console.log('✅ Comando start() ejecutado');
+          console.log('💡 Si no funciona, verifica permisos manualmente en el navegador');
+        }catch(err){ 
+          console.error('❌ Error al iniciar reconocimiento:', err);
+          handleMicrophoneError(err);
+        }
+      }
     }
   }
+  
+  // Función helper para manejar errores de micrófono
+  function handleMicrophoneError(err) {
+    console.error('  → Nombre del error:', err.name);
+    console.error('  → Mensaje:', err.message);
+        
+    if(elMicState()) {
+      elMicState().textContent = 'Error al iniciar';
+      elMicState().style.color = '#ff0000';
+    }
+    
+    // Mensaje de error al usuario
+    let errorMsg = '❌ No se pudo iniciar el reconocimiento de voz.\n\n';
+    
+    if (err.name === 'InvalidStateError') {
+      errorMsg += '💡 Ya hay una sesión de reconocimiento activa. Espera un momento e intenta nuevamente.';
+    } else if (err.name === 'NotAllowedError') {
+      errorMsg += '🔒 Permiso denegado. Ve a la configuración del navegador y permite el acceso al micrófono para este sitio.';
+    } else {
+      errorMsg += '💡 Verifica que tu micrófono esté conectado y funcionando, y que hayas dado permisos al navegador.';
+    }
+    
+    appendMsg('bot', errorMsg);
+  }
 
-  function speak(text){ try{
-    if (!window.speechSynthesis) return;
-    // Cancelar voz previa si existe
-    window.speechSynthesis.cancel();
+  function speak(text){ 
+    try{
+      if (!window.speechSynthesis) {
+        console.error('❌ [SPEAK] speechSynthesis NO disponible en este navegador');
+        return;
+      }
+      
+      if (!text || text.trim() === '') {
+        console.warn('⚠️ [SPEAK] Texto vacío, no hay nada que leer');
+        return;
+      }
+      
+      console.log('🔊 ========== SPEAK DESACTIVADO ==========');
+      console.log('⚠️ TTS está desactivado - el bot solo responde por texto');
+      return; // TTS desactivado - salir inmediatamente
     
     // Limpiar el texto antes de leerlo
     let cleanText = text;
     
+    // ========== PASO 1: ELIMINAR TODO EL HTML ==========
+    // Eliminar todas las etiquetas HTML completas (apertura y cierre)
+    cleanText = cleanText.replace(/<[^>]*>/g, '');
+    
+    // Eliminar entidades HTML
+    cleanText = cleanText.replace(/&nbsp;/g, ' ');
+    cleanText = cleanText.replace(/&lt;/g, '<');
+    cleanText = cleanText.replace(/&gt;/g, '>');
+    cleanText = cleanText.replace(/&amp;/g, '&');
+    cleanText = cleanText.replace(/&quot;/g, '"');
+    cleanText = cleanText.replace(/&#39;/g, "'");
+    cleanText = cleanText.replace(/&[a-z]+;/gi, ''); // Otras entidades
+    
+    // ========== PASO 2: ELIMINAR EMOJIS ==========
     // Eliminar emojis (todos los caracteres Unicode de emojis)
     cleanText = cleanText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F910}-\u{1F96B}]|[\u{1F980}-\u{1F9E0}]/gu, '');
     
+    // ========== PASO 3: ELIMINAR MARKDOWN ==========
     // Eliminar markdown (**, __, etc.)
     cleanText = cleanText.replace(/\*\*/g, ''); // Eliminar **
     cleanText = cleanText.replace(/\*/g, ''); // Eliminar *
@@ -543,59 +882,241 @@
     // Limpiar espacios al inicio y final
     cleanText = cleanText.trim();
     
+    // CRÍTICO: Asegurar que las voces estén cargadas antes de hablar
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      console.warn('⚠️ [SPEAK] Voces aún no cargadas, esperando...');
+      // Forzar recarga de voces
+      window.speechSynthesis.onvoiceschanged = () => {
+        pickYouthVoice();
+        console.log('🔄 [SPEAK] Voces cargadas, reintentando speak()');
+      };
+      // Reintentar después de 100ms
+      setTimeout(() => speak(text), 100);
+      return;
+    }
+    
+    // Si no hay voz seleccionada, intentar seleccionar una ahora
+    if (!selectedVoice) {
+      console.warn('⚠️ [SPEAK] No hay voz seleccionada, buscando...');
+      pickYouthVoice();
+    }
+    
     const u = new SpeechSynthesisUtterance(cleanText);
     u.lang = 'es-PE';
     u.rate = 1.05; // un poco más ágil (voz adolescente)
     u.pitch = 1.3; // timbre juvenil
     u.volume = 0.9;
-    if (selectedVoice) u.voice = selectedVoice;
+    if (selectedVoice) {
+      u.voice = selectedVoice;
+      console.log('🔊 [SPEAK] Usando voz:', selectedVoice.name);
+    } else {
+      console.warn('⚠️ [SPEAK] Usando voz por defecto del navegador');
+    }
+    
+    // Evento cuando termine de hablar
+    u.onend = () => {
+      console.log('✅ [TTS] Síntesis de voz FINALIZADA');
+      
+      // Esperar 800ms antes de reactivar micrófono (evita capturar eco residual)
+      setTimeout(() => {
+        isSpeaking = false;
+        console.log('✅ [TTS] isSpeaking = FALSE');
+        
+        // CRÍTICO: Reactivar reconocimiento SI el botón de micrófono estaba activo
+        const micBtn = elMic();
+        if (micBtn && micBtn.classList.contains('recording')) {
+          console.log('🔄 [TTS] Reactivando reconocimiento de voz...');
+          if (recog && !listening) {
+            try {
+              recog.start();
+              console.log('✅ [TTS] Reconocimiento reactivado exitosamente');
+            } catch(e) {
+              console.error('❌ [TTS] Error al reactivar reconocimiento:', e);
+              // Si hay error, probablemente ya está activo, ignorar
+            }
+          }
+        }
+      }, 800);
+    };
+    
+    u.onerror = (err) => {
+      console.error('❌ [TTS] ERROR en síntesis de voz:', err);
+      console.error('  → Error name:', err.name);
+      console.error('  → Error message:', err.message);
+      isSpeaking = false;
+    };
+    
+    u.onstart = () => {
+      console.log('▶️ [TTS] Síntesis de voz INICIADA (reproduciendo audio)');
+    };
+    
+    console.log('🔊 [SPEAK] Ejecutando speechSynthesis.speak()...');
     window.speechSynthesis.speak(u);
-  }catch(_){ }
+    console.log('✅ [SPEAK] Utterance enviado a la cola de TTS');
+    console.log('  → speaking:', window.speechSynthesis.speaking);
+    console.log('  → pending:', window.speechSynthesis.pending);
+    console.log('========================================');
+  }catch(e){ 
+    console.error('❌ [SPEAK] Exception:', e);
+    isSpeaking = false;
+  }
   }
 
   function pickYouthVoice(){
     try{
       const voices = window.speechSynthesis.getVoices();
+      console.log('🔍 [pickYouthVoice] Total de voces disponibles:', voices.length);
+      
       // Preferencias: voces en español con nombre joven/natural
-      const prefs = ['Google español', 'es-ES', 'es-US', 'es-PE'];
+      const prefs = ['Google español', 'es-ES', 'es-US', 'es-PE', 'es-MX', 'Spanish'];
       selectedVoice = null;
+      
       for (let p of prefs){
         const v = voices.find(v => (v.lang||'').toLowerCase().startsWith(p.toLowerCase()) || (v.name||'').toLowerCase().includes(p.toLowerCase()));
-        if (v){ selectedVoice = v; break; }
+        if (v){ 
+          selectedVoice = v; 
+          console.log('✅ [pickYouthVoice] Voz seleccionada:', v.name, '(', v.lang, ')');
+          break; 
+        }
       }
-    }catch(_){ selectedVoice = null; }
+      
+      if (!selectedVoice && voices.length > 0) {
+        // Si no encuentra ninguna preferencia, usa la primera voz en español disponible
+        selectedVoice = voices.find(v => (v.lang||'').toLowerCase().startsWith('es'));
+        console.log('⚠️ [pickYouthVoice] Voz por defecto:', selectedVoice ? selectedVoice.name : 'Ninguna');
+      }
+      
+      if (!selectedVoice) {
+        console.log('❌ [pickYouthVoice] No se encontró ninguna voz en español');
+      }
+    }catch(err){ 
+      console.error('❌ [pickYouthVoice] Error:', err);
+      selectedVoice = null; 
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    if (window.speechSynthesis){
-      pickYouthVoice();
-      window.speechSynthesis.onvoiceschanged = pickYouthVoice;
-    }
-    const btn = elSend(); if (btn) btn.addEventListener('click', sendText);
-    const inp = elInput(); if (inp) inp.addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendText(); }});
-    const mic = elMic(); if (mic) mic.addEventListener('click', toggleMic);
-    initVoice();
-    
-    // NO mostrar mensaje de bienvenida automático - solo panel lateral
-  });
+  // DOMContentLoaded eliminado - toda la inicialización se hace en initTommibot()
   
   /**
-   * Función global para enviar consultas desde botones HTML
+   * Función global para enviar consultas desde botones HTML (preguntas rápidas)
    */
-  window.sendQuery = function(query) {
+  window.sendQuery = async function(query) {
     if (!query) return;
     
     // Mostrar la consulta como mensaje del usuario
     appendMsg('user', query);
     
-    // Enviar al servidor
-    sendToTommibot(query, 'text');
+    // Deshabilitar botón de envío temporalmente
+    const sendBtn = elSend();
+    if (sendBtn) sendBtn.disabled = true;
     
-    // Actualizar el input (opcional)
+    // Intentar ejecutar comando primero
+    try {
+      if (executeVoiceCommand(query)) {
+        if (sendBtn) sendBtn.disabled = false;
+        return;
+      }
+    } catch(_) { /* continuar si no es comando */ }
+    
+    try {
+      // Enviar al servidor
+      const res = await fetch(apiUrl, { 
+        method:'POST', 
+        headers:{'Content-Type':'application/json'}, 
+        body: JSON.stringify({ message: query, mode: 'text' }) 
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Error HTTP: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      
+      if (data && data.ok === false) {
+        const errorMsg = data.error || 'Ocurrió un error al procesar tu mensaje.';
+        appendMsg('bot', '❌ ' + errorMsg);
+        console.error('Error de Tommibot:', data.details || errorMsg);
+      } else {
+        const reply = data && data.reply ? data.reply : 'No pude procesar tu solicitud.';
+        appendMsg('bot', reply);
+        // NO llamar speak() aquí - appendMsg() ya lo hace automáticamente
+        
+        if (data && Array.isArray(data.actions) && data.actions.length){
+          executeActions(data.actions);
+        }
+      }
+    } catch(e) { 
+      console.error('Error en sendQuery:', e);
+      appendMsg('bot','❌ Error al conectar con Tommibot. Verifica tu conexión.');
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
+    
+    // Limpiar input
     const inp = elInput();
     if (inp) {
       inp.value = '';
       inp.focus();
     }
   };
+  
+  // INICIALIZACIÓN INMEDIATA (no esperar DOMContentLoaded)
+  function initTommibot() {
+    console.log('🚀 ========== TOMMIBOT INICIALIZADO ==========');
+    console.log('  → isSpeaking:', isSpeaking);
+    console.log('  → listening:', listening);
+    
+    // TTS COMPLETAMENTE DESACTIVADO - El bot solo responde por texto
+    const speakCheckbox = elSpeak();
+    if (speakCheckbox) {
+      speakCheckbox.checked = false;
+      speakCheckbox.disabled = true; // Deshabilitar checkbox para que no se pueda activar
+      console.log('❌ TTS DESACTIVADO - El bot solo responderá por texto');
+    }
+    
+    // Configurar event listeners para botones e input
+    const btn = elSend();
+    if (btn) {
+      btn.addEventListener('click', sendText);
+      console.log('✅ Event listener agregado al botón Enviar');
+    }
+    
+    const inp = elInput();
+    if (inp) {
+      inp.addEventListener('keydown', e => {
+        if(e.key==='Enter' && !e.shiftKey){
+          e.preventDefault();
+          sendText();
+        }
+      });
+      console.log('✅ Event listener agregado al input (Enter para enviar)');
+    }
+    
+    const mic = elMic();
+    if (mic) {
+      mic.addEventListener('click', toggleMic);
+      console.log('✅ Event listener agregado al botón de micrófono');
+    } else {
+      console.warn('⚠️ Botón de micrófono NO encontrado en el DOM');
+    }
+    
+    // INICIALIZAR RECONOCIMIENTO DE VOZ
+    initVoice();
+    console.log('🎤 Reconocimiento de voz inicializado');
+    
+    console.log('💬 Tommibot configurado para respuestas SOLO POR TEXTO');
+    console.log('🎤 Micrófono listo para todos los roles (Admin, Profesor, Encargado)');
+  }
+  
+  // EXPONER FUNCIONES GLOBALMENTE para uso externo (ej: Admin fix)
+  window.tomibot_initVoice = initVoice;
+  window.tomibot_appendMsg = appendMsg;
+  
+  // Ejecutar inmediatamente si el DOM ya está listo, sino esperar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTommibot);
+  } else {
+    initTommibot();
+  }
 })();

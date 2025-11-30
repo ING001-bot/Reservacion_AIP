@@ -555,10 +555,6 @@ setTimeout(() => {
             </tbody>
         </table>
     </div>
-
-    <div class="text-center mt-3">
-        <a href="dashboard.php" class="btn btn-outline-brand">⬅ Volver al Dashboard</a>
-    </div>
 </div>
 
 <!-- Bootstrap -->

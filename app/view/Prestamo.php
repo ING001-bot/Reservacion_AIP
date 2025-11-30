@@ -99,26 +99,17 @@ $rol = $_SESSION['tipo'] ?? 'Profesor';
 // Solo aulas de tipo REGULAR para préstamos (no AIP)
 $aulas = $aulaController->listarAulas('REGULAR');
 
-// Cargar inventario por tipo con stock disponible (activos y disponibles para la fecha)
 // SISTEMA DINÁMICO: Obtiene TODOS los tipos de equipos registrados en BD
 $fecha_prestamo_check = $_POST['fecha_prestamo'] ?? date('Y-m-d', strtotime('+1 day'));
 $tipos_equipos = $prestamoController->listarTodosLosTiposConStock($fecha_prestamo_check);
 
-// Para compatibilidad con código existente, mantener variables específicas si existen
-$laptops = $tipos_equipos['LAPTOP']['equipos'] ?? [];
-$proyectores = $tipos_equipos['PROYECTOR']['equipos'] ?? [];
-$mouses = $tipos_equipos['MOUSE']['equipos'] ?? [];
-$extensiones = $tipos_equipos['EXTENSION']['equipos'] ?? [];
-$parlantes = $tipos_equipos['PARLANTE']['equipos'] ?? [];
+// Calcular total de equipos disponibles en general
+$total_equipos_disponibles = 0;
+foreach ($tipos_equipos as $tipo => $data) {
+    $total_equipos_disponibles += $data['total_disponible'] ?? 0;
+}
 
-// Calcular totales disponibles
-$total_laptops = $tipos_equipos['LAPTOP']['total_disponible'] ?? 0;
-$total_proyectores = $tipos_equipos['PROYECTOR']['total_disponible'] ?? 0;
-$total_mouses = $tipos_equipos['MOUSE']['total_disponible'] ?? 0;
-$total_extensiones = $tipos_equipos['EXTENSION']['total_disponible'] ?? 0;
-$total_parlantes = $tipos_equipos['PARLANTE']['total_disponible'] ?? 0;
-
-// Procesar formulario (selección por equipo específico) – evitar cuando es POST de verificación
+// Procesar formulario - Recolectar TODOS los IDs de equipos seleccionados
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['verificar_codigo'])) {
     $id_usuario = $_SESSION['id_usuario'];
     $fecha_prestamo = $_POST['fecha_prestamo'] ?? date('Y-m-d');
@@ -126,17 +117,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['verificar_codigo']))
     $hora_fin = $_POST['hora_fin'] ?? null;
     $id_aula = $_POST['id_aula'] ?? null;
 
-    // IDs seleccionados
-    $id_laptop = (int)($_POST['id_laptop'] ?? 0);
-    $id_proyector = (int)($_POST['id_proyector'] ?? 0);
-    $use_mouse = isset($_POST['use_mouse']);
-    $id_mouse = $use_mouse ? (int)($_POST['id_mouse'] ?? 0) : 0;
-    $use_extension = isset($_POST['use_extension']);
-    $id_extension = $use_extension ? (int)($_POST['id_extension'] ?? 0) : 0;
-    $use_parlante = isset($_POST['use_parlante']);
-    $id_parlante = $use_parlante ? (int)($_POST['id_parlante'] ?? 0) : 0;
-
-    $equipos = array_values(array_filter([$id_laptop, $id_proyector, $id_mouse, $id_extension, $id_parlante]));
+    // Recolectar dinámicamente todos los equipos seleccionados
+    $equipos = [];
+    foreach ($_POST as $key => $value) {
+        // Buscar campos que empiecen con "equipo_"
+        if (strpos($key, 'equipo_') === 0 && !empty($value) && (int)$value > 0) {
+            $equipos[] = (int)$value;
+        }
+    }
 
     if (!$hora_inicio) {
         $mensaje = '⚠ Debes ingresar la hora de inicio.';
@@ -360,7 +348,6 @@ setTimeout(() => {
     <?php endif; ?>
 
     <!-- Verificar stock y aulas -->
-    <?php $noEquipos = empty($tipos_equipos) || count($tipos_equipos) === 0; ?>
     <?php if (empty($aulas)): ?>
         <?php if (in_array($rol, ['Administrador','Encargado'], true)): ?>
             <div class="alert alert-danger">
@@ -376,7 +363,7 @@ setTimeout(() => {
         <?php endif; ?>
     <?php endif; ?>
 
-    <?php if ($noEquipos): ?>
+    <?php if (empty($tipos_equipos) || count($tipos_equipos) === 0): ?>
         <?php if (in_array($rol, ['Administrador','Encargado'], true)): ?>
             <div class="alert alert-warning">
                 <strong>⚠️ No hay equipos disponibles.</strong>
@@ -401,24 +388,65 @@ setTimeout(() => {
         <div class="card-body">
             <div class="mb-2 text-uppercase small text-muted fw-semibold">Paso 1 · Selección rápida</div>
             
-            <!-- Indicadores de stock disponible -->
+            <!-- Indicadores de stock disponible DINÁMICOS -->
             <div class="alert alert-info mb-3">
                 <strong>📊 Stock Disponible:</strong>
-                <span class="badge bg-primary ms-2">💻 Laptops: <?= $total_laptops ?></span>
-                <span class="badge bg-primary ms-2">📽 Proyectores: <?= $total_proyectores ?></span>
-                <span class="badge bg-primary ms-2">🔌 Extensions: <?= $total_extensiones ?></span>
-                <span class="badge bg-secondary ms-2">🖱 Mouses: <?= $total_mouses ?></span>
-                <span class="badge bg-secondary ms-2">🔊 Parlantes: <?= $total_parlantes ?></span>
+                <?php foreach ($tipos_equipos as $tipo => $data): ?>
+                    <?php 
+                    $emoji = '📦'; // Default
+                    if (stripos($tipo, 'LAPTOP') !== false) $emoji = '💻';
+                    elseif (stripos($tipo, 'PROYECTOR') !== false) $emoji = '📽';
+                    elseif (stripos($tipo, 'EXTENSION') !== false || stripos($tipo, 'CABLE') !== false) $emoji = '🔌';
+                    elseif (stripos($tipo, 'MOUSE') !== false) $emoji = '🖱';
+                    elseif (stripos($tipo, 'PARLANTE') !== false || stripos($tipo, 'ALTAVOZ') !== false) $emoji = '🔊';
+                    elseif (stripos($tipo, 'TABLET') !== false) $emoji = '📱';
+                    elseif (stripos($tipo, 'TECLADO') !== false) $emoji = '⌨️';
+                    ?>
+                    <span class="badge bg-primary ms-2"><?= $emoji ?> <?= htmlspecialchars($tipo) ?>: <?= (int)$data['total_disponible'] ?></span>
+                <?php endforeach; ?>
+                <?php if (empty($tipos_equipos)): ?>
+                    <span class="text-muted">No hay equipos disponibles</span>
+                <?php endif; ?>
             </div>
             
             <div class="d-flex flex-wrap gap-2 mb-3 filters-actions">
-                <?php $hasLap = $total_laptops>0; $hasProy = $total_proyectores>0; $hasExt = $total_extensiones>0; $hasParl = $total_parlantes>0; ?>
-                <button type="button" class="btn btn-brand btn-control" id="pack-completo" <?= ($hasLap && $hasProy && $hasExt)?'':'disabled' ?>>📦 Laptop + Proyector + Extension</button>
-                <button type="button" class="btn btn-outline-brand btn-control" id="pack-proyector" <?= ($hasProy && $hasExt)?'':'disabled' ?>>📽 Solo Proyector + Extension</button>
-                <button type="button" class="btn btn-outline-brand btn-control" id="pack-laptop" <?= $hasLap?'':'disabled' ?>>💻 Solo Laptop</button>
-                <button type="button" class="btn btn-outline-secondary btn-control" id="pack-parlante" <?= $hasParl?'':'disabled' ?>>🔊 Solo Parlante</button>
-                <button type="button" class="btn btn-outline-danger btn-control" id="pack-limpiar">✖ Limpiar</button>
+                <?php 
+                // Verificar qué tipos de equipos están disponibles
+                $tiene_laptop = isset($tipos_equipos['LAPTOP']) && !empty($tipos_equipos['LAPTOP']['equipos']);
+                $tiene_proyector = isset($tipos_equipos['PROYECTOR']) && !empty($tipos_equipos['PROYECTOR']['equipos']);
+                $tiene_extension = isset($tipos_equipos['EXTENSION']) && !empty($tipos_equipos['EXTENSION']['equipos']);
+                $tiene_parlante = isset($tipos_equipos['PARLANTE']) && !empty($tipos_equipos['PARLANTE']['equipos']);
+                ?>
+                
+                <button type="button" class="btn btn-brand btn-control pack-btn" 
+                        data-laptop="1" data-proyector="1" data-extension="1"
+                        <?= ($tiene_laptop && $tiene_proyector && $tiene_extension) ? '' : 'disabled' ?>>
+                    📦 Laptop + Proyector + Extension
+                </button>
+                
+                <button type="button" class="btn btn-outline-brand btn-control pack-btn" 
+                        data-proyector="1" data-extension="1"
+                        <?= ($tiene_proyector && $tiene_extension) ? '' : 'disabled' ?>>
+                    📽 Solo Proyector + Extension
+                </button>
+                
+                <button type="button" class="btn btn-outline-brand btn-control pack-btn" 
+                        data-laptop="1"
+                        <?= $tiene_laptop ? '' : 'disabled' ?>>
+                    💻 Solo Laptop
+                </button>
+                
+                <button type="button" class="btn btn-outline-secondary btn-control pack-btn" 
+                        data-parlante="1"
+                        <?= $tiene_parlante ? '' : 'disabled' ?>>
+                    🔊 Solo Parlante
+                </button>
+                
+                <button type="button" class="btn btn-outline-danger btn-control" id="limpiar-seleccion">
+                    ✖ Limpiar
+                </button>
             </div>
+            
             <form id="form-prestamo" method="POST" class="row g-3">
                 <div class="col-md-4">
                     <label for="fecha_prestamo" class="form-label">Fecha de Préstamo</label>
@@ -428,83 +456,49 @@ setTimeout(() => {
                 </div>
 
                 <div class="col-12">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
-                        <h5 class="m-0">Selecciona equipos base</h5>
-                        <div id="selection-summary" class="d-flex flex-wrap gap-2"></div>
+                    <h5 class="mt-2">Selecciona Equipos</h5>
+                </div>
+                
+                <?php if (!empty($tipos_equipos)): ?>
+                    <?php foreach ($tipos_equipos as $tipo => $data): ?>
+                        <?php 
+                        $equipos_del_tipo = $data['equipos'] ?? [];
+                        $total_disponible = $data['total_disponible'] ?? 0;
+                        if (empty($equipos_del_tipo)) continue;
+                        
+                        // Determinar emoji
+                        $emoji = '📦';
+                        if (stripos($tipo, 'LAPTOP') !== false) $emoji = '💻';
+                        elseif (stripos($tipo, 'PROYECTOR') !== false) $emoji = '📽';
+                        elseif (stripos($tipo, 'EXTENSION') !== false || stripos($tipo, 'CABLE') !== false) $emoji = '🔌';
+                        elseif (stripos($tipo, 'MOUSE') !== false) $emoji = '🖱';
+                        elseif (stripos($tipo, 'PARLANTE') !== false || stripos($tipo, 'ALTAVOZ') !== false) $emoji = '🔊';
+                        elseif (stripos($tipo, 'TABLET') !== false) $emoji = '📱';
+                        elseif (stripos($tipo, 'TECLADO') !== false) $emoji = '⌨️';
+                        
+                        $field_name = 'equipo_' . strtolower(str_replace(' ', '_', $tipo));
+                        ?>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">
+                                <?= $emoji ?> <?= htmlspecialchars(ucfirst(strtolower($tipo))) ?> 
+                                <small class="text-muted">(<?= count($equipos_del_tipo) ?> disp.)</small>
+                            </label>
+                            <select class="form-select equipo-select" name="<?= $field_name ?>" data-tipo="<?= htmlspecialchars($tipo) ?>">
+                                <option value="0">Seleccionar...</option>
+                                <?php foreach ($equipos_del_tipo as $eq): ?>
+                                    <option value="<?= (int)$eq['id_equipo'] ?>"><?= htmlspecialchars($eq['nombre_equipo']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No hay tipos de equipos registrados o disponibles para la fecha seleccionada.
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4 col-12">
-                    <label class="form-label">Laptop <small class="text-muted">(<?= count($laptops) ?> disp.)</small></label>
-                    <select class="form-select" name="id_laptop" id="id_laptop" <?= count($laptops)==0?'disabled':'' ?>>
-                        <option value="0">Seleccionar...</option>
-                        <?php foreach ($laptops as $eq): ?>
-                            <option value="<?= (int)$eq['id_equipo'] ?>"><?= htmlspecialchars($eq['nombre_equipo']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php if (count($laptops)==0): ?><div class="form-text text-danger">Sin stock disponible de Laptops</div><?php endif; ?>
-                </div>
-                <div class="col-md-4 col-12">
-                    <label class="form-label">Proyector <small class="text-muted">(<?= count($proyectores) ?> disp.)</small></label>
-                    <select class="form-select" name="id_proyector" id="id_proyector" <?= count($proyectores)==0?'disabled':'' ?>>
-                        <option value="0">Seleccionar...</option>
-                        <?php foreach ($proyectores as $eq): ?>
-                            <option value="<?= (int)$eq['id_equipo'] ?>"><?= htmlspecialchars($eq['nombre_equipo']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php if (count($proyectores)==0): ?><div class="form-text text-danger">Sin stock disponible de Proyectores</div><?php endif; ?>
-                </div>
-
-                <div class="col-12">
-                    <h5 class="mt-3">Complementos</h5>
-                </div>
-                <!-- Mouse (aparece cuando se elige una Laptop) -->
-                <div class="col-md-4 col-12" id="wrap_mouse" style="display:none">
-                    <label class="form-label">Mouse (opcional) <small class="text-muted">(<?= count($mouses) ?> disp.)</small></label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <input class="form-check-input mt-0" type="checkbox" id="use_mouse" name="use_mouse" value="1">
-                        </span>
-                        <select class="form-select" name="id_mouse" id="id_mouse" disabled <?= count($mouses)==0?'data-empty="1"':'' ?>>
-                            <option value="0">Seleccionar...</option>
-                            <?php foreach ($mouses as $eq): ?>
-                                <option value="<?= (int)$eq['id_equipo'] ?>"><?= htmlspecialchars($eq['nombre_equipo']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <?php if (count($mouses)==0): ?><div class="form-text text-muted">No hay Mouse en stock.</div><?php endif; ?>
-                </div>
-                <!-- Extension (aparece cuando se elige un Proyector) -->
-                <div class="col-md-4 col-12" id="wrap_extension" style="display:none">
-                    <label class="form-label">Extension (opcional) <small class="text-muted">(<?= count($extensiones) ?> disp.)</small></label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <input class="form-check-input mt-0" type="checkbox" id="use_extension" name="use_extension" value="1">
-                        </span>
-                        <select class="form-select" name="id_extension" id="id_extension" disabled <?= count($extensiones)==0?'data-empty="1"':'' ?>>
-                            <option value="0">Seleccionar...</option>
-                            <?php foreach ($extensiones as $eq): ?>
-                                <option value="<?= (int)$eq['id_equipo'] ?>"><?= htmlspecialchars($eq['nombre_equipo']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <?php if (count($extensiones)==0): ?><div class="form-text text-muted">No hay Extensions en stock.</div><?php endif; ?>
-                </div>
-                <!-- Parlante (aparece siempre como opcional) -->
-                <div class="col-md-4 col-12" id="wrap_parlante">
-                    <label class="form-label">Parlante (opcional) <small class="text-muted">(<?= count($parlantes) ?> disp.)</small></label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <input class="form-check-input mt-0" type="checkbox" id="use_parlante" name="use_parlante" value="1">
-                        </span>
-                        <select class="form-select" name="id_parlante" id="id_parlante" disabled <?= count($parlantes)==0?'data-empty="1"':'' ?>>
-                            <option value="0">Seleccionar...</option>
-                            <?php foreach ($parlantes as $eq): ?>
-                                <option value="<?= (int)$eq['id_equipo'] ?>"><?= htmlspecialchars($eq['nombre_equipo']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <?php if (count($parlantes)==0): ?><div class="form-text text-muted">No hay Parlantes en stock.</div><?php endif; ?>
-                </div>
+                <?php endif; ?>
 
                 <div class="col-12 mt-2">
                     <div class="text-uppercase small text-muted fw-semibold">Paso 2 · Aula y horario</div>
@@ -537,13 +531,21 @@ setTimeout(() => {
                 </div>
 
                 <div class="col-12 mt-2">
-                    <div class="text-uppercase small text-muted fw-semibold">Paso 3 · Confirmar</div>
+                    <div class="text-uppercase small text-muted fw-semibold">Paso 2 · Confirmar</div>
                 </div>
                 <div class="col-12 text-center">
-                    <?php $disableSubmit = empty($aulas) || ($noEquipos && !in_array($rol, ['Administrador','Encargado'], true)); ?>
-                    <button type="submit" class="btn btn-brand px-4" <?= $disableSubmit ? 'disabled' : '' ?>>Enviar</button>
+                    <?php $disableSubmit = empty($aulas) || empty($tipos_equipos); ?>
+                    <button type="submit" class="btn btn-brand px-4" <?= $disableSubmit ? 'disabled' : '' ?>>
+                        <i class="bi bi-send me-2"></i>Solicitar Préstamo
+                    </button>
                     <?php if ($disableSubmit): ?>
-                        <div class="text-muted mt-2">No es posible enviar mientras no haya aulas o equipos disponibles.</div>
+                        <div class="text-muted mt-2">
+                            <?php if (empty($aulas)): ?>
+                                No hay aulas REGULAR disponibles.
+                            <?php elseif (empty($tipos_equipos)): ?>
+                                No hay equipos disponibles para la fecha seleccionada.
+                            <?php endif; ?>
+                        </div>
                     <?php endif; ?>
                 </div>
             </form>
@@ -551,9 +553,8 @@ setTimeout(() => {
     </div>
 
     <!-- Tabla de préstamos -->
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h2 class="text-brand m-0">📖 Mis Préstamos Registrados</h2>
-        <a href="../view/Dashboard.php" class="btn btn-outline-brand">🔙 Volver</a>
+    <div class="mb-2">
+        <h2 class="text-brand">📖 Mis Préstamos Registrados</h2>
     </div>
     <div class="table-responsive shadow-lg">
         <table class="table table-hover align-middle text-center table-brand">
@@ -697,132 +698,69 @@ setTimeout(() => {
             });
         }
         // Flujo OTP duplicado eliminado; se mantiene solo el modal del servidor.
-        const selLaptop = document.getElementById('id_laptop');
-        const selProy = document.getElementById('id_proyector');
-        const wrapMouse = document.getElementById('wrap_mouse');
-        const wrapExt = document.getElementById('wrap_extension');
-        const useMouse = document.getElementById('use_mouse');
-        const useExt = document.getElementById('use_extension');
-        const selMouse = document.getElementById('id_mouse');
-        const selExt = document.getElementById('id_extension');
-        const useParl = document.getElementById('use_parlante');
-        const selParl = document.getElementById('id_parlante');
-        // Botones de packs
-        const btnPackCompleto = document.getElementById('pack-completo');
-        const btnPackProy = document.getElementById('pack-proyector');
-        const btnPackLap = document.getElementById('pack-laptop');
-        const btnPackClear = document.getElementById('pack-limpiar');
-
-        function refreshComplements(){
-            const hasLaptop = parseInt(selLaptop.value||'0',10) > 0;
-            wrapMouse.style.display = hasLaptop ? '' : 'none';
-            if (!hasLaptop) { useMouse.checked = false; selMouse.disabled = true; selMouse.value = '0'; }
-            const hasProy = parseInt(selProy.value||'0',10) > 0;
-            wrapExt.style.display = hasProy ? '' : 'none';
-            if (!hasProy) { useExt.checked = false; selExt.disabled = true; selExt.value = '0'; }
+        // Sistema de Packs Rápidos (dinámico y compatible con nuevos tipos)
+        const packButtons = document.querySelectorAll('.pack-btn');
+        const limpiarBtn = document.getElementById('limpiar-seleccion');
+        
+        // Función para seleccionar el primer equipo disponible de un tipo
+        function seleccionarPrimerEquipo(tipoEquipo) {
+            const select = document.querySelector(`select[data-tipo="${tipoEquipo}"]`);
+            if (!select) return false;
+            
+            // Buscar la primera opción que no sea "0"
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value !== '0') {
+                    select.value = select.options[i].value;
+                    return true;
+                }
+            }
+            return false;
         }
-        function toggleSelect(chk, sel){ sel.disabled = !chk.checked; if (!chk.checked) sel.value = '0'; }
-        function firstAvailable(select){
-            // Selecciona la primera opción válida distinta de 0
-            if (!select) return;
-            for (let i=0;i<select.options.length;i++){
-                const opt = select.options[i];
-                if (opt.value && opt.value !== '0'){ select.value = opt.value; break; }
-            }
+        
+        // Función para limpiar todos los equipos
+        function limpiarTodos() {
+            const selects = document.querySelectorAll('.equipo-select');
+            selects.forEach(select => {
+                select.value = '0';
+            });
         }
-
-        function updateSummary(){
-            var box = document.getElementById('selection-summary');
-            if (!box) return;
-            box.innerHTML = '';
-            function addChip(label){
-                var span = document.createElement('span');
-                span.className = 'badge bg-light text-dark border';
-                span.textContent = label;
-                box.appendChild(span);
-            }
-            // Base
-            if (selLaptop && selLaptop.value !== '0'){
-                addChip('💻 Laptop');
-            }
-            if (selProy && selProy.value !== '0'){
-                addChip('📽 Proyector');
-            }
-            // Complementos
-            if (useMouse && useMouse.checked && selMouse.value !== '0'){
-                addChip('🖱 Mouse');
-            }
-            if (useExt && useExt.checked && selExt.value !== '0'){
-                addChip('🔌 Extensión');
-            }
-            if (useParl && useParl.checked && selParl.value !== '0'){
-                addChip('🔊 Parlante');
-            }
-        }
-
-        // Acciones rápidas
-        if (btnPackCompleto){ btnPackCompleto.addEventListener('click', ()=>{
-            firstAvailable(selLaptop);
-            firstAvailable(selProy);
-            refreshComplements();
-            useExt.checked = true; toggleSelect(useExt, selExt); firstAvailable(selExt);
-            // Reset parlante opcional
-            if (useParl){ useParl.checked = false; toggleSelect(useParl, selParl); }
-            updateSummary();
-        }); }
-        if (btnPackProy){ btnPackProy.addEventListener('click', ()=>{
-            selLaptop.value = '0';
-            firstAvailable(selProy);
-            refreshComplements();
-            useExt.checked = true; toggleSelect(useExt, selExt); firstAvailable(selExt);
-            if (useMouse){ useMouse.checked = false; toggleSelect(useMouse, selMouse); }
-            if (useParl){ useParl.checked = false; toggleSelect(useParl, selParl); }
-            updateSummary();
-        }); }
-        if (btnPackLap){ btnPackLap.addEventListener('click', ()=>{
-            firstAvailable(selLaptop);
-            selProy.value = '0';
-            refreshComplements();
-            if (useExt){ useExt.checked = false; toggleSelect(useExt, selExt); }
-            if (useParl){ useParl.checked = false; toggleSelect(useParl, selParl); }
-            updateSummary();
-        }); }
-        if (btnPackClear){ btnPackClear.addEventListener('click', ()=>{
-            selLaptop.value = '0'; selProy.value = '0';
-            if (useMouse){ useMouse.checked = false; }
-            if (useExt){ useExt.checked = false; }
-            if (useParl){ useParl.checked = false; }
-            toggleSelect(useMouse, selMouse);
-            toggleSelect(useExt, selExt);
-            toggleSelect(useParl, selParl);
-            refreshComplements();
-            updateSummary();
-        }); }
-        // Solo Parlante
-        const btnPackParl = document.getElementById('pack-parlante');
-        if (btnPackParl){ btnPackParl.addEventListener('click', ()=>{
-            selLaptop.value = '0'; selProy.value = '0';
-            refreshComplements();
-            if (useMouse){ useMouse.checked = false; toggleSelect(useMouse, selMouse); }
-            if (useExt){ useExt.checked = false; toggleSelect(useExt, selExt); }
-            if (useParl){
-                useParl.checked = true; toggleSelect(useParl, selParl); firstAvailable(selParl);
-            }
-            updateSummary();
-        }); }
-
-        selLaptop.addEventListener('change', refreshComplements);
-        selProy.addEventListener('change', refreshComplements);
-        if (useMouse) useMouse.addEventListener('change', ()=>{ toggleSelect(useMouse, selMouse); updateSummary(); });
-        if (useExt) useExt.addEventListener('change', ()=>{ toggleSelect(useExt, selExt); updateSummary(); });
-        if (useParl) useParl.addEventListener('change', ()=>{ toggleSelect(useParl, selParl); updateSummary(); });
-        // Actualizar resumen ante cambios de selects
-        ['id_laptop','id_proyector','id_mouse','id_extension','id_parlante'].forEach(function(id){
-            var el = document.getElementById(id);
-            if (el){ el.addEventListener('change', updateSummary); }
+        
+        // Manejar clicks en los botones de packs
+        packButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Primero limpiar todo
+                limpiarTodos();
+                
+                // Activar equipos según el pack
+                if (this.dataset.laptop) {
+                    seleccionarPrimerEquipo('LAPTOP');
+                }
+                if (this.dataset.proyector) {
+                    seleccionarPrimerEquipo('PROYECTOR');
+                }
+                if (this.dataset.extension) {
+                    seleccionarPrimerEquipo('EXTENSION');
+                }
+                if (this.dataset.mouse) {
+                    seleccionarPrimerEquipo('MOUSE');
+                }
+                if (this.dataset.parlante) {
+                    seleccionarPrimerEquipo('PARLANTE');
+                }
+                
+                // Resaltar botón activo
+                packButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
         });
-        refreshComplements();
-        updateSummary();
+        
+        // Botón limpiar
+        if (limpiarBtn) {
+            limpiarBtn.addEventListener('click', function() {
+                limpiarTodos();
+                packButtons.forEach(b => b.classList.remove('active'));
+            });
+        }
     })();
 </script>
 </body>

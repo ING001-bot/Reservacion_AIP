@@ -34,7 +34,7 @@ $vista = $_GET['view'] ?? 'inicio';
   <link rel="stylesheet" href="../../Public/css/historial_global.css?v=<?php echo time(); ?>">
   <link rel="stylesheet" href="../../Public/css/historial.css?v=<?php echo time(); ?>">
 </head>
-<body class="bg-light">
+<body class="bg-light admin-dashboard">
 <?php require __DIR__ . '/partials/navbar.php'; ?>
 
 <div class="d-flex">
@@ -155,5 +155,142 @@ $vista = $_GET['view'] ?? 'inicio';
   <script src="../../Public/js/HistorialGlobalCalendario.js?v=<?= time() ?>"></script>
 <?php endif; ?>
 <script src="../../Public/js/theme.js"></script>
+
+<!-- Fix CRÍTICO para micrófono en Administrador -->
+<script>
+(function() {
+  'use strict';
+  
+  console.log('🔧 [ADMIN FIX] ===== INICIANDO FIX DE MICRÓFONO =====');
+  
+  window.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 [ADMIN FIX] DOM cargado, configurando micrófono...');
+    
+    // PASO 1: Enumerar TODOS los dispositivos de audio
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices()
+        .then(function(devices) {
+          console.log('🎤 [ADMIN FIX] Dispositivos de audio detectados:');
+          
+          var audioInputs = devices.filter(function(d) { return d.kind === 'audioinput'; });
+          
+          audioInputs.forEach(function(device, index) {
+            console.log('  ' + (index + 1) + '. ' + (device.label || 'Micrófono ' + (index + 1)));
+            console.log('     → ID: ' + device.deviceId.substring(0, 20) + '...');
+          });
+          
+          if (audioInputs.length === 0) {
+            console.error('❌ [ADMIN FIX] NO SE DETECTÓ NINGÚN MICRÓFONO');
+            console.error('💡 Verifica que el micrófono esté conectado y habilitado en Windows');
+            return;
+          }
+          
+          // PASO 2: Buscar el micrófono FÍSICO (NO "Mezcla estéreo")
+          var microfono = null;
+          
+          for (var i = 0; i < audioInputs.length; i++) {
+            var label = (audioInputs[i].label || '').toLowerCase();
+            
+            // Buscar micrófono real (evitar mezcla estéreo, loopback, etc.)
+            if (!label.includes('mezcla') && 
+                !label.includes('stereo') && 
+                !label.includes('mix') &&
+                !label.includes('loopback') &&
+                !label.includes('what u hear') &&
+                (label.includes('micr') || label.includes('headset') || label.includes('array') || label.includes('webcam'))) {
+              microfono = audioInputs[i];
+              break;
+            }
+          }
+          
+          // Si no encuentra uno específico, usar el primero
+          if (!microfono && audioInputs.length > 0) {
+            microfono = audioInputs[0];
+            console.warn('⚠️ [ADMIN FIX] No se encontró micrófono físico, usando el primero disponible');
+          }
+          
+          if (!microfono) {
+            console.error('❌ [ADMIN FIX] No se pudo seleccionar un micrófono');
+            return;
+          }
+          
+          console.log('✅ [ADMIN FIX] Micrófono seleccionado: ' + (microfono.label || 'Desconocido'));
+          
+          // PASO 3: Solicitar acceso EXPLÍCITO a ese micrófono específico
+          navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              deviceId: { exact: microfono.deviceId },
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            } 
+          })
+          .then(function(stream) {
+            console.log('✅ [ADMIN FIX] ¡Acceso al micrófono OTORGADO!');
+            console.log('✅ [ADMIN FIX] Dispositivo activo: ' + stream.getAudioTracks()[0].label);
+            console.log('✅ [ADMIN FIX] Configuración:');
+            var settings = stream.getAudioTracks()[0].getSettings();
+            console.log('   → echoCancellation:', settings.echoCancellation);
+            console.log('   → noiseSuppression:', settings.noiseSuppression);
+            console.log('   → autoGainControl:', settings.autoGainControl);
+            
+            // Guardar el deviceId para uso posterior
+            window.__adminMicDeviceId = microfono.deviceId;
+            
+            // Cerrar el stream
+            stream.getTracks().forEach(function(track) {
+              track.stop();
+            });
+            
+            console.log('✅ [ADMIN FIX] Stream liberado, micrófono listo');
+            console.log('');
+            console.log('════════════════════════════════════════════════');
+            console.log('✅ ¡MICRÓFONO CONFIGURADO CORRECTAMENTE!');
+            console.log('💡 Abre el chatbot y prueba el botón del micrófono');
+            console.log('💡 IMPORTANTE: Habla CLARO y CERCA del micrófono');
+            console.log('════════════════════════════════════════════════');
+          })
+          .catch(function(err) {
+            console.error('❌ [ADMIN FIX] Error al acceder al micrófono:', err.name, '-', err.message);
+            console.error('');
+            console.error('💡 SOLUCIONES:');
+            console.error('   1. Ve a: chrome://settings/content/microphone');
+            console.error('   2. Asegúrate que localhost tenga permiso');
+            console.error('   3. Verifica que el micrófono no esté siendo usado por otra app');
+            console.error('   4. Reinicia el navegador');
+          });
+        })
+        .catch(function(err) {
+          console.error('❌ [ADMIN FIX] Error al enumerar dispositivos:', err);
+        });
+    } else {
+      console.error('❌ [ADMIN FIX] enumerateDevices NO disponible');
+    }
+  });
+})();
+</script>
+
+<!-- INSTRUCCIONES PARA EL USUARIO -->
+<script>
+// Mostrar mensaje en consola después de 2 segundos
+setTimeout(function() {
+  console.log('');
+  console.log('════════════════════════════════════════════════');
+  console.log('📋 INSTRUCCIONES SI EL MICRÓFONO NO FUNCIONA:');
+  console.log('');
+  console.log('1. Ve a Configuración de Windows → Sistema → Sonido');
+  console.log('2. En "Entrada", selecciona tu micrófono FÍSICO');
+  console.log('3. NO selecciones "Mezcla estéreo"');
+  console.log('4. Haz clic en "Propiedades del dispositivo"');
+  console.log('5. Asegúrate que el volumen esté al 100%');
+  console.log('6. Recarga esta página (F5)');
+  console.log('');
+  console.log('Si sigue sin funcionar:');
+  console.log('• Prueba el micrófono en otra app (ej: Grabadora de voz)');
+  console.log('• Cierra otras aplicaciones que usen el micrófono');
+  console.log('• Reinicia el navegador completamente');
+  console.log('════════════════════════════════════════════════');
+}, 2000);
+</script>
 </body>
 </html>

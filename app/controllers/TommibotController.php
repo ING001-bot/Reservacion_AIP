@@ -181,8 +181,8 @@ class TommibotController {
     }
     
     // El flujo ahora es más simple: siempre se usa el AIService, que tiene la lógica local.
-    $response = $this->ai->generateResponse($message, $this->userRole, $this->userId);
-    
+    // Se pasa el modo (voz/texto) para que la respuesta sea idéntica
+    $response = $this->ai->generateResponse($message, $this->userRole, $this->userId, $mode);
     return $this->addRoleContext($response);
   }
   

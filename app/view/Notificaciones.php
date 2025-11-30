@@ -228,7 +228,7 @@ if (!defined('EMBEDDED_VIEW')):
 
 <!-- Modal de Detalles -->
 <div class="modal fade" id="detalleNotifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalTitulo">
