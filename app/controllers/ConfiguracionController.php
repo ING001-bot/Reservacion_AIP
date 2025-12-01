@@ -107,7 +107,7 @@ class ConfiguracionController {
             return ['error' => true, 'mensaje' => '⚠️ Correo inválido'];
         }
 
-        // Verificar que el correo no esté en uso por otro usuario
+        // Verificar que el correo tenga formato válido y no esté usado por otro
         if ($this->usuarioModel->existeCorreoDeOtro($correo, $id_usuario)) {
             return ['error' => true, 'mensaje' => '⚠️ El correo ya está en uso'];
         }
@@ -125,19 +125,58 @@ class ConfiguracionController {
             return ['error' => true, 'mensaje' => '⚠️ Usuario no encontrado'];
         }
 
-        // Actualizar
-        $ok = $this->usuarioModel->actualizarUsuario(
+        // Actualizar nombre y teléfono inmediatamente, mantener correo actual por ahora
+        $correoActual = strtolower(trim($usuarioActual['correo'] ?? ''));
+        $nuevoCorreo = strtolower(trim($correo));
+
+        $okDatos = $this->usuarioModel->actualizarUsuario(
             $id_usuario,
             $nombre,
-            $correo,
+            $correoActual,
             $usuarioActual['tipo_usuario'],
             $telefono
         );
 
-        return [
-            'error' => !$ok,
-            'mensaje' => $ok ? '✅ Datos actualizados correctamente' : '❌ Error al actualizar'
-        ];
+        if (!$okDatos) {
+            return ['error' => true, 'mensaje' => '❌ Error al actualizar tus datos'];
+        }
+
+        // Si el correo cambió, iniciar flujo de verificación y NO cambiarlo aún
+        if ($nuevoCorreo !== $correoActual) {
+            // Preparar token y URL de confirmación
+            $token = bin2hex(random_bytes(24));
+            $expira = date('Y-m-d H:i:s', time() + 24*60*60); // 24 horas
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $url = 'http://' . $host . '/Reservacion_AIP/Public/confirmar_cambio_correo.php?token=' . urlencode($token);
+
+            // Guardar solicitud de cambio de correo
+            $okInicio = $this->usuarioModel->iniciarCambioCorreo($id_usuario, $nuevoCorreo, $token, $expira);
+            if (!$okInicio) {
+                return ['error' => true, 'mensaje' => '❌ No se pudo iniciar el cambio de correo. Inténtalo nuevamente.'];
+            }
+
+            // Intentar enviar notificación por correo (si falla, mostrar enlace igualmente)
+            try {
+                require_once __DIR__ . '/../lib/NotificationService.php';
+                $ns = new \App\Lib\NotificationService();
+                $cuerpo = 'Has solicitado cambiar tu correo en el sistema. Por favor confirma el cambio haciendo clic en el siguiente enlace:<br>' .
+                          '<a href="' . $url . '">Confirmar nuevo correo</a><br>' .
+                          'Este enlace vence en 24 horas.';
+                $ns->sendNotification(
+                    ['email' => $nuevoCorreo],
+                    'Confirma tu nuevo correo',
+                    $cuerpo,
+                    ['userName' => $nombre, 'type' => 'info', 'sendSms' => false, 'url' => $url]
+                );
+            } catch (\Throwable $e) {
+                // Continuar sin bloquear: informar envío fallido sin mostrar enlace
+                return ['error' => false, 'mensaje' => '✅ Datos actualizados. ⚠️ No se pudo enviar el correo de verificación. Intenta nuevamente más tarde.'];
+            }
+
+            return ['error' => false, 'mensaje' => '✅ Datos actualizados. 📧 Te enviamos un enlace a tu nuevo correo para confirmar el cambio.'];
+        }
+
+        return ['error' => false, 'mensaje' => '✅ Datos actualizados correctamente'];
     }
 
     /**

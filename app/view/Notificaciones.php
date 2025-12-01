@@ -109,6 +109,16 @@ foreach ($todasNotificaciones as &$notif) {
         $stmtReserva->execute([$metadata['id_reserva']]);
         $notif['detalles'] = $stmtReserva->fetch(PDO::FETCH_ASSOC) ?: [];
         error_log("Detalles encontrados: " . count($notif['detalles']) . " campos");
+    } elseif (isset($metadata['tipo']) && $metadata['tipo'] === 'cancelacion_reserva') {
+        // Detalles desde metadata de cancelación (sin consultas adicionales)
+        $notif['detalles'] = [
+            'solicitante' => $metadata['solicitante'] ?? 'Usuario',
+            'aula' => $metadata['aula'] ?? '',
+            'fecha' => $metadata['fecha'] ?? '',
+            'hora_inicio' => $metadata['hora_inicio'] ?? '',
+            'hora_fin' => $metadata['hora_fin'] ?? '',
+            'motivo' => $metadata['motivo'] ?? ''
+        ];
     } else {
         error_log("Notificación sin metadata de préstamo o reserva");
     }
@@ -119,10 +129,13 @@ unset($notif);
 $reservas = [];
 $equipos = [];
 $devoluciones = [];
+$cancelaciones = [];
 
 foreach ($todasNotificaciones as $notif) {
     $titulo = strtolower($notif['titulo']);
-    if (stripos($titulo, 'reserva') !== false) {
+    if (stripos($titulo, 'cancelación de reserva') !== false || stripos($titulo, 'cancelacion de reserva') !== false) {
+        $cancelaciones[] = $notif;
+    } elseif (stripos($titulo, 'reserva') !== false) {
         $reservas[] = $notif;
     } elseif (stripos($titulo, 'devolución') !== false || stripos($titulo, 'devolucion') !== false) {
         $devoluciones[] = $notif;
@@ -162,6 +175,11 @@ if (!defined('EMBEDDED_VIEW')):
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cancelaciones-tab" data-bs-toggle="tab" data-bs-target="#cancelaciones" type="button">
+                ⛔ Cancelaciones <span class="badge bg-primary"><?= count($cancelaciones) ?></span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="equipos-tab" data-bs-toggle="tab" data-bs-target="#equipos" type="button">
                 💻 Préstamos <span class="badge bg-primary"><?= count($equipos) ?></span>
             </button>
@@ -186,6 +204,21 @@ if (!defined('EMBEDDED_VIEW')):
             <?php else: ?>
                 <div class="list-group">
                     <?php foreach ($reservas as $notif): 
+                        echo renderNotificacion($notif);
+                    endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Cancelaciones -->
+        <div class="tab-pane fade" id="cancelaciones" role="tabpanel">
+            <?php if (empty($cancelaciones)): ?>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No tienes notificaciones de cancelaciones.
+                </div>
+            <?php else: ?>
+                <div class="list-group">
+                    <?php foreach ($cancelaciones as $notif): 
                         echo renderNotificacion($notif);
                     endforeach; ?>
                 </div>
@@ -228,7 +261,7 @@ if (!defined('EMBEDDED_VIEW')):
 
 <!-- Modal de Detalles -->
 <div class="modal fade" id="detalleNotifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalTitulo">
@@ -236,6 +269,19 @@ if (!defined('EMBEDDED_VIEW')):
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            <style>
+                /* Mejor UX: modal grande y con scroll interno controlado */
+                #detalleNotifModal .modal-body{ max-height: calc(100vh - 220px); overflow:auto; }
+                @media (max-width: 576px){
+                    /* Bajar más el modal y evitar que la cabecera lo tape */
+                    #detalleNotifModal .modal-dialog{ margin: 2.75rem 0.5rem 1rem; }
+                    #detalleNotifModal .modal-dialog-centered{ align-items: flex-start !important; }
+                    #detalleNotifModal .modal-header{ padding: .5rem .75rem; }
+                    #detalleNotifModal .modal-body{ max-height: calc(100vh - 200px); padding: .75rem; }
+                    #detalleNotifModal .modal-footer{ padding: .5rem .75rem; }
+                    #detalleNotifModal .card .card-body{ padding: .75rem; }
+                }
+            </style>
             <div class="modal-body" id="modalContenido">
                 <!-- Se llenará dinámicamente con JavaScript -->
             </div>
@@ -260,10 +306,14 @@ function renderNotificacion($notif) {
     
     ob_start();
     ?>
+    <?php 
+      $esCancelacion = stripos(($notif['titulo'] ?? ''), 'Cancelación de reserva') !== false || stripos(($notif['titulo'] ?? ''), 'Cancelacion de reserva') !== false;
+    ?>
     <div class="list-group-item list-group-item-action <?= $bgClass ?> d-flex align-items-start gap-3 notif-item"
        data-notif-id="<?= (int)$notif['id_notificacion'] ?>"
        data-notif-url="<?= htmlspecialchars($url) ?>"
        data-notif-titulo="<?= htmlspecialchars($notif['titulo']) ?>"
+       data-notif-msg="<?= htmlspecialchars($notif['mensaje']) ?>"
        data-notif-detalles='<?= $detallesJson ?>'
        style="cursor:pointer;">
         <div class="pt-1" style="width:30px; text-align:center;">
@@ -279,7 +329,7 @@ function renderNotificacion($notif) {
                 <?php if (!$leida): ?>
                     <span class="badge bg-primary">Nueva</span>
                 <?php endif; ?>
-                <?php if (!empty($detalles)): ?>
+                <?php if (!empty($detalles) || $esCancelacion): ?>
                     <button class="btn btn-sm btn-outline-info ver-detalles" type="button">
                         <i class="fas fa-search-plus me-1"></i>Ver más detalles
                     </button>
@@ -313,6 +363,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     const modalDetalles = new bootstrap.Modal(modalElement);
+    // Asegurar accesibilidad y evitar warning de aria-hidden con foco retenido
+    modalElement.setAttribute('tabindex','-1');
+    modalElement.addEventListener('shown.bs.modal', () => {
+        try { modalElement.focus(); } catch (e) {}
+    });
+    function safeShowModal(){
+        try {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+        } catch (e) {}
+        // Deferir al siguiente frame para no abrir mientras el DOM aún aplica aria-hidden
+        requestAnimationFrame(() => { setTimeout(() => { try { modalDetalles.show(); } catch(e){} }, 0); });
+    }
     let urlActual = '#';
     
     console.log('✅ Modal inicializado correctamente');
@@ -324,8 +388,48 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-info-circle me-2"></i>' + titulo;
     
     let html = '';
+    const esCancelacion = /cancelaci[óo]n de reserva/i.test(titulo || '');
     
-    if (detalles && Object.keys(detalles).length > 0) {
+    if (esCancelacion) {
+        // Ocultar botón Ir
+        const btnIr = document.getElementById('irAUrl');
+        if (btnIr) btnIr.style.display = 'none';
+        // Si tenemos detalles desde metadata, renderizar tarjetas como en reservas
+        if (detalles && Object.keys(detalles).length > 0) {
+            html += '<div class="row g-3">';
+            if (detalles.solicitante) {
+                html += '<div class="col-12"><div class="card bg-light"><div class="card-body">';
+                html += '<h6 class="card-title"><i class="fas fa-user me-2"></i>Solicitante</h6>';
+                html += '<p class="mb-0"><strong>Nombre:</strong> ' + detalles.solicitante + '</p>';
+                html += '</div></div></div>';
+            }
+            if (detalles.aula) {
+                html += '<div class="col-md-6"><div class="card border-primary"><div class="card-body">';
+                html += '<h6 class="card-title"><i class="fas fa-door-open me-2"></i>Aula</h6>';
+                html += '<p class="mb-0 fs-5 text-primary">' + detalles.aula + '</p>';
+                html += '</div></div></div>';
+            }
+            if (detalles.fecha) {
+                html += '<div class="col-md-6"><div class="card border-info"><div class="card-body">';
+                html += '<h6 class="card-title"><i class="fas fa-calendar me-2"></i>Fecha y Hora</h6>';
+                html += '<p class="mb-1"><strong>Fecha:</strong> ' + detalles.fecha + '</p>';
+                if (detalles.hora_inicio && detalles.hora_fin) {
+                    html += '<p class="mb-0"><strong>Horario:</strong> ' + detalles.hora_inicio + ' - ' + detalles.hora_fin + '</p>';
+                }
+                html += '</div></div></div>';
+            }
+            if (detalles.motivo) {
+                html += '<div class="col-12"><div class="card border-warning"><div class="card-body">';
+                html += '<h6 class="card-title"><i class="fas fa-ban me-2"></i>Motivo de cancelación</h6>';
+                html += '<p class="mb-0">' + detalles.motivo + '</p>';
+                html += '</div></div></div>';
+            }
+            html += '</div>';
+        } else {
+            // Fallback si no hay detalles (notificación antigua)
+            html = '<div class="alert alert-warning"><i class="fas fa-ban me-2"></i>Esta es una notificación de cancelación de reserva.<br>Usa el historial para ver más información si la necesitas.</div>';
+        }
+    } else if (detalles && Object.keys(detalles).length > 0) {
         html += '<div class="row g-3">';
         
         // Información del solicitante
@@ -444,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (tipoUsuario === 'Administrador') {
                 urlDestino = 'Admin.php?view=historial_global';
             } else if (tipoUsuario === 'Encargado') {
-                urlDestino = 'Encargado.php?view=calendario_equipos';
+                urlDestino = 'Encargado.php?view=historial'; // Redirigir al historial/calendario del encargado
             }
         } else if (detalles.id_reserva) {
             // Si es reserva, ir al historial/calendario dentro del panel
@@ -453,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (tipoUsuario === 'Administrador') {
                 urlDestino = 'Admin.php?view=historial_global';
             } else if (tipoUsuario === 'Encargado') {
-                urlDestino = 'Encargado.php?view=calendario';
+                urlDestino = 'Encargado.php?view=historial'; // Redirigir al historial/calendario del encargado
             }
         }
     }
@@ -463,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
         urlDestino = url;
     }
     
-    if (urlDestino) {
+    if (urlDestino && !esCancelacion) {
         btnIr.style.display = 'block';
         btnIr.onclick = function() {
             // Marcar como leída
@@ -482,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnIr.style.display = 'none';
     }
     
-    modalDetalles.show();
+    safeShowModal();
 }
 
 // Manejar click en la notificación completa (sin botón de detalles)

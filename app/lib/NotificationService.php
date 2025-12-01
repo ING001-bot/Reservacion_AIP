@@ -346,6 +346,14 @@ class NotificationService {
                 } else {
                     $mensaje = "Préstamo #{$idPrestamo} - {$listaEquipos} - Confirmado por {$encargado} a las {$horaConfirmacion}.{$comentario}";
                 }
+            } elseif ($tipoUsuario === 'Encargado') {
+                $url = 'Encargado.php?view=notificaciones';
+                $titulo = '✅ Devolución confirmada';
+                if ($cantidadEquipos > 1) {
+                    $mensaje = "Has confirmado la devolución del préstamo #{$idPrestamo}: {$listaEquipos} a las {$horaConfirmacion}.{$comentario}";
+                } else {
+                    $mensaje = "Has confirmado la devolución del préstamo #{$idPrestamo}: {$listaEquipos} a las {$horaConfirmacion}.{$comentario}";
+                }
             } else {
                 return false;
             }

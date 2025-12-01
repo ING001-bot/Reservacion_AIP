@@ -9,8 +9,10 @@ class UsuarioModel {
      */
     public function __construct($conexion = null) {
         if ($conexion === null) {
-            global $conexion; // Usar la conexión global si no se proporciona una
+            // Usar la conexión global si no se proporciona una
+            $conexion = $GLOBALS['conexion'] ?? null;
         }
+
         $this->db = $conexion;
         $this->ensureSchema();
     }
@@ -124,6 +126,44 @@ class UsuarioModel {
         $telefono = $this->normalizePhone($telefono);
         $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ?, correo = ?, tipo_usuario = ?, telefono = ? WHERE id_usuario = ?");
         return $stmt->execute([$nombre, $correo, $tipo_usuario, $telefono, $id_usuario]);
+    }
+
+    // Inicia el flujo de cambio de correo: guarda nuevo_correo y token/expira
+    public function iniciarCambioCorreo(int $id_usuario, string $nuevoCorreo, string $token, string $expira): bool {
+        $correo = strtolower(trim($nuevoCorreo));
+        $sql = "UPDATE usuarios SET nuevo_correo = ?, token_cambio_correo = ?, token_cambio_expira = ? WHERE id_usuario = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$correo, $token, $expira, $id_usuario]);
+    }
+
+    // Confirma el cambio de correo usando el token: mueve nuevo_correo a correo y limpia token/expira
+    public function confirmarCambioCorreoPorToken(string $token): array {
+        $token = trim($token);
+        // Obtener fila válida por token no expirado
+        $sel = $this->db->prepare("SELECT id_usuario, nuevo_correo FROM usuarios WHERE token_cambio_correo = ? AND (token_cambio_expira IS NULL OR token_cambio_expira >= NOW())");
+        $sel->execute([$token]);
+        $row = $sel->fetch(\PDO::FETCH_ASSOC);
+        if (!$row || empty($row['nuevo_correo'])) {
+            return ['ok' => false, 'mensaje' => 'Token inválido o expirado'];
+        }
+        $id = (int)$row['id_usuario'];
+        $nuevo = strtolower(trim($row['nuevo_correo']));
+
+        // Verificar unicidad del correo destino antes de confirmar
+        $chk = $this->db->prepare("SELECT 1 FROM usuarios WHERE correo = ? AND id_usuario <> ?");
+        $chk->execute([$nuevo, $id]);
+        if ($chk->rowCount() > 0) {
+            return ['ok' => false, 'mensaje' => 'El correo ya se encuentra en uso por otro usuario'];
+        }
+
+        // Aplicar cambio y limpiar campos
+        $upd = $this->db->prepare("UPDATE usuarios SET correo = ?, nuevo_correo = NULL, token_cambio_correo = NULL, token_cambio_expira = NULL WHERE id_usuario = ?");
+        $ok = $upd->execute([$nuevo, $id]);
+        if (!$ok) {
+            return ['ok' => false, 'mensaje' => 'No se pudo confirmar el cambio de correo'];
+        }
+
+        return ['ok' => true, 'mensaje' => 'Correo confirmado correctamente', 'id_usuario' => $id, 'correo' => $nuevo];
     }
 
     // Actualiza correo estableciendo verificado=0 y guardando token/expira
@@ -249,6 +289,19 @@ class UsuarioModel {
             $stmt = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'telefono'");
             if ($stmt->rowCount() === 0) {
                 $this->db->exec("ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(32) NULL AFTER correo");
+            }
+            // add columns for email change flow if missing
+            $col = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'nuevo_correo'");
+            if ($col->rowCount() === 0) {
+                $this->db->exec("ALTER TABLE usuarios ADD COLUMN nuevo_correo VARCHAR(255) NULL AFTER telefono");
+            }
+            $col = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'token_cambio_correo'");
+            if ($col->rowCount() === 0) {
+                $this->db->exec("ALTER TABLE usuarios ADD COLUMN token_cambio_correo VARCHAR(64) NULL AFTER nuevo_correo");
+            }
+            $col = $this->db->query("SHOW COLUMNS FROM usuarios LIKE 'token_cambio_expira'");
+            if ($col->rowCount() === 0) {
+                $this->db->exec("ALTER TABLE usuarios ADD COLUMN token_cambio_expira DATETIME NULL AFTER token_cambio_correo");
             }
         } catch (\Throwable $e) {
             error_log('ensureSchema UsuarioModel: '.$e->getMessage());

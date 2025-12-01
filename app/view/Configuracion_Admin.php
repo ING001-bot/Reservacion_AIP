@@ -102,10 +102,42 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
 <div class="config-container">
     <?php if ($mensaje): ?>
         <div class="alert alert-<?= $mensaje_tipo ?> alert-dismissible fade show" role="alert">
-            <?= htmlspecialchars($mensaje) ?>
+            <?= $mensaje ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
+
+    <script>
+    // Confirmación antes de guardar cambios (asegurar instalación cuando cargue el DOM)
+    window.addEventListener('DOMContentLoaded', function(){
+        const form = document.getElementById('form-actualizar-datos');
+        if (!form) return;
+        form.addEventListener('submit', function(e){
+            if (window.__savingProfile) return;
+            if (typeof Swal === 'undefined') { return; }
+            e.preventDefault();
+            Swal.fire({
+                title: '¿Guardar cambios del perfil?',
+                text: 'Se actualizarán tus datos personales.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar'
+            }).then(res => { if (res.isConfirmed){ window.__savingProfile = true; form.submit(); } });
+        });
+    });
+
+    // Mostrar mensaje de éxito/error automáticamente
+    <?php if (!empty($mensaje) && isset($_POST['actualizar_datos'])): ?>
+    Swal.fire({
+        icon: '<?= ($mensaje_tipo ?? '') === 'success' ? 'success' : 'error' ?>',
+        title: '<?= ($mensaje_tipo ?? '') === 'success' ? '¡Guardado!' : 'Error' ?>',
+        text: '<?= addslashes($mensaje ?? '') ?>',
+        timer: 3000,
+        showConfirmButton: true
+    });
+    <?php endif; ?>
+    </script>
 
     <!-- Header del perfil -->
     <div class="profile-header">
@@ -136,7 +168,7 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
     <!-- Información Personal -->
     <div class="config-section">
         <h4>📋 Información Personal</h4>
-        <form method="POST">
+        <form method="POST" id="form-actualizar-datos">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Nombre Completo</label>
@@ -167,7 +199,7 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
                 </div>
             </div>
             <div class="mt-3">
-                <button type="submit" name="actualizar_datos" class="btn btn-brand">
+                <button type="submit" name="actualizar_datos" class="btn btn-brand" id="btn-guardar-datos">
                     💾 Guardar Cambios
                 </button>
             </div>

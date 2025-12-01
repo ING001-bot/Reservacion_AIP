@@ -74,6 +74,13 @@ class ReservaController {
 
         // Verificar disponibilidad
         if ($this->model->verificarDisponibilidad($id_aula, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
+            // Regla: Si el mismo docente canceló previamente EXACTA franja, no puede volver a reservarla
+            $id_usuario_int = (int)$id_usuario;
+            if ($this->model->existeCancelacionMismaFranja($id_usuario_int, (int)$id_aula, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
+                $this->mensaje = "⛔ No puedes volver a reservar esta misma franja horaria.\nEsta reserva fue cancelada previamente por ti. Por favor, selecciona un horario distinto.";
+                $this->tipo = 'danger';
+                return false;
+            }
             if ($this->model->crearReserva($id_aula, $id_usuario, $fecha_reserva_str, $hora_inicio, $hora_fin)) {
                 $this->mensaje = "✅ Reserva realizada correctamente.";
                 $this->tipo = "success";
@@ -283,9 +290,26 @@ class ReservaController {
                         [ 'userName' => $docente, 'type' => 'warning', 'sendSms' => false ]
                     );
                 }
-                // Al docente (campanita)
+                // Metadata común para todos los roles
+                $metadata = json_encode([
+                    'tipo' => 'cancelacion_reserva',
+                    'motivo' => $motivo,
+                    'solicitante' => $docente,
+                    'fecha' => $reserva['fecha'] ?? '',
+                    'hora_inicio' => $reserva['hora_inicio'] ?? '',
+                    'hora_fin' => $reserva['hora_fin'] ?? '',
+                    'aula' => ($this->model->obtenerAulaPorId((int)($reserva['id_aula'] ?? 0))['nombre_aula'] ?? '')
+                ], JSON_UNESCAPED_UNICODE);
+
+                // Al docente (campanita con metadata)
                 try {
-                    $this->model->crearNotificacion((int)$id_usuario, 'Cancelación de reserva', 'Has cancelado una reserva. Motivo: ' . strip_tags($motivo), 'Public/index.php?view=mis_reservas');
+                    $this->model->crearNotificacionConMetadata(
+                        (int)$id_usuario,
+                        'Cancelación de reserva',
+                        'Has cancelado una reserva. Motivo: ' . strip_tags($motivo),
+                        'Profesor.php?view=notificaciones',
+                        $metadata
+                    );
                 } catch (\Throwable $e) { /* noop */ }
                 // A Encargado y Administrador: correo + campanita
                 $destinatarios = $this->model->listarUsuariosPorRol(['Encargado','Administrador']);
@@ -305,14 +329,28 @@ class ReservaController {
                               'url' => 'http://' . $_SERVER['HTTP_HOST'] . '/Reservacion_AIP/Admin.php?view=historial_global' ]
                         );
                     }
-                    // campanita
+                    // campanita con metadata (Admin y Encargado)
                     try {
-                        $this->model->crearNotificacion((int)$u['id_usuario'], 'Cancelación de reserva', strip_tags($messageEA), '/Reservacion_AIP/Admin.php?view=historial_global');
+                        $urlInPanel = ($u['nombre'] ?? '') && (($u['correo'] ?? '') || true) ?
+                            ((($_SESSION['tipo'] ?? '') === 'Administrador' || ($u['tipo_usuario'] ?? '') === 'Administrador') ? 'Admin.php?view=notificaciones' : 'Encargado.php?view=notificaciones')
+                            : 'Admin.php?view=notificaciones';
+                        $this->model->crearNotificacionConMetadata(
+                            (int)$u['id_usuario'],
+                            'Cancelación de reserva',
+                            strip_tags($messageEA),
+                            $urlInPanel,
+                            $metadata
+                        );
                     } catch (\Throwable $e) { /*noop*/ }
                 }
             } catch (\Throwable $e) {
                 error_log('Error al notificar cancelación de reserva: ' . $e->getMessage());
             }
+            // Flash: informar a la vista qué aula/fecha actualizar
+            $_SESSION['flash_cancel'] = [
+                'id_aula' => (int)($reserva['id_aula'] ?? 0),
+                'fecha' => $reserva['fecha'] ?? ''
+            ];
             
             return true;
         } else {

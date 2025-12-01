@@ -76,7 +76,7 @@ $perfil = $configController->obtenerPerfil($id_usuario);
 <div class="config-container">
     <?php if ($mensaje): ?>
         <div class="alert alert-<?= $mensaje_tipo ?> alert-dismissible fade show" role="alert">
-            <?= htmlspecialchars($mensaje) ?>
+            <?= $mensaje ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
@@ -101,7 +101,12 @@ $perfil = $configController->obtenerPerfil($id_usuario);
             </div>
             <div class="flex-grow-1">
                 <h2 class="mb-1 fw-bold"><?= htmlspecialchars($perfil['nombre']) ?></h2>
-                <p class="mb-2 opacity-75"><?= htmlspecialchars($perfil['correo']) ?></p>
+                <p class="mb-2 opacity-75">
+                    <?= htmlspecialchars($perfil['correo']) ?>
+                    <?php if (!empty($perfil['nuevo_correo'])): ?>
+                        <br><small class="text-warning">Pendiente de confirmación: <?= htmlspecialchars($perfil['nuevo_correo']) ?></small>
+                    <?php endif; ?>
+                </p>
                 <span class="badge-role badge-encargado">🧰 Encargado</span>
             </div>
         </div>
@@ -110,7 +115,7 @@ $perfil = $configController->obtenerPerfil($id_usuario);
     <!-- Información Personal -->
     <div class="config-section">
         <h4>📋 Mi Información</h4>
-        <form method="POST">
+        <form method="POST" id="form-actualizar-datos">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Nombre Completo</label>
@@ -141,7 +146,7 @@ $perfil = $configController->obtenerPerfil($id_usuario);
                 </div>
             </div>
             <div class="mt-3">
-                <button type="submit" name="actualizar_datos" class="btn btn-brand">
+                <button type="submit" name="actualizar_datos" class="btn btn-brand" id="btn-guardar-datos">
                     💾 Guardar Cambios
                 </button>
             </div>
@@ -199,11 +204,37 @@ $perfil = $configController->obtenerPerfil($id_usuario);
 </div>
 
 <script>
+// Confirmación antes de guardar cambios
+document.getElementById('form-actualizar-datos')?.addEventListener('submit', function(e){
+    if (window.__savingProfile) return;
+    // Si SweetAlert no está disponible, dejar pasar el submit normal
+    if (typeof Swal === 'undefined') { return; }
+    e.preventDefault();
+    Swal.fire({
+        title: '¿Guardar cambios del perfil?',
+        text: 'Se actualizarán tus datos personales.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar'
+    }).then(res => { if (res.isConfirmed){ window.__savingProfile = true; e.target.submit(); } });
+});
+
 // Mostrar mensaje de éxito/error automáticamente
 <?php if ($mensaje && isset($_POST['eliminar_foto'])): ?>
 Swal.fire({
     icon: '<?= $mensaje_tipo === 'success' ? 'success' : 'error' ?>',
     title: '<?= $mensaje_tipo === 'success' ? '¡Foto eliminada!' : 'Error' ?>',
+    text: '<?= addslashes($mensaje) ?>',
+    timer: 3000,
+    showConfirmButton: true
+});
+<?php endif; ?>
+
+<?php if ($mensaje && isset($_POST['actualizar_datos'])): ?>
+Swal.fire({
+    icon: '<?= $mensaje_tipo === 'success' ? 'success' : 'error' ?>',
+    title: '<?= $mensaje_tipo === 'success' ? '¡Guardado!' : 'Error' ?>',
     text: '<?= addslashes($mensaje) ?>',
     timer: 3000,
     showConfirmButton: true

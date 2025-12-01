@@ -290,17 +290,20 @@ function init(){
             }
 
             // Si hay inicio y fin seleccionados
-            const inicioIdx = lista.findIndex(x => x.time === selInicio);
-            const finIdx = lista.findIndex(x => x.time === selFin);
-            
-            if (inicioIdx === -1 || finIdx === -1) return;
-            
-            // Verificar si hay horarios ocupados en el rango
-            const rango = lista.slice(
-                Math.min(inicioIdx, finIdx),
-                Math.max(inicioIdx, finIdx) + 1
-            );
-            
+            const hStart = selInicio.split('-')[0];
+            const hEnd = selFin.split('-')[0];
+            const start = compararHora(hStart, hEnd) <= 0 ? hStart : hEnd;
+            const end   = compararHora(hStart, hEnd) <= 0 ? hEnd   : hStart;
+
+            // Construir subconjunto por valor de hora (nunca incluir anteriores al inicio)
+            const rango = lista.filter(x => {
+                const hx = (x.time || '').split('-')[0];
+                return compararHora(hx, start) >= 0 && compararHora(hx, end) <= 0;
+            });
+
+            if (!rango.length) return;
+
+            // Verificar si hay horarios ocupados o especiales en el rango
             const hayOcupados = rango.some(x => x.danger || x.disabled || x.el.disabled || x.el.classList.contains('btn-warning'));
 
             if (hayOcupados) {
@@ -316,18 +319,17 @@ function init(){
                 return;
             }
 
-            // Resaltar el rango seleccionado
-            for (let i = Math.min(inicioIdx, finIdx); i <= Math.max(inicioIdx, finIdx); i++) {
-                const x = lista[i];
+            // Resaltar el rango seleccionado (inclusivo)
+            rango.forEach(x => {
                 if (x && !x.danger && !x.disabled && !x.el.disabled && !x.el.classList.contains('btn-warning')) {
                     x.el.classList.add('active', 'btn-outline-primary');
                     x.el.classList.remove('btn-success');
                 }
-            }
+            });
 
             // Pintar medio botón en el fin si NO es fin especial (para indicar que después puede iniciar otra reserva)
             const finesEspeciales = ['10:10','12:45','16:00','18:35'];
-            const finItem = lista[finIdx];
+            const finItem = rango[rango.length - 1];
             if (finItem && !finesEspeciales.includes(finItem.time)) {
                 finItem.el.classList.add('btn-half-primary');
             }

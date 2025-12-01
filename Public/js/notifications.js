@@ -80,6 +80,18 @@
       `;
       list.appendChild(a);
     });
+
+    // Redirigir SIEMPRE al panel de notificaciones del rol actual
+    list.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const role = (window.__tbUserRole||'').toLowerCase();
+        let url = '../view/Profesor.php?view=notificaciones';
+        if (role === 'administrador') url = '../view/Admin.php?view=notificaciones';
+        else if (role === 'encargado') url = '../view/Encargado.php?view=notificaciones';
+        window.location.href = url;
+      });
+    });
   }
 
   function updateCount(count){

@@ -12,6 +12,8 @@ if (!defined('EMBEDDED_VIEW')) {
 require "../config/conexion.php";
 require '../controllers/ReservaController.php';
 require_once '../middleware/VerifyMiddleware.php';
+require_once '../middleware/RouteGuard.php';
+RouteGuard::enforceInternalNav();
 require_once '../lib/VerificationService.php';
 require_once '../models/UsuarioModel.php';
 
@@ -121,6 +123,13 @@ $fecha_min = $mañana->format('Y-m-d');
 
 $fecha_default = $_POST['fecha'] ?? $fecha_min;
 $id_aula_selected = $_POST['id_aula'] ?? (isset($aulas[0]['id_aula']) ? $aulas[0]['id_aula'] : null);
+// Si venimos de una cancelación, usar aula/fecha canceladas para refrescar disponibilidad
+if (!empty($_SESSION['flash_cancel'])) {
+    $fc = $_SESSION['flash_cancel'];
+    if (!empty($fc['fecha'])) { $fecha_default = $fc['fecha']; }
+    if (!empty($fc['id_aula'])) { $id_aula_selected = $fc['id_aula']; }
+    unset($_SESSION['flash_cancel']);
+}
 
 $reservas_existentes = [];
 if (!empty($fecha_default) && !empty($id_aula_selected)) {

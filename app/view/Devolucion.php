@@ -9,6 +9,9 @@ if (!isset($_SESSION['usuario']) || $_SESSION['tipo']!=='Encargado') {
     die("Acceso denegado");
 }
 
+// Definir usuario para cabecera
+$usuario = $_SESSION['usuario'] ?? 'Encargado';
+
 // Marcar notificación como leída si viene desde una notificación
 if (isset($_GET['notif_read']) && is_numeric($_GET['notif_read'])) {
     try {
@@ -27,276 +30,172 @@ if (!defined('EMBEDDED_VIEW')) {
     header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
 }
 
+
+$q = isset($_GET['q']) ? trim($_GET['q']) : '';
+$estado = isset($_GET['estado']) ? trim($_GET['estado']) : '';
+$desde = isset($_GET['desde']) ? trim($_GET['desde']) : date('Y-m-d', strtotime('-30 days'));
+$hasta = isset($_GET['hasta']) ? trim($_GET['hasta']) : date('Y-m-d');
+
+// Obtener préstamos filtrados para mostrar en la tabla
+$prestamos = $controller->obtenerPrestamosFiltrados($estado, $desde, $hasta, $q);
+
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Devolución individual
     if (isset($_POST['devolver_id'])) {
-        $id = intval($_POST['devolver_id']);
-        $coment = isset($_POST['comentario']) ? trim($_POST['comentario']) : null;
-        
-        if ($controller->devolverEquipo($id, $coment, false)) { // false = no enviar notificación automática
-            // Crear notificación agrupada
-            try {
-                $prestamo = $controller->obtenerPrestamoPorId($id);
-                if ($prestamo && $prestamo['id_usuario']) {
-                    require_once __DIR__ . '/../lib/NotificationService.php';
-                    $notifService = new \App\Lib\NotificationService();
-                    $db = $controller->getDb();
-                    
-                    $equiposDevueltos = [['nombre' => $prestamo['nombre_equipo'] ?? 'Equipo']];
-                    $datosDev = [
-                        'id_prestamo' => $id,
-                        'equipos' => $equiposDevueltos,
-                        'encargado' => $_SESSION['usuario'] ?? 'Encargado',
-                        'hora_confirmacion' => date('H:i'),
-                        'comentario' => $coment
-                    ];
-                    
-                    // Notificar al profesor
-                    $notifService->crearNotificacionDevolucionPack(
-                        $db,
-                        (int)$prestamo['id_usuario'],
-                        'Profesor',
-                        $datosDev
-                    );
-                    
-                    // Notificar administradores
-                    $admins = $controller->listarUsuariosPorRol(['Administrador']);
-                    foreach ($admins as $admin) {
-                        $notifService->crearNotificacionDevolucionPack(
-                            $db,
-                            (int)$admin['id_usuario'],
-                            'Administrador',
-                            $datosDev
-                        );
-                    }
-                }
-            } catch (\Exception $e) {
-                error_log("Error al crear notificación de devolución: " . $e->getMessage());
+      $id = intval($_POST['devolver_id']);
+      $coment = isset($_POST['comentario']) ? trim($_POST['comentario']) : null;
+      $success = false;
+      // Pre-chequeo idempotente para evitar notificación en recarga
+      $pre = $controller->obtenerPrestamoPorId($id);
+      if ($pre && ($pre['estado'] ?? '') === 'Devuelto') {
+        $mensaje = '✔ Este préstamo ya estaba confirmado como devuelto.';
+        $success = true;
+      } elseif ($controller->devolverEquipo($id, $coment, false)) { // false = no enviar notificación automática
+        // Crear notificación (1 para Admin, 1 para Encargado)
+        try {
+          $prestamo = $controller->obtenerPrestamoPorId($id);
+          if ($prestamo) {
+            require_once __DIR__ . '/../lib/NotificationService.php';
+            $notifService = new \App\Lib\NotificationService();
+            $db = $controller->getDb();
+            $equiposDevueltos = [['nombre' => $prestamo['nombre_equipo'] ?? 'Equipo']];
+            $datosDev = [
+              'id_prestamo' => $id,
+              'equipos' => $equiposDevueltos,
+              'encargado' => $_SESSION['usuario'] ?? 'Encargado',
+              'hora_confirmacion' => date('H:i'),
+              'comentario' => $coment
+            ];
+            // Notificar profesor (si existe)
+            if (!empty($prestamo['id_usuario'])) {
+              $notifService->crearNotificacionDevolucionPack(
+                $db,
+                (int)$prestamo['id_usuario'],
+                'Profesor',
+                $datosDev
+              );
             }
-            
-            $mensaje = '✅ Devolución registrada correctamente.';
-        } else {
-            $mensaje = '❌ No se pudo registrar la devolución.';
+            // Notificar administradores
+            $admins = $controller->listarUsuariosPorRol(['Administrador']);
+            foreach ($admins as $admin) {
+              $notifService->crearNotificacionDevolucionPack(
+                $db,
+                (int)$admin['id_usuario'],
+                'Administrador',
+                $datosDev
+              );
+            }
+          }
+        } catch (\Exception $e) {
+          error_log("Error al crear notificación de devolución: " . $e->getMessage());
         }
+        $mensaje = '✅ Devolución registrada correctamente.';
+        $success = true;
+      } else {
+        $mensaje = '❌ No se pudo registrar la devolución.';
+      }
+      // Redirigir para evitar reenvío del formulario (PRG)
+      // Importante: mover header antes de cualquier salida
+      if (!headers_sent()) {
+        $redirUrl = $_SERVER['PHP_SELF'] . '?success=' . ($success ? '1' : '0') . '&msg=' . urlencode($mensaje);
+        header('Location: ' . $redirUrl);
+        exit;
+      }
     }
     
-    // Devolución grupal
+    // Devolución grupal (única lógica)
     if (isset($_POST['devolver_grupo_ids'])) {
         $idsJson = $_POST['devolver_grupo_ids'] ?? '[]';
         $ids = json_decode($idsJson, true);
         $coment = isset($_POST['comentario_grupo']) ? trim($_POST['comentario_grupo']) : null;
-        
+        $exitosos = 0;
+        $equiposDevueltos = [];
+        $omitidos = 0;
+        $idUsuarioProfesor = null;
         if (is_array($ids) && !empty($ids)) {
-            $exitosos = 0;
-            $equiposDevueltos = [];
-            $idUsuarioPrestamo = null;
-            
-            foreach ($ids as $id) {
-                if ($controller->devolverEquipo(intval($id), $coment)) {
-                    $exitosos++;
-                    
-                    // Obtener datos del equipo para la notificación
-                    try {
-                        $prestamo = $controller->obtenerPrestamoPorId(intval($id));
-                        if ($prestamo && $prestamo['nombre_equipo']) {
-                            $equiposDevueltos[] = ['nombre' => $prestamo['nombre_equipo']];
-                            if (!$idUsuarioPrestamo && $prestamo['id_usuario']) {
-                                $idUsuarioPrestamo = $prestamo['id_usuario'];
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        error_log("Error al obtener datos del préstamo: " . $e->getMessage());
-                    }
+          // Filtrar préstamos ya devueltos para no reprocesarlos
+          $idsProcesables = [];
+          foreach ($ids as $cand) {
+            $pre = $controller->obtenerPrestamoPorId((int)$cand);
+            if ($pre && ($pre['estado'] ?? '') === 'Devuelto') { $omitidos++; continue; }
+            $idsProcesables[] = (int)$cand;
+          }
+          foreach ($idsProcesables as $idg) {
+            if ($controller->devolverEquipo(intval($idg), $coment)) {
+              $exitosos++;
+              try {
+                $prestamoG = $controller->obtenerPrestamoPorId(intval($idg));
+                if ($prestamoG && $prestamoG['nombre_equipo']) {
+                  $equiposDevueltos[] = ['nombre' => $prestamoG['nombre_equipo']];
+                  if (!$idUsuarioProfesor && !empty($prestamoG['id_usuario'])) {
+                    $idUsuarioProfesor = (int)$prestamoG['id_usuario'];
+                  }
                 }
+              } catch (\Exception $e) { error_log('Error datos prestamo grupal: '.$e->getMessage()); }
             }
-            
-            // Crear notificaciones agrupadas al finalizar todas las devoluciones
-            if ($exitosos > 0 && !empty($equiposDevueltos)) {
-                try {
-                    require_once __DIR__ . '/../lib/NotificationService.php';
-                    $notifService = new \App\Lib\NotificationService();
-                    $db = $controller->getDb();
-                    
-                    $datosDev = [
-                        'id_prestamo' => $ids[0], // ID del primer préstamo como referencia
-                        'equipos' => $equiposDevueltos,
-                        'encargado' => $_SESSION['usuario'] ?? 'Encargado',
-                        'hora_confirmacion' => date('H:i'),
-                        'comentario' => $coment
-                    ];
-                    
-                    // Notificar al profesor
-                    if ($idUsuarioPrestamo) {
-                        $notifService->crearNotificacionDevolucionPack(
-                            $db,
-                            $idUsuarioPrestamo,
-                            'Profesor',
-                            $datosDev
-                        );
-                    }
-                    
-                    // Notificar a todos los administradores
-                    $admins = $controller->listarUsuariosPorRol(['Administrador']);
-                    foreach ($admins as $admin) {
-                        $notifService->crearNotificacionDevolucionPack(
-                            $db,
-                            (int)$admin['id_usuario'],
-                            'Administrador',
-                            $datosDev
-                        );
-                    }
-                } catch (\Exception $e) {
-                    error_log("Error al crear notificaciones de devolución agrupada: " . $e->getMessage());
-                }
-            }
-            
-            if ($exitosos === count($ids)) {
-                $mensaje = '✅ Devolución de ' . $exitosos . ' equipo(s) registrada correctamente.';
-            } else if ($exitosos > 0) {
-                $mensaje = '⚠️ Se registraron ' . $exitosos . ' de ' . count($ids) . ' devoluciones.';
-            } else {
-                $mensaje = '❌ No se pudo registrar ninguna devolución.';
-            }
+          }
+          if ($exitosos > 0 && !empty($equiposDevueltos)) {
+            try {
+              require_once __DIR__ . '/../lib/NotificationService.php';
+              $notifService = new \App\Lib\NotificationService();
+              $db = $controller->getDb();
+              $datosDev = [
+                'id_prestamo' => $idsProcesables[0] ?? 0,
+                'equipos' => $equiposDevueltos,
+                'encargado' => $_SESSION['usuario'] ?? 'Encargado',
+                'hora_confirmacion' => date('H:i'),
+                'comentario' => $coment
+              ];
+              // Notificar profesor (si se detectó)
+              if (!empty($idUsuarioProfesor)) {
+                $notifService->crearNotificacionDevolucionPack($db, $idUsuarioProfesor, 'Profesor', $datosDev);
+              }
+              // Notificar administradores
+              $admins = $controller->listarUsuariosPorRol(['Administrador']);
+              foreach ($admins as $admin) {
+                $notifService->crearNotificacionDevolucionPack($db, (int)$admin['id_usuario'], 'Administrador', $datosDev);
+              }
+            } catch (\Exception $e) { error_log('Error notificación grupal: '.$e->getMessage()); }
+          }
+          if ($exitosos > 0 && $omitidos === 0) {
+            $mensaje = '✅ Devolución de ' . $exitosos . ' equipo(s) registrada correctamente.';
+          } else if ($exitosos > 0 && $omitidos > 0) {
+            $mensaje = '✅ ' . $exitosos . ' confirmado(s). ✔ ' . $omitidos . ' ya estaban confirmados.';
+          } else if ($exitosos === 0 && $omitidos > 0) {
+            $mensaje = '✔ Estos préstamo(s) ya estaban confirmados como devueltos.';
+          } else {
+            $mensaje = '❌ No se pudo registrar ninguna devolución.';
+          }
+          // Redirección PRG para evitar reenvío
+          if (!headers_sent()) {
+            $redirUrl = $_SERVER['PHP_SELF'] . '?success=' . ($exitosos > 0 ? '1' : '0') . '&msg=' . urlencode($mensaje);
+            header('Location: ' . $redirUrl);
+            exit;
+          }
         }
     }
-    // Packs eliminados del sistema
-}
-
-// Filtros simples - Por defecto mostrar todos los estados (así, al confirmar, la fila sigue visible)
-$estado = isset($_GET['estado']) && $_GET['estado'] !== '' ? trim($_GET['estado']) : '';
-$desde = isset($_GET['desde']) && $_GET['desde'] !== '' ? trim($_GET['desde']) : '';
-$hasta = isset($_GET['hasta']) && $_GET['hasta'] !== '' ? trim($_GET['hasta']) : '';
-$q = isset($_GET['q']) && $_GET['q'] !== '' ? trim($_GET['q']) : '';
-
-// Si no hay filtros de fecha, limitar a últimos 30 días para mejor rendimiento
-if ($desde === '' && $hasta === '') {
-    $desde = date('Y-m-d', strtotime('-30 days'));
-}
-
-// Siempre usar filtros para optimizar la consulta
-$prestamos = $controller->obtenerPrestamosFiltrados(
-    $estado !== '' ? $estado : null, 
-    $desde !== '' ? $desde : null, 
-    $hasta !== '' ? $hasta : null, 
-    $q !== '' ? $q : null
-);
-
-$usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
+  }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Registrar Devolución</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Estilos propios -->
-    <link rel="stylesheet" href="../../Public/css/brand.css">
-    <style>
-      /* Estilos simples para tabla de préstamos */
-      .table-brand {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      
-      .table-brand thead {
-        background: #0d6efd;
-        color: white;
-      }
-      
-      .table-brand thead th {
-        font-weight: 600;
-        padding: 0.75rem;
-        border: none;
-      }
-      
-      .table-brand tbody tr:hover {
-        background-color: #f8f9fa;
-      }
-      
-      .table-brand tbody td {
-        padding: 0.75rem;
-        vertical-align: middle;
-      }
-      
-      .badge {
-        padding: 0.35rem 0.65rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border-radius: 4px;
-      }
-      
-      .badge.bg-info {
-        background: #0dcaf0 !important;
-        color: #000 !important;
-      }
-      
-      .badge.bg-warning {
-        background: #ffc107 !important;
-        color: #000 !important;
-      }
-      
-      .badge.bg-success {
-        background: #198754 !important;
-        color: #fff !important;
-      }
-      
-      .btn-success {
-        background: #198754;
-        border: none;
-        font-weight: 500;
-      }
-      
-      .btn-success:hover {
-        background: #157347;
-      }
-      
-      .filters .form-label { 
-        font-weight: 600; 
-      }
-      
-      .text-brand {
-        color: #0d6efd;
-        font-weight: 700;
-      }
-      
-      /* Submit animation */
-      .modal.submitting .modal-content { 
-        transform: scale(0.98); 
-        opacity: .85; 
-        transition: transform .2s ease, opacity .2s ease; 
-      }
-      
-      .toast-container { 
-        position: fixed; 
-        bottom: 1rem; 
-        right: 1rem; 
-        z-index: 1080; 
-      }
-      
-      /* Responsive */
-      @media (max-width: 768px) {
-        .table-brand {
-          font-size: 0.85rem;
-        }
-        
-        .table-brand thead th,
-        .table-brand tbody td {
-          padding: 0.6rem 0.4rem;
-        }
-        
-        .badge {
-          font-size: 0.75rem;
-          padding: 0.3rem 0.5rem;
-        }
-      }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Devolución</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../Public/css/brand.css">
 </head>
 <body>
 <?php require __DIR__ . '/partials/navbar.php'; ?>
+<style>
+  .toast-container{ position: fixed; right: 360px; bottom: 24px; z-index:1080; }
+  @media (max-width: 1200px){ .toast-container{ right: 24px; bottom: 24px; } }
+  /* Posicionar ambos modales más abajo y centrados */
+  #modalDevolverGrupo .modal-dialog,
+  .custom-modal-pos{ display:flex; align-items:flex-start; justify-content:center; min-height:100vh; margin-top:180px !important; }
+</style>
 
 <main class="container py-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -304,7 +203,7 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
         <div class="text-muted">Encargado: <strong><?= $usuario ?></strong></div>
     </div>
 
-    <form class="card p-3 shadow-sm mb-3" method="get" action="Devolucion.php">
+    <form id="filtrosForm" class="card p-3 shadow-sm mb-3" method="get" action="Devolucion.php">
             <div class="row g-2 align-items-end filters">
                 <div class="col-6 col-md-2">
                     <label class="form-label fw-semibold">
@@ -335,12 +234,12 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
                     <input type="text" class="form-control form-control-sm" name="q" placeholder="🔍 Buscar por equipo, profesor o aula..." value="<?= htmlspecialchars($q) ?>" autocomplete="off">
                 </div>
                 <div class="col-12 col-md-2 d-flex gap-2 justify-content-end align-items-center">
-                    <button class="btn btn-sm btn-brand rounded-pill px-3 w-100 w-md-auto" type="submit">
+                    <button id="btnBuscar" class="btn btn-sm btn-brand rounded-pill px-3 w-100 w-md-auto" type="button">
                         <i class="fas fa-search me-1"></i>Buscar
                     </button>
-                    <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 w-100 w-md-auto" href="Devolucion.php" title="Limpiar filtros">
+                    <button id="btnLimpiar" class="btn btn-sm btn-outline-secondary rounded-pill px-3 w-100 w-md-auto" type="button" title="Limpiar filtros">
                         <i class="fas fa-broom me-1"></i>Limpiar
-                    </a>
+                    </button>
                 </div>
             </div>
             
@@ -506,8 +405,16 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
               <small class="text-muted">Solo requerido si el estado es "Mal estado"</small>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-success">Marcar como Devuelto</button>
+              <div class="container-fluid">
+                <div class="row">
+                  <div class="col-12 d-flex justify-content-center mt-3">
+                    <button type="submit" class="btn btn-success px-4 py-2">Marcar como Devuelto</button>
+                  </div>
+                  <div class="col-12 d-flex justify-content-center mt-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -518,7 +425,17 @@ $usuario = htmlspecialchars($_SESSION['usuario'], ENT_QUOTES, 'UTF-8');
 
     <!-- Modal Devolver unitario -->
     <div class="modal fade" id="modalDevolver" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-centered custom-modal-pos">
+        <style>
+          /* Solo afecta el modal de devolución unitario */
+          .custom-modal-pos {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            margin-top: 180px !important;
+          }
+        </style>
         <div class="modal-content">
           <form method="post" action="">
             <div class="modal-header">
@@ -624,27 +541,41 @@ document.addEventListener('DOMContentLoaded', function(){
   // Packs eliminados: sin modal ni lógica de packs
 
   // Toast after server feedback
-  <?php if (!empty($mensaje)): ?>
+  <?php 
+    $msg = $mensaje;
+    if (isset($_GET['msg'])) $msg = $_GET['msg'];
+    if (!empty($msg)): ?>
     (function(){
       const toastEl = document.getElementById('toastFeedback');
       const body = document.getElementById('toastFeedbackBody');
-      if (body) body.textContent = <?= json_encode($mensaje, JSON_UNESCAPED_UNICODE) ?>;
+      if (body) body.textContent = <?= json_encode($msg, JSON_UNESCAPED_UNICODE) ?>;
       const t = new bootstrap.Toast(toastEl, { delay: 3000 });
       t.show();
     })();
   <?php endif; ?>
   
   // Debug del formulario de búsqueda
-  const searchForm = document.querySelector('form[method="get"]');
-  if (searchForm) {
-    searchForm.addEventListener('submit', function(e) {
-      // Permitir submit normal
-      console.log('Formulario enviado con:', {
-        estado: this.querySelector('[name="estado"]')?.value,
-        desde: this.querySelector('[name="desde"]')?.value,
-        hasta: this.querySelector('[name="hasta"]')?.value,
-        q: this.querySelector('[name="q"]')?.value
-      });
+  const searchForm = document.getElementById('filtrosForm');
+  const btnBuscar = document.getElementById('btnBuscar');
+  const btnLimpiar = document.getElementById('btnLimpiar');
+  if (btnBuscar && searchForm) {
+    btnBuscar.addEventListener('click', function(){
+      const estado = encodeURIComponent(searchForm.querySelector('[name="estado"]').value || '');
+      const desde  = encodeURIComponent(searchForm.querySelector('[name="desde"]').value || '');
+      const hasta  = encodeURIComponent(searchForm.querySelector('[name="hasta"]').value || '');
+      const q      = encodeURIComponent(searchForm.querySelector('[name="q"]').value || '');
+      const params = new URLSearchParams();
+      if (estado) params.set('estado', estado);
+      if (desde)  params.set('desde', desde);
+      if (hasta)  params.set('hasta', hasta);
+      if (q)      params.set('q', q);
+      const url = 'Devolucion.php' + (params.toString() ? ('?' + params.toString()) : '');
+      window.location.href = url;
+    });
+  }
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', function(){
+      window.location.href = 'Devolucion.php';
     });
   }
 });

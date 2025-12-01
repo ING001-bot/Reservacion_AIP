@@ -61,6 +61,19 @@ $badge = count($no_leidas);
 ?>
 <!-- Dependencias para iconos y offcanvas (sin integrity para evitar bloqueos) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<script>
+// Favicon institucional (aplica a todas las vistas que incluyen el navbar)
+(function(){
+  try{
+    var href = '../../Public/img/logo_colegio.png';
+    var link = document.querySelector('link[rel="icon"]') || document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/png';
+    link.href = href;
+    if (!link.parentNode && document.head) document.head.appendChild(link);
+  }catch(e){ /* noop */ }
+})();
+</script>
 
 <!-- Menú móvil -->
 <div class="offcanvas offcanvas-start bg-brand text-white" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">

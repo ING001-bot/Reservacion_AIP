@@ -221,7 +221,8 @@ class UsuarioController {
         if (!$actual) {
             return ['error' => true, 'mensaje' => '⚠️ Usuario no encontrado.'];
         }
-        $tipo_usuario = $actual['tipo']; // Mantener el rol actual
+        // Mantener el rol actual desde BD (columna correcta: tipo_usuario)
+        $tipo_usuario = $actual['tipo_usuario'] ?? ($actual['tipo'] ?? 'Profesor');
 
         // Validar correo (formato, etc.)
         $val = $this->validarCorreoEstricto($correo);
@@ -307,7 +308,7 @@ class UsuarioController {
 
             if (isset($_POST['editar_usuario'])) {
                 $telefono = $this->normalizeTelefono($_POST['telefono'] ?? null);
-                $res = $this->editarUsuario($_POST['id_usuario'], $_POST['nombre'], $_POST['correo'], $_POST['tipo'], $telefono);
+                $res = $this->editarUsuario($_POST['id_usuario'], $_POST['nombre'], $_POST['correo'], $_POST['tipo'] ?? '', $telefono);
                 $mensaje = $res['mensaje'];
                 $mensaje_tipo = $res['error'] ? 'danger' : 'success';
                 if (!$res['error']) {

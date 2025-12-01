@@ -35,6 +35,32 @@ class PrestamoModel {
             return ['mensaje'=>'❌ El aula seleccionada no existe o está inactiva. Por favor, selecciona otra aula.','tipo'=>'error'];
         }
         
+        // Validaciones de horario (ventana permitida 06:00 - 19:00)
+        if (!$hora_inicio) {
+            return ['mensaje'=>'⚠️ Debes indicar la hora de inicio.','tipo'=>'error'];
+        }
+        // Normalizar HH:MM a HH:MM:SS
+        if (strlen($hora_inicio) === 5) $hora_inicio .= ':00';
+        if ($hora_fin !== null && strlen($hora_fin) === 5) $hora_fin .= ':00';
+        
+        $minPermitida = '06:00:00';
+        $maxPermitida = '19:00:00';
+        
+        // Inicio debe estar dentro de ventana
+        if ($hora_inicio < $minPermitida || $hora_inicio > $maxPermitida) {
+            return ['mensaje'=>'⛔ La hora de inicio de préstamo debe estar entre 06:00 y 19:00.','tipo'=>'error'];
+        }
+        
+        // Si hay fin, validar orden y ventana
+        if ($hora_fin !== null) {
+            if ($hora_fin <= $hora_inicio) {
+                return ['mensaje'=>'⚠️ La hora de fin debe ser mayor que la hora de inicio.','tipo'=>'error'];
+            }
+            if ($hora_fin > $maxPermitida) {
+                return ['mensaje'=>'⛔ La hora de fin de préstamo no puede exceder las 19:00.','tipo'=>'error'];
+            }
+        }
+        
         // VALIDAR CONFLICTO: Verificar que no haya otro préstamo para la misma aula/fecha/hora
         $checkConflicto = $this->db->prepare("
             SELECT COUNT(*) as total 
@@ -194,32 +220,33 @@ class PrestamoModel {
     }
 
     public function devolverEquipo($id_prestamo, ?string $comentario = null) {
-        // Obtener el id_equipo del préstamo
-        $stmtGet = $this->db->prepare("SELECT id_equipo FROM prestamos WHERE id_prestamo = :id");
+        // Obtener estado e id_equipo del préstamo
+        $stmtGet = $this->db->prepare("SELECT id_equipo, estado FROM prestamos WHERE id_prestamo = :id");
         $stmtGet->bindValue(':id', $id_prestamo, PDO::PARAM_INT);
         $stmtGet->execute();
         $row = $stmtGet->fetch(PDO::FETCH_ASSOC);
-        $id_equipo = $row ? (int)$row['id_equipo'] : null;
+        if (!$row) return false;
+        $id_equipo = isset($row['id_equipo']) ? (int)$row['id_equipo'] : null;
+        $estadoActual = $row['estado'] ?? '';
+
+        // Idempotencia: si ya está devuelto, no hacer nada
+        if (strcasecmp($estadoActual, 'Devuelto') === 0) {
+            return true;
+        }
 
         $this->db->beginTransaction();
         try {
-            // Marcar devolución
-            $stmt = $this->db->prepare("
-                UPDATE prestamos 
-                SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :comentario 
-                WHERE id_prestamo=:id
-            ");
+            // Marcar devolución solo si no estaba devuelto
+            $stmt = $this->db->prepare("\n                UPDATE prestamos \n                SET estado='Devuelto', fecha_devolucion=CURDATE(), comentario_devolucion = :comentario \n                WHERE id_prestamo=:id AND estado <> 'Devuelto'\n            ");
             $stmt->bindValue(':comentario', $comentario, PDO::PARAM_STR);
             $stmt->bindValue(':id', $id_prestamo, PDO::PARAM_INT);
             $stmt->execute();
 
-            // Incrementar stock solo si no supera el máximo
-            if ($id_equipo) {
-                $stmtInc = $this->db->prepare("
-                    UPDATE equipos 
-                    SET stock = LEAST(stock + 1, stock_maximo) 
-                    WHERE id_equipo = ?
-                ");
+            $actualizados = $stmt->rowCount();
+
+            // Incrementar stock solo si hubo actualización
+            if ($actualizados > 0 && $id_equipo) {
+                $stmtInc = $this->db->prepare("\n                    UPDATE equipos \n                    SET stock = LEAST(stock + 1, stock_maximo) \n                    WHERE id_equipo = ?\n                ");
                 $stmtInc->execute([$id_equipo]);
             }
 

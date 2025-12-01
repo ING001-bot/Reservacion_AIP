@@ -10,6 +10,15 @@ class ReservaModel {
         return $this->db;
     }
 
+    // Verifica si el usuario canceló previamente la MISMA franja (misma aula, fecha, inicio y fin)
+    public function existeCancelacionMismaFranja(int $id_usuario, int $id_aula, string $fecha, string $hora_inicio, string $hora_fin): bool {
+        if (strlen($hora_inicio) === 5) $hora_inicio .= ':00';
+        if (strlen($hora_fin) === 5) $hora_fin .= ':00';
+        $stmt = $this->db->prepare("\n            SELECT COUNT(*) FROM reservas_canceladas\n            WHERE id_usuario = :u AND id_aula = :a\n              AND fecha = :f AND hora_inicio = :hi AND hora_fin = :hf\n        ");
+        $stmt->execute([':u'=>$id_usuario, ':a'=>$id_aula, ':f'=>$fecha, ':hi'=>$hora_inicio, ':hf'=>$hora_fin]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     // Obtener una reserva específica perteneciente a un usuario
     public function obtenerReservaDeUsuario(int $id_reserva, int $id_usuario): ?array {
         $stmt = $this->db->prepare("SELECT id_reserva, id_aula, id_usuario, fecha, hora_inicio, hora_fin FROM reservas WHERE id_reserva = ? AND id_usuario = ?");
@@ -173,6 +182,17 @@ class ReservaModel {
     public function crearNotificacion(int $id_usuario, string $titulo, string $mensaje, string $url = ''): bool {
         $stmt = $this->db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url) VALUES (?, ?, ?, ?)");
         return $stmt->execute([$id_usuario, $titulo, $mensaje, $url]);
+    }
+
+    // Crear notificación con metadata (para cancelaciones)
+    public function crearNotificacionConMetadata(int $id_usuario, string $titulo, string $mensaje, string $url, string $metadata): bool {
+        try {
+            $stmt = $this->db->prepare("INSERT INTO notificaciones (id_usuario, titulo, mensaje, url, metadata) VALUES (?, ?, ?, ?, ?)");
+            return $stmt->execute([$id_usuario, $titulo, $mensaje, $url, $metadata]);
+        } catch (\PDOException $e) {
+            error_log('Error crearNotificacionConMetadata: ' . $e->getMessage());
+            return false;
+        }
     }
 
     // Listar cancelaciones del usuario dentro de un rango de fechas (por fecha reservada)

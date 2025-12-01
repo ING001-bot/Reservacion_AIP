@@ -20,7 +20,7 @@ class VerifyMiddleware {
         $sessionUserId = $_SESSION['usuario_id'] ?? $_SESSION['id_usuario'] ?? null;
         if ($sessionUserId === null) {
             $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-            header('Location: /Sistema_reserva_AIP/Public/login.php');
+            header('Location: /Reservacion_AIP/Public/login.php');
             exit;
         }
         
@@ -31,7 +31,7 @@ class VerifyMiddleware {
             
             // Redirigir a la página de verificación
             $_SESSION['pending_action'] = $actionType;
-            header('Location: /Sistema_reserva_AIP/Public/verificar.php?action=' . $actionType);
+            header('Location: /Reservacion_AIP/Public/verificar.php?action=' . $actionType);
             exit;
         }
         
