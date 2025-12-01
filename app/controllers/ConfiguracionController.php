@@ -12,6 +12,40 @@ class ConfiguracionController {
     }
 
     /**
+     * Actualizar contraseña del usuario (requiere contraseña actual y confirmación)
+     */
+    public function actualizarContrasena(int $id_usuario, string $contrasena_actual, string $nueva_contrasena, string $confirmacion): array {
+        $contrasena_actual = (string)$contrasena_actual;
+        $nueva_contrasena = (string)$nueva_contrasena;
+        $confirmacion = (string)$confirmacion;
+
+        if (strlen($nueva_contrasena) < 6) {
+            return ['error' => true, 'mensaje' => '⚠️ La contraseña nueva debe tener al menos 6 caracteres'];
+        }
+        if ($nueva_contrasena !== $confirmacion) {
+            return ['error' => true, 'mensaje' => '⚠️ La confirmación no coincide'];
+        }
+
+        $usuario = $this->usuarioModel->obtenerPorId($id_usuario);
+        if (!$usuario) {
+            return ['error' => true, 'mensaje' => '⚠️ Usuario no encontrado'];
+        }
+
+        // Verificar contraseña actual
+        $hash = $usuario['contraseña'] ?? '';
+        if (!is_string($hash) || $hash === '' || !password_verify($contrasena_actual, $hash)) {
+            return ['error' => true, 'mensaje' => '⚠️ La contraseña actual es incorrecta'];
+        }
+
+        $nuevoHash = password_hash($nueva_contrasena, PASSWORD_BCRYPT);
+        $ok = $this->usuarioModel->actualizarContraseñaPorId($id_usuario, $nuevoHash);
+        return [
+            'error' => !$ok,
+            'mensaje' => $ok ? '✅ Contraseña actualizada correctamente' : '❌ Error al actualizar la contraseña'
+        ];
+    }
+
+    /**
      * Obtener perfil completo del usuario
      */
     public function obtenerPerfil(int $id_usuario): ?array {
@@ -141,8 +175,24 @@ class ConfiguracionController {
             return ['error' => true, 'mensaje' => '❌ Error al actualizar tus datos'];
         }
 
-        // Si el correo cambió, iniciar flujo de verificación y NO cambiarlo aún
+        // Si el correo cambió
         if ($nuevoCorreo !== $correoActual) {
+            // Para Administrador: aplicar cambio inmediato sin verificación
+            if (($usuarioActual['tipo_usuario'] ?? '') === 'Administrador') {
+                $okCorreoAdmin = $this->usuarioModel->actualizarUsuario(
+                    $id_usuario,
+                    $nombre,
+                    $nuevoCorreo,
+                    $usuarioActual['tipo_usuario'],
+                    $telefono
+                );
+                if (!$okCorreoAdmin) {
+                    return ['error' => true, 'mensaje' => '❌ Error al actualizar tu correo'];
+                }
+                return ['error' => false, 'mensaje' => '✅ Datos actualizados correctamente'];
+            }
+
+            // Para otros roles: iniciar flujo de verificación y NO cambiarlo aún
             // Preparar token y URL de confirmación
             $token = bin2hex(random_bytes(24));
             $expira = date('Y-m-d H:i:s', time() + 24*60*60); // 24 horas

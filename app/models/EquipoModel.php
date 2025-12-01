@@ -56,16 +56,16 @@ class EquipoModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /** Eliminar equipo permanentemente */
+    /** Dar de baja (baja lógica) */
     public function darDeBajaEquipo($id_equipo) {
-        $stmt = $this->db->prepare("DELETE FROM equipos WHERE id_equipo = ?");
+        $stmt = $this->db->prepare("UPDATE equipos SET activo = 0 WHERE id_equipo = ?");
         return $stmt->execute([$id_equipo]);
     }
 
-    /** Restaurar equipo (ya no aplica con eliminación física) */
+    /** Restaurar equipo (reactivar) */
     public function restaurarEquipo($id_equipo) {
-        // Método obsoleto - no se puede restaurar lo que se eliminó físicamente
-        return false;
+        $stmt = $this->db->prepare("UPDATE equipos SET activo = 1 WHERE id_equipo = ?");
+        return $stmt->execute([$id_equipo]);
     }
 
     /** Eliminar definitivo (ahora es lo mismo que dar de baja) */

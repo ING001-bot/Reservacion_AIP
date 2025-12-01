@@ -424,21 +424,17 @@ setTimeout(() => {
                                 $ocupada = false;
                                 if (!$isRecreoMarker) {
                                     foreach ($reservas_existentes as $res) {
-                                        // CORREGIDO: Un bloque se marca ocupado SOLO si:
-                                        // 1. La reserva EMPIEZA en este bloque (res_inicio está dentro del bloque)
-                                        // 2. O la reserva CUBRE COMPLETAMENTE este bloque (empieza antes y termina después)
-                                        $res_inicio = $res['hora_inicio'];
-                                        $res_fin = $res['hora_fin'];
-                                        
-                                        // Caso 1: La reserva empieza dentro de este bloque
-                                        $empiezaEnBloque = ($res_inicio >= $inicio && $res_inicio < $fin);
-                                        
-                                        // Caso 2: La reserva cubre completamente el bloque
-                                        $cubreBloque = ($res_inicio <= $inicio && $res_fin >= $fin);
-                                        
-                                        if ($empiezaEnBloque || $cubreBloque) { 
-                                            $ocupada = true; 
-                                            break; 
+                                        // REGLA: Un bloque queda ocupado si y solo si
+                                        // el INICIO del bloque está dentro del rango de la reserva
+                                        // [res_inicio, res_fin). Así evitamos marcar 06:45 cuando la
+                                        // reserva empieza 07:10.
+                                        $res_inicio = strlen($res['hora_inicio']) === 5 ? ($res['hora_inicio'] . ':00') : $res['hora_inicio'];
+                                        $res_fin = strlen($res['hora_fin']) === 5 ? ($res['hora_fin'] . ':00') : $res['hora_fin'];
+
+                                        $bloqueInicioDentro = ($inicio >= $res_inicio && $inicio < $res_fin);
+                                        if ($bloqueInicioDentro) {
+                                            $ocupada = true;
+                                            break;
                                         }
                                     }
                                 }

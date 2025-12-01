@@ -10,7 +10,7 @@ if (!defined('EMBEDDED_VIEW')) {
 
 require_once __DIR__ . '/../controllers/ConfiguracionController.php';
 
-$id_usuario = $_SESSION['id_usuario'] ?? 0;
+$id_usuario = $_SESSION['id_usuario'] ?? ($_SESSION['usuario']['id_usuario'] ?? 0);
 $configController = new ConfiguracionController();
 
 $mensaje = '';
@@ -217,7 +217,7 @@ document.getElementById('form-actualizar-datos')?.addEventListener('submit', fun
         showCancelButton: true,
         confirmButtonText: 'Sí, guardar',
         cancelButtonText: 'Cancelar'
-    }).then(res => { if (res.isConfirmed){ window.__savingProfile = true; e.target.submit(); } });
+    }).then(res => { if (res.isConfirmed){ window.__savingProfile = true; const f=e.target; if(!f.querySelector('input[name="actualizar_datos"]')){ const h=document.createElement('input'); h.type='hidden'; h.name='actualizar_datos'; h.value='1'; f.appendChild(h);} f.submit(); } });
 });
 
 // Mostrar mensaje de éxito/error automáticamente

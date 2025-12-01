@@ -12,7 +12,7 @@ require_once __DIR__ . '/../controllers/ConfiguracionController.php';
 require_once __DIR__ . '/../models/UsuarioModel.php';
 require_once __DIR__ . '/../controllers/SistemaController.php';
 
-$id_usuario = $_SESSION['id_usuario'] ?? 0;
+$id_usuario = $_SESSION['id_usuario'] ?? ($_SESSION['usuario']['id_usuario'] ?? 0);
 $configController = new ConfiguracionController();
 $usuarioModel = new UsuarioModel();
 $sistemaController = new SistemaController();
@@ -123,7 +123,7 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
                 showCancelButton: true,
                 confirmButtonText: 'Sí, guardar',
                 cancelButtonText: 'Cancelar'
-            }).then(res => { if (res.isConfirmed){ window.__savingProfile = true; form.submit(); } });
+            }).then(res => { if (res.isConfirmed){ window.__savingProfile = true; if(!form.querySelector('input[name="actualizar_datos"]')){ const h=document.createElement('input'); h.type='hidden'; h.name='actualizar_datos'; h.value='1'; form.appendChild(h);} form.submit(); } });
         });
     });
 
@@ -159,7 +159,12 @@ $mantenimientoInfo = $sistemaController->obtenerUltimoMantenimiento();
             </div>
             <div class="flex-grow-1">
                 <h2 class="mb-1 fw-bold"><?= htmlspecialchars($perfil['nombre']) ?></h2>
-                <p class="mb-2 opacity-75"><?= htmlspecialchars($perfil['correo']) ?></p>
+                <p class="mb-2 opacity-75">
+                    <?= htmlspecialchars($perfil['correo']) ?>
+                    <?php if (!empty($perfil['nuevo_correo'])): ?>
+                        <br><small class="text-warning">Pendiente de confirmación: <?= htmlspecialchars($perfil['nuevo_correo']) ?></small>
+                    <?php endif; ?>
+                </p>
                 <span class="badge-role badge-admin">🔐 Administrador</span>
             </div>
         </div>

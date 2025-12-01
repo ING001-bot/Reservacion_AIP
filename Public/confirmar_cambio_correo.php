@@ -15,7 +15,7 @@ if ($token === '') {
         $res = $model->confirmarCambioCorreoPorToken($token);
         if (!empty($res['ok'])) {
             $exito = true;
-            $mensaje = 'Tu correo fue cambiado correctamente.';
+            $mensaje = 'Correo verificado correctamente.';
             // Actualizar sesión si corresponde
             if (isset($_SESSION['id_usuario']) && isset($res['id_usuario']) && (int)$_SESSION['id_usuario'] === (int)$res['id_usuario']) {
                 if (!empty($res['correo'])) {
@@ -23,10 +23,10 @@ if ($token === '') {
                 }
             }
         } else {
-            $mensaje = $res['mensaje'] ?? 'No se pudo confirmar el cambio de correo.';
+            $mensaje = 'Token inválido o expirado.';
         }
     } catch (Throwable $e) {
-        $mensaje = 'Error procesando la solicitud.';
+        $mensaje = 'Token inválido o expirado.';
     }
 }
 
