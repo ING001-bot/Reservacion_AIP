@@ -32,12 +32,17 @@ if (!defined('EMBEDDED_VIEW')) {
 
 
 $q = isset($_GET['q']) ? trim($_GET['q']) : '';
-$estado = isset($_GET['estado']) ? trim($_GET['estado']) : '';
-$desde = isset($_GET['desde']) ? trim($_GET['desde']) : date('Y-m-d', strtotime('-30 days'));
-$hasta = isset($_GET['hasta']) ? trim($_GET['hasta']) : date('Y-m-d');
+$estado = isset($_GET['estado']) ? trim($_GET['estado']) : 'Prestado';
+$desde = isset($_GET['desde']) ? trim($_GET['desde']) : '';
+$hasta = isset($_GET['hasta']) ? trim($_GET['hasta']) : '';
 
 // Obtener préstamos filtrados para mostrar en la tabla
 $prestamos = $controller->obtenerPrestamosFiltrados($estado, $desde, $hasta, $q);
+
+// Si no hay resultados con filtros y no se especificó estado, intentar obtener todas las devoluciones
+if (empty($prestamos) && empty($estado) && empty($q)) {
+    $prestamos = $controller->obtenerTodasLasDevoluciones();
+}
 
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -186,6 +191,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../../Public/css/brand.css">
+  <script>
+    // Limpiar campos de fecha cuando se carga sin parámetros de filtro
+    document.addEventListener('DOMContentLoaded', function() {
+      // Si no hay parámetros en la URL (carga inicial), limpiar campos de fecha
+      if (window.location.search === '' || window.location.search === '?success=0' || window.location.search === '?success=1') {
+        const inputDesde = document.querySelector('input[name="desde"]');
+        const inputHasta = document.querySelector('input[name="hasta"]');
+        if (inputDesde) inputDesde.value = '';
+        if (inputHasta) inputHasta.value = '';
+      }
+    });
+  </script>
 </head>
 <body>
 <?php require __DIR__ . '/partials/navbar.php'; ?>
@@ -243,12 +260,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             
-            <?php if (!empty($q) || !empty($estado) || (!empty($desde) && $desde !== date('Y-m-d', strtotime('-30 days'))) || !empty($hasta)): ?>
+            <?php if (!empty($q) || (isset($_GET['estado']) && !empty($_GET['estado'])) || !empty($desde) || !empty($hasta)): ?>
             <div class="mt-2">
                 <small class="text-muted">
                     <i class="fas fa-info-circle me-1"></i>
                     Filtros activos:
-                    <?php if ($estado): ?><span class="badge bg-primary"><?= htmlspecialchars($estado) ?></span><?php endif; ?>
+                    <?php if (isset($_GET['estado']) && !empty($_GET['estado'])): ?><span class="badge bg-primary"><?= htmlspecialchars($_GET['estado']) ?></span><?php endif; ?>
                     <?php if ($desde): ?><span class="badge bg-secondary">Desde: <?= htmlspecialchars($desde) ?></span><?php endif; ?>
                     <?php if ($hasta): ?><span class="badge bg-secondary">Hasta: <?= htmlspecialchars($hasta) ?></span><?php endif; ?>
                     <?php if ($q): ?><span class="badge bg-info text-dark">Búsqueda: "<?= htmlspecialchars($q) ?>"</span><?php endif; ?>

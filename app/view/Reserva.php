@@ -11,6 +11,7 @@ if (!defined('EMBEDDED_VIEW')) {
 
 require "../config/conexion.php";
 require '../controllers/ReservaController.php';
+require_once '../controllers/PrestamoController.php';
 require_once '../middleware/VerifyMiddleware.php';
 require_once '../middleware/RouteGuard.php';
 RouteGuard::enforceInternalNav();
@@ -90,9 +91,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && !$necesi
 
 $nombreProfesor = $_SESSION['usuario'] ?? 'Invitado';
 $controller = new ReservaController($conexion);
+$prestamoController = new PrestamoController($conexion);
 
 // SOLO obtener aulas de tipo AIP
 $aulas = $controller->obtenerAulas('AIP');
+
+// Obtener devoluciones del usuario actual (últimos 30 días, con fallback)
+date_default_timezone_set('America/Lima');
+$desde = date('Y-m-d', strtotime('-30 days'));
+$hasta = date('Y-m-d');
+$devoluciones = $prestamoController->obtenerPrestamosFiltrados('Devuelto', $desde, $hasta, '');
+
+// Si no hay devoluciones en los últimos 30 días, obtener todas (sin límite de fecha)
+if (empty($devoluciones)) {
+    $devoluciones = $prestamoController->obtenerTodasLasDevoluciones();
+}
+
+// Filtrar para mostrar solo devoluciones del usuario actual (si es encargado, mostrar todas)
+if ($_SESSION['tipo'] !== 'Administrador' && $_SESSION['tipo'] !== 'Encargado') {
+    $devoluciones = array_filter($devoluciones, function($d) {
+        return (int)($d['id_usuario'] ?? 0) === (int)$_SESSION['id_usuario'];
+    });
+}
 
 // Verificar si hay aulas disponibles
 if (empty($aulas)) {
@@ -467,6 +487,7 @@ setTimeout(() => {
     <div class="d-flex justify-content-center gap-2 my-3">
         <button id="btn-realizadas" class="btn btn-primary btn-sm" type="button">Reservas realizadas</button>
         <button id="btn-canceladas" class="btn btn-outline-primary btn-sm" type="button">Reservas canceladas</button>
+        <button id="btn-devoluciones" class="btn btn-outline-primary btn-sm" type="button">Devoluciones</button>
     </div>
 
     <h2 class="text-center text-brand my-2">📖 Reservas Registradas</h2>
@@ -560,6 +581,42 @@ setTimeout(() => {
             </tbody>
         </table>
     </div>
+
+    <!-- Tabla de Devoluciones -->
+    <div id="tabla-devoluciones" class="table-responsive shadow-lg" style="display: none;">
+        <table class="table table-hover align-middle text-center table-brand">
+            <thead class="table-info text-center">
+            <tr>
+                <th>Equipo</th>
+                <th>Tipo</th>
+                <th>Responsable</th>
+                <th>Aula</th>
+                <th>Fecha Préstamo</th>
+                <th>Hora Inicio</th>
+                <th>Hora Fin</th>
+                <th>Fecha Devolución</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if (!empty($devoluciones)): ?>
+                <?php foreach ($devoluciones as $dev): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($dev['nombre_equipo'] ?? '—') ?></td>
+                        <td><span class="badge bg-secondary"><?= htmlspecialchars($dev['tipo_equipo'] ?? '') ?></span></td>
+                        <td><?= htmlspecialchars($dev['nombre'] ?? '—') ?></td>
+                        <td><?= htmlspecialchars($dev['nombre_aula'] ?? '—') ?></td>
+                        <td><?= htmlspecialchars($dev['fecha_prestamo'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($dev['hora_inicio'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($dev['hora_fin'] ?? '') ?></td>
+                        <td><span class="badge bg-success"><?= htmlspecialchars($dev['fecha_devolucion'] ?? '—') ?></span></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="8" class="text-muted">No hay devoluciones registradas.</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Bootstrap -->
@@ -577,8 +634,10 @@ setTimeout(() => {
 document.addEventListener('DOMContentLoaded', function() {
     const btnRealizadas = document.getElementById('btn-realizadas');
     const btnCanceladas = document.getElementById('btn-canceladas');
+    const btnDevoluciones = document.getElementById('btn-devoluciones');
     const tablaRealizadas = document.getElementById('tabla-realizadas');
     const tablaCanceladas = document.getElementById('tabla-canceladas');
+    const tablaDevoluciones = document.getElementById('tabla-devoluciones');
     const formReserva = document.getElementById('form-reserva');
     const fechaInput = document.getElementById('fecha-select');
     let otpOk = false; // modal del servidor maneja verificación; no usar prompts duplicados
@@ -586,23 +645,42 @@ document.addEventListener('DOMContentLoaded', function() {
     function mostrarRealizadas() {
         tablaRealizadas.style.display = '';
         tablaCanceladas.style.display = 'none';
+        tablaDevoluciones.style.display = 'none';
         btnRealizadas.classList.remove('btn-outline-primary');
         btnRealizadas.classList.add('btn-primary');
         btnCanceladas.classList.remove('btn-primary');
         btnCanceladas.classList.add('btn-outline-primary');
+        btnDevoluciones.classList.remove('btn-primary');
+        btnDevoluciones.classList.add('btn-outline-primary');
     }
 
     function mostrarCanceladas() {
         tablaRealizadas.style.display = 'none';
         tablaCanceladas.style.display = '';
+        tablaDevoluciones.style.display = 'none';
         btnCanceladas.classList.remove('btn-outline-primary');
         btnCanceladas.classList.add('btn-primary');
         btnRealizadas.classList.remove('btn-primary');
         btnRealizadas.classList.add('btn-outline-primary');
+        btnDevoluciones.classList.remove('btn-primary');
+        btnDevoluciones.classList.add('btn-outline-primary');
+    }
+
+    function mostrarDevoluciones() {
+        tablaRealizadas.style.display = 'none';
+        tablaCanceladas.style.display = 'none';
+        tablaDevoluciones.style.display = '';
+        btnDevoluciones.classList.remove('btn-outline-primary');
+        btnDevoluciones.classList.add('btn-primary');
+        btnRealizadas.classList.remove('btn-primary');
+        btnRealizadas.classList.add('btn-outline-primary');
+        btnCanceladas.classList.remove('btn-primary');
+        btnCanceladas.classList.add('btn-outline-primary');
     }
 
     btnRealizadas.addEventListener('click', mostrarRealizadas);
     btnCanceladas.addEventListener('click', mostrarCanceladas);
+    btnDevoluciones.addEventListener('click', mostrarDevoluciones);
 
     // Si venimos de una cancelación exitosa, mostrar directamente la pestaña de canceladas
     <?php if (!empty($controller->mensaje) && $controller->tipo === 'success' && strpos($controller->mensaje, 'Reserva cancelada') !== false): ?>

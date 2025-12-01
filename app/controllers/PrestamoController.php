@@ -190,6 +190,11 @@ class PrestamoController {
         return $this->model->obtenerPrestamosFiltrados($estado, $desde, $hasta, $q);
     }
 
+    // Obtener TODAS las devoluciones sin límite de fecha
+    public function obtenerTodasLasDevoluciones(): array {
+        return $this->model->obtenerTodasLasDevoluciones();
+    }
+
     // ========================= Notificaciones (in-app) =========================
     public function listarNotificacionesUsuario(int $id_usuario, bool $soloNoLeidas = false, int $limit = 10): array {
         return $this->model->listarNotificacionesUsuario($id_usuario, $soloNoLeidas, $limit);

@@ -373,5 +373,34 @@ class PrestamoModel {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    // Obtener TODAS las devoluciones sin límite de fecha (para debugging)
+    public function obtenerTodasLasDevoluciones(): array {
+        $sql = "
+            SELECT 
+                p.id_prestamo, 
+                COALESCE(e.nombre_equipo, 'Sin equipo') as nombre_equipo, 
+                COALESCE(e.tipo_equipo, '') as tipo_equipo, 
+                u.nombre, 
+                COALESCE(a.nombre_aula, 'Sin aula') as nombre_aula, 
+                COALESCE(a.tipo, '') as tipo,
+                p.fecha_prestamo, 
+                p.hora_inicio, 
+                p.hora_fin, 
+                p.fecha_devolucion, 
+                p.estado,
+                p.id_usuario,
+                p.id_aula
+            FROM prestamos p
+            LEFT JOIN equipos e ON p.id_equipo = e.id_equipo
+            LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+            LEFT JOIN aulas a ON p.id_aula = a.id_aula
+            WHERE p.estado = 'Devuelto'
+            ORDER BY p.fecha_devolucion DESC, p.fecha_prestamo DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 }
 }
